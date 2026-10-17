@@ -20,3 +20,6 @@ Thumbs.db
 # Claude Code: personal settings and local memory stay out of Git
 .claude/settings.local.json
 CLAUDE.local.md
+
+# Vercel CLI link and build output (vercel pull / vercel build)
+.vercel/

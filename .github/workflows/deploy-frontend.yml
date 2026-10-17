@@ -26,9 +26,8 @@ jobs:
       name: production-frontend
       url: ${{ steps.deploy.outputs.url }}
 
-    defaults:
-      run:
-        working-directory: frontend
+    # The Vercel CLI runs from the repository root: the Vercel project has Root Directory = frontend
+    # and the CLI applies it itself. Running inside frontend/ would resolve frontend/frontend.
 
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
