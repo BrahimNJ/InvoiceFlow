@@ -6,7 +6,8 @@ services:
     runtime: docker
     plan: free
     region: frankfurt
-    rootDir: backend
+    # Paths are relative to the repository root. Do not add rootDir: Render would prefix
+    # it to dockerContext (backend/backend). Auto-deploy is off, so build filters are not needed.
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /actuator/health
