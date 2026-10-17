@@ -1,0 +1,60 @@
+<section class="hero" id="top">
+  <div class="container grid">
+    <div class="copy">
+      <p class="badge"><span class="dot"></span>Built for the French e-invoicing reform</p>
+
+      <h1>Invoicing made simple for the <span class="highlight">e-invoicing era</span>.</h1>
+
+      <p class="lead">
+        Create compliant invoices in seconds, track every payment and get ready for mandatory
+        electronic invoicing in France, with an AI assistant that turns a sentence into a draft invoice.
+      </p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="#features">Explore features <app-icon name="arrow-right" [size]="18" /></a>
+        <a class="btn btn-ghost" href="#reform">Understand the reform</a>
+      </div>
+
+      <ul class="highlights">
+        @for (item of highlights; track item) {
+          <li><app-icon name="check" [size]="16" />{{ item }}</li>
+        }
+      </ul>
+    </div>
+
+    <div class="visual" aria-hidden="true">
+      <div class="invoice">
+        <div class="invoice-head">
+          <div>
+            <p class="muted">Invoice</p>
+            <p class="number">INV-2026-0042</p>
+          </div>
+          <span class="status">Paid</span>
+        </div>
+
+        <div class="parties">
+          <div><p class="muted">From</p><p>Naji Studio</p></div>
+          <div><p class="muted">Bill to</p><p>ACME SAS</p></div>
+        </div>
+
+        <ul class="lines">
+          @for (line of lines; track line.label) {
+            <li>
+              <span>{{ line.label }}<small>{{ line.quantity }} × {{ line.unitPrice | currency: 'EUR' }}</small></span>
+              <strong>{{ line.quantity * line.unitPrice | currency: 'EUR' }}</strong>
+            </li>
+          }
+        </ul>
+
+        <dl class="totals">
+          <div><dt>Subtotal</dt><dd>{{ subtotal | currency: 'EUR' }}</dd></div>
+          <div><dt>VAT 20%</dt><dd>{{ vat | currency: 'EUR' }}</dd></div>
+          <div class="grand"><dt>Total</dt><dd>{{ total | currency: 'EUR' }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="chip chip-top"><app-icon name="file-check" [size]="18" />Factur-X validated</div>
+      <div class="chip chip-bottom"><span class="plus">+{{ total | currency: 'EUR' : 'symbol' : '1.0-0' }}</span>Payment received</div>
+    </div>
+  </div>
+</section>

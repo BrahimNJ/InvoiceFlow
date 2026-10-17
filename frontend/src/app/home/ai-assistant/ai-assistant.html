@@ -1,0 +1,35 @@
+<section class="section ai" id="ai" aria-labelledby="ai-title">
+  <div class="container grid">
+    <div class="copy">
+      <span class="eyebrow">AI assistant <span class="soon">On the roadmap</span></span>
+      <h2 id="ai-title">Describe it. InvoiceFlow drafts it.</h2>
+      <p class="lead">
+        Write what you sold in plain words. The assistant prepares the invoice, and you stay in control:
+        the AI suggests, the business rules decide.
+      </p>
+      <ul class="points">
+        @for (point of points; track point) {
+          <li><app-icon name="check" [size]="18" />{{ point }}</li>
+        }
+      </ul>
+    </div>
+
+    <div class="demo" aria-label="Example of an invoice drafted from a sentence">
+      <div class="prompt">
+        <app-icon name="sparkles" [size]="18" />
+        <p>{{ prompt }}</p>
+      </div>
+
+      <div class="draft">
+        <p class="draft-title"><span>Draft invoice</span><span class="ok">Validated</span></p>
+        <dl>
+          <div><dt>Customer</dt><dd>{{ draft.customer }}</dd></div>
+          <div><dt>Line</dt><dd>Development · {{ draft.quantity }} × {{ draft.unitPrice | currency: 'EUR' }}</dd></div>
+          <div><dt>Subtotal</dt><dd>{{ subtotal | currency: 'EUR' }}</dd></div>
+          <div><dt>VAT</dt><dd>{{ draft.vatRate * 100 }}%</dd></div>
+          <div class="total"><dt>Total</dt><dd>{{ total | currency: 'EUR' }}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
