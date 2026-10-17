@@ -1,0 +1,23 @@
+# Render Blueprint for the backend (https://render.com/docs/blueprint-spec).
+# Deploys are triggered by .github/workflows/deploy-backend.yml once Backend CI is green.
+services:
+  - type: web
+    name: invoiceflow-backend
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # Neon credentials, entered in the Render dashboard (never committed)
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
