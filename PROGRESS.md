@@ -27,9 +27,9 @@
 | 0.1 | Spring Boot backend skeleton | ✅ Done | — | Spring Boot 4, Java 17 source |
 | 0.2 | Angular frontend skeleton | ✅ Done | — | Angular 21, Vitest |
 | 0.3 | GitHub Actions CI (backend + frontend) | ✅ Done | #1 / #2 | H2 for backend tests |
-| 0.4 | Claude Code conventions, best practices, progress tracking | 🚧 In progress | #5 | `CLAUDE.md`, `docs/claude-code/`, this file |
-| 0.5 | PostgreSQL + Docker Compose for local runtime | 📋 Planned | — | App cannot start locally without it |
-| 0.6 | Profiles (`dev`, `test`) and `.env.example` | 📋 Planned | — | Depends on 0.5 |
+| 0.4 | Claude Code conventions, best practices, progress tracking | ✅ Done | #5 / #6 | `CLAUDE.md`, `docs/claude-code/`, this file |
+| 0.5 | PostgreSQL + Docker Compose + Flyway for local runtime | 🚧 In progress | #7 | Branch `7-feat/postgresql-setup` |
+| 0.6 | Profiles (`dev`, `test`, `prod`) and `.env.example` | 🚧 In progress | #7 | Done in the same branch as 0.5 |
 
 ## Phase 1 — Customers
 
@@ -91,4 +91,5 @@
 
 | Date | Change |
 |------|--------|
-| 2026-10-17 | Customer CRUD merged (#4). Claude Code conventions started (#5). |
+| 2026-10-17 | PostgreSQL, Flyway and Spring profiles in progress (#7). |
+| 2026-10-17 | Customer CRUD merged (#4). Claude Code conventions merged (#6). |

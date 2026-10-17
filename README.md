@@ -163,3 +163,33 @@ invoiceflow/
 │   └── workflows/
 │
 └── README.md
+```
+
+---
+
+## Local development
+
+Prerequisites: Java 21, Node.js 22, Docker.
+
+```bash
+# 1. Start PostgreSQL (data kept in the postgres-data volume)
+docker compose up -d
+
+# 2. Start the backend on http://localhost:8080 (dev profile, Flyway migrates the schema)
+cd backend && ./mvnw spring-boot:run
+
+# 3. Start the frontend on http://localhost:4200
+cd frontend && npm install && npm start
+```
+
+The defaults work out of the box. To change credentials or ports, copy `.env.example` to `.env`
+(git-ignored) and export the variables you need.
+
+| Profile | Database | Used by |
+|---------|----------|---------|
+| `dev` (default) | Local PostgreSQL from `compose.yaml` | `./mvnw spring-boot:run` |
+| `test` | In-memory H2 (PostgreSQL mode) | `./mvnw test`, CI |
+| `prod` | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` from the environment | Production |
+
+The schema is managed by Flyway migrations in `backend/src/main/resources/db/migration`;
+Hibernate only validates it. Never edit an applied migration, add a new `V<n>__<description>.sql` instead.
