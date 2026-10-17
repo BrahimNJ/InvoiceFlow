@@ -30,6 +30,7 @@
 | 0.4 | Claude Code conventions, best practices, progress tracking | ✅ Done | #5 / #6 | `CLAUDE.md`, `docs/claude-code/`, this file |
 | 0.5 | PostgreSQL + Docker Compose + Flyway for local runtime | 🚧 In progress | #7 | Branch `7-feat/postgresql-setup` |
 | 0.6 | Profiles (`dev`, `test`, `prod`) and `.env.example` | 🚧 In progress | #7 | Done in the same branch as 0.5 |
+| 0.7 | Continuous deployment: Vercel (frontend), Render + Neon (backend) | 🚧 In progress | #8 | Branch `8-ci/continuous-deployment`, based on #7; see `docs/deployment.md` |
 
 ## Phase 1 — Customers
 
@@ -91,5 +92,6 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-17 | Continuous deployment in progress (#8); CI now also runs on issue branches. |
 | 2026-10-17 | PostgreSQL, Flyway and Spring profiles in progress (#7). |
 | 2026-10-17 | Customer CRUD merged (#4). Claude Code conventions merged (#6). |
