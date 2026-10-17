@@ -1,0 +1,22 @@
+# IDE and editor metadata (per-module .gitignore files cover build outputs)
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+!frontend/.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Claude Code: personal settings and local memory stay out of Git
+.claude/settings.local.json
+CLAUDE.local.md
