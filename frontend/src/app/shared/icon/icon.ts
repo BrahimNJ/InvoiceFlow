@@ -1,0 +1,40 @@
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+
+// Stroke icons (24x24 grid), one path each.
+const ICONS = {
+  'arrow-right': 'M5 12h14M12 5l7 7-7 7',
+  check: 'M20 6 9 17l-5-5',
+  users:
+    'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+  package: 'M21 8 12 3 3 8l9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8',
+  invoice: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
+  'file-check': 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 15l2 2 4-4',
+  chart: 'M3 3v18h18M8 17v-4M13 17V9M18 17V5',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
+  sparkles:
+    'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z',
+  send: 'M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z',
+  github:
+    'M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22',
+} as const;
+
+export type IconName = keyof typeof ICONS;
+
+@Component({
+  selector: 'app-icon',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <svg viewBox="0 0 24 24" [attr.width]="size()" [attr.height]="size()" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true" focusable="false">
+      <path [attr.d]="path()" />
+    </svg>
+  `,
+  styles: `:host { display: inline-flex; flex-shrink: 0; }`,
+})
+export class Icon {
+  readonly name = input.required<IconName>();
+  readonly size = input(20);
+
+  protected readonly path = computed(() => ICONS[this.name()]);
+}
