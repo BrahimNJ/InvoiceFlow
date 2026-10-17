@@ -1,0 +1,20 @@
+<section class="section reform" id="reform" aria-labelledby="reform-title">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">The e-invoicing reform</span>
+      <h2 id="reform-title">Electronic invoicing is becoming mandatory in France</h2>
+      <p>PDF attachments by email will no longer be enough. InvoiceFlow structures your invoice data from day one, so switching costs you nothing.</p>
+    </div>
+
+    <ol class="timeline">
+      @for (milestone of milestones; track milestone.date; let first = $first) {
+        <li [class.current]="first">
+          <span class="tag">{{ milestone.tag }}</span>
+          <p class="date">{{ milestone.date }}</p>
+          <h3>{{ milestone.title }}</h3>
+          <p class="text">{{ milestone.text }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+</section>

@@ -1,0 +1,19 @@
+<section class="section" id="features" aria-labelledby="features-title">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Features</span>
+      <h2 id="features-title">Everything you need to bill and get paid</h2>
+      <p>From your first customer to your hundredth invoice, InvoiceFlow covers the full invoicing cycle.</p>
+    </div>
+
+    <ul class="grid">
+      @for (feature of features; track feature.title) {
+        <li class="card">
+          <span class="icon"><app-icon [name]="feature.icon" [size]="22" /></span>
+          <h3>{{ feature.title }}</h3>
+          <p>{{ feature.text }}</p>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

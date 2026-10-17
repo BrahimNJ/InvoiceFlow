@@ -1,0 +1,18 @@
+.cta { padding-block: 0 clamp(4rem, 9vw, 6rem); }
+
+.panel {
+  padding: clamp(2.5rem, 6vw, 4rem) clamp(1.5rem, 5vw, 4rem); border-radius: 28px; text-align: center; color: #fff;
+  background:
+    radial-gradient(30rem 16rem at 100% 0%, rgb(20 184 138 / .45), transparent 65%),
+    linear-gradient(135deg, var(--brand), #2b3fc4);
+  box-shadow: var(--shadow-lg);
+}
+h2 { font-size: clamp(1.7rem, 4vw, 2.5rem); font-weight: 800; }
+.panel p { margin: 1rem auto 0; max-width: 34rem; color: rgb(255 255 255 / .85); font-size: 1.05rem; }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; margin-top: 2rem; }
+
+.footer { padding-block: 2.5rem; background: var(--night); color: #c9d1ee; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem; }
+.brand { display: grid; gap: .35rem; color: #fff; }
+.brand p { font-size: .875rem; color: #9aa6cf; }
+.legal { font-size: .85rem; color: #8590ba; }

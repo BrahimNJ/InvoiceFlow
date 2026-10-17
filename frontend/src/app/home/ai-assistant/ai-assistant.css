@@ -1,0 +1,45 @@
+.ai {
+  color: #fff;
+  background:
+    radial-gradient(40rem 26rem at 100% 0%, rgb(79 107 255 / .35), transparent 60%),
+    radial-gradient(30rem 20rem at 0% 100%, rgb(20 184 138 / .22), transparent 60%),
+    var(--night);
+}
+
+.grid { display: grid; gap: 3rem; align-items: center; }
+@media (min-width: 980px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+.eyebrow { color: #9fb0ff; }
+.soon {
+  margin-left: .5rem; padding: .15rem .55rem; border-radius: 999px;
+  background: rgb(255 255 255 / .1); color: #fff; letter-spacing: .04em; text-transform: none; font-weight: 600;
+}
+
+h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 750; }
+.lead { margin-top: 1rem; max-width: 32rem; font-size: 1.075rem; color: #b9c3e6; }
+
+.points { display: grid; gap: .8rem; margin-top: 1.8rem; }
+.points li { display: flex; gap: .65rem; align-items: flex-start; color: #dfe5fb; }
+.points app-icon { margin-top: .2rem; color: #4fe0b0; }
+
+.demo { display: grid; gap: 1rem; }
+
+.prompt {
+  display: flex; gap: .75rem; padding: 1.1rem 1.25rem; border-radius: var(--radius);
+  background: rgb(255 255 255 / .07); border: 1px solid rgb(255 255 255 / .14);
+  font-size: 1rem; color: #fff;
+}
+.prompt app-icon { margin-top: .2rem; color: #9fb0ff; }
+
+.draft {
+  padding: 1.4rem 1.5rem; border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--ink-900); box-shadow: 0 30px 60px -20px rgb(0 0 0 / .5);
+}
+.draft-title { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+.ok { padding: .2rem .65rem; border-radius: 999px; background: var(--accent-50); color: #0d8a66; font-size: .75rem; }
+
+dl { margin: 1rem 0 0; }
+dl div { display: flex; justify-content: space-between; gap: 1rem; padding-block: .5rem; border-top: 1px solid var(--line); font-size: .92rem; }
+dt { color: var(--ink-500); }
+dd { margin: 0; font-weight: 600; text-align: right; }
+.total dd { color: var(--brand); font-size: 1.1rem; }
