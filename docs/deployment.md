@@ -52,8 +52,9 @@ merge / push on main
    `backend/Dockerfile` (Maven package, JRE 21 runtime, non-root user) and starts it with `SPRING_PROFILES_ACTIVE=prod`.
    On startup Flyway applies any new migration to Neon. Render only routes traffic to the new container once
    `/actuator/health` answers `UP`; if it never does, the previous version keeps running.
-4. **Frontend deploy.** The workflow checks out the commit that passed `Frontend CI`, builds it with the
-   Vercel CLI using the project settings from Vercel, and uploads the prebuilt output as the production deployment.
+4. **Frontend deploy.** The workflow checks out the commit that passed `Frontend CI` and runs the Vercel CLI
+   from the repository root. Using the project settings pulled from Vercel (Root Directory `frontend`), it runs
+   `npm ci` and `npm run build` from `frontend/vercel.json`, then uploads the prebuilt output as the production deployment.
 5. Each deploy workflow is serialized (`concurrency`), so two merges in a row never deploy in parallel.
 
 Both workflows can also be started manually from **Actions → Deploy frontend / Deploy backend → Run workflow**,
@@ -113,7 +114,7 @@ The deploy hook URL is a credential: anyone who has it can trigger a deploy.
 | Setting | Value | Why |
 |---------|-------|-----|
 | Framework Preset | Angular | |
-| Root Directory | *empty* | The workflow already runs the CLI inside `frontend/` |
+| Root Directory | `frontend` | The workflow runs the CLI from the repository root and Vercel enters `frontend/` itself (#15) |
 | Git deployments | disabled by `frontend/vercel.json` (`git.deploymentEnabled: false`) | Deploys only come from GitHub Actions, after CI |
 
 ## Checking a deployment
@@ -132,6 +133,7 @@ The deploy hook URL is a credential: anyone who has it can trigger a deploy.
 | Render: `lstat /opt/render/project/src/backend/backend: no such file or directory` | Root Directory set to `backend` | Empty Root Directory (see settings above) |
 | Deploy backend: `RENDER_DEPLOY_HOOK_URL secret is not set` | Missing GitHub secret | Add it, rerun the workflow |
 | Deploy frontend: `You specified VERCEL_ORG_ID but you forgot to specify VERCEL_PROJECT_ID` | Missing GitHub secret | Add `VERCEL_PROJECT_ID`, rerun |
+| Deploy frontend: `sh: 1: ng: not found` / `Command "ng build" exited with 127` | CLI run inside `frontend/` while Root Directory is `frontend`: it resolved `frontend/frontend`, skipped `npm ci` and ignored `vercel.json` | Run the CLI from the repository root (done in `deploy-frontend.yml`, #15) |
 | Deploy frontend: `Project not found` | `VERCEL_ORG_ID` is not the team that owns the project, or the token has no access to it | Overwrite `VERCEL_ORG_ID` with the right Team ID |
 | Backend starts then crashes: `'url' must start with "jdbc"` | `DB_URL` missing or in `postgresql://` form | Use the JDBC form |
 | Backend crashes: `password authentication failed` / `Connection refused` | Wrong Neon credentials or host | Copy them again from Neon |
@@ -151,7 +153,7 @@ The deploy hook URL is a credential: anyone who has it can trigger a deploy.
 1. **Neon**: project in `eu-central-1` (Frankfurt), keep the default database and role.
 2. **Render**: *New → Blueprint* on this repository, branch `main`; enter `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`.
    Apply the settings above, then copy the deploy hook URL into GitHub.
-3. **Vercel**: *Add New → Project*, import the repository, framework Angular, Root Directory empty.
+3. **Vercel**: *Add New → Project*, import the repository, framework Angular, Root Directory `frontend`.
    Create a token and copy the team and project ids into GitHub.
 4. **GitHub**: add the four Actions secrets.
 5. Run both deploy workflows once manually, then check as described above.
