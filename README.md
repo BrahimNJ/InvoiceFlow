@@ -193,3 +193,15 @@ The defaults work out of the box. To change credentials or ports, copy `.env.exa
 
 The schema is managed by Flyway migrations in `backend/src/main/resources/db/migration`;
 Hibernate only validates it. Never edit an applied migration, add a new `V<n>__<description>.sql` instead.
+
+---
+
+## Deployment
+
+Every merge on `main` with green CI deploys automatically (details: [`docs/deployment.md`](docs/deployment.md)).
+
+| Part | Host | URL |
+|------|------|-----|
+| Frontend | Vercel | https://invoice-flow-seven-omega.vercel.app |
+| Backend | Render (Docker) | https://invoiceflow-backend-84wn.onrender.com/actuator/health |
+| Database | Neon (PostgreSQL) | private |
