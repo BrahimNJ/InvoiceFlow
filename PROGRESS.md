@@ -92,6 +92,7 @@
 
 | Date | Change |
 |------|--------|
-| 2026-10-17 | Continuous deployment in progress (#8); CI now also runs on issue branches. |
+| 2026-10-17 | Render build fix: Docker context resolved as `backend/backend` (#11). |
+| 2026-10-17 | Continuous deployment merged (#10); CI now also runs on issue branches. |
 | 2026-10-17 | PostgreSQL, Flyway and Spring profiles merged (#9). |
 | 2026-10-17 | Customer CRUD merged (#4). Claude Code conventions merged (#6). |
