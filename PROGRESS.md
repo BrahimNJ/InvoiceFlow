@@ -31,7 +31,8 @@
 | 0.5 | PostgreSQL + Docker Compose + Flyway for local runtime | ✅ Done | #7 / #9 | |
 | 0.6 | Profiles (`dev`, `test`, `prod`) and `.env.example` | ✅ Done | #7 / #9 | Same PR as 0.5 |
 | 0.7 | Continuous deployment: Vercel (frontend), Render + Neon (backend) | ✅ Done | #8 / #10, #11 / #12 | Live, checked 2026-10-17: frontend, `/actuator/health` UP, `/api/customers` reads Neon. See `docs/deployment.md` |
-| 0.8 | Deployment guide + end-to-end check of automatic deploy on merge | 🔍 In review | #13 | The merge of this PR is the first fully automatic deploy |
+| 0.8 | Deployment guide + end-to-end check of automatic deploy on merge | ✅ Done | #13 / #14 | First automatic run: backend deployed, frontend failed (fixed in 0.8.1) |
+| 0.8.1 | Fix frontend deploy: run Vercel CLI from repo root (Root Directory `frontend`) | 🔍 In review | #15 | Reproduced locally; validated on `main` by the merge of this fix |
 | 0.9 | CORS + frontend API base URL (dev and prod) | 📋 Planned | — | Needed before 1.3 can call the deployed backend |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
 
@@ -95,7 +96,8 @@
 
 | Date | Change |
 |------|--------|
-| 2026-10-17 | Frontend, backend and database live; deployment guide rewritten (#13). |
+| 2026-10-17 | Frontend deploy fix: Vercel CLI from repo root (#15). |
+| 2026-10-17 | Frontend, backend and database live; deployment guide rewritten (#14). Automatic backend deploy validated. |
 | 2026-10-17 | Render build fix: Docker context resolved as `backend/backend` (#11). |
 | 2026-10-17 | Continuous deployment merged (#10); CI now also runs on issue branches. |
 | 2026-10-17 | PostgreSQL, Flyway and Spring profiles merged (#9). |
