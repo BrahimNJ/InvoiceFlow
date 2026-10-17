@@ -18,6 +18,18 @@ curl https://invoiceflow-backend-84wn.onrender.com/actuator/health   # {"status"
 curl https://invoiceflow-backend-84wn.onrender.com/api/customers     # JSON list read from Neon
 ```
 
+## How the frontend reaches the backend
+
+The two apps live on different origins, so the browser applies CORS.
+
+| Side | Setting | Dev | Prod |
+|------|---------|-----|------|
+| Angular | `apiUrl` in `frontend/src/environments/` | `http://localhost:8080` (`environment.development.ts`, used by `ng serve`) | `https://invoiceflow-backend-84wn.onrender.com` (`environment.ts`, used by `ng build`) |
+| Spring Boot | `app.cors.allowed-origins` (`CORS_ALLOWED_ORIGINS`) | `http://localhost:4200` | `https://invoice-flow-seven-omega.vercel.app` |
+
+CORS covers `/api/**` (GET, POST, PUT, DELETE) and `/actuator/health` (GET, used by the status indicator in the page footer).
+If the Vercel URL changes (custom domain, new project), set `CORS_ALLOWED_ORIGINS` on Render and update `environment.ts` if the backend URL changes.
+
 ## What happens on a merge to `main`
 
 ```
@@ -88,6 +100,7 @@ Nothing secret is stored in the repository. GitHub never shows a secret again; t
 | `DB_URL` | Render → service → Environment | Neon → Connect, converted to `jdbc:postgresql://<host>/<db>?sslmode=require` |
 | `DB_USERNAME`, `DB_PASSWORD` | Render → service → Environment | Neon → Connect |
 | `SPRING_PROFILES_ACTIVE=prod` | Render → service → Environment | Fixed value (also the Docker image default) |
+| `CORS_ALLOWED_ORIGINS` (optional) | Render → service → Environment | Comma-separated frontend origins; defaults to the Vercel production URL (not a secret) |
 
 Neon gives `postgresql://user:password@host/db?sslmode=require`. Spring Boot needs the JDBC form:
 prefix with `jdbc:`, remove `user:password@`, and set the user and password in their own variables.
@@ -138,6 +151,7 @@ The deploy hook URL is a credential: anyone who has it can trigger a deploy.
 | Backend starts then crashes: `'url' must start with "jdbc"` | `DB_URL` missing or in `postgresql://` form | Use the JDBC form |
 | Backend crashes: `password authentication failed` / `Connection refused` | Wrong Neon credentials or host | Copy them again from Neon |
 | Backend crashes: `Schema-validation: missing column …` | Entity changed without a Flyway migration | Add `V<n>__<description>.sql`, never edit an applied one |
+| Browser console: `blocked by CORS policy: No 'Access-Control-Allow-Origin' header` | Frontend origin not in `CORS_ALLOWED_ORIGINS` | Add the exact origin (scheme + host, no trailing slash) on Render, redeploy |
 | First request takes ~1 minute | Render free plan sleeps after 15 min without traffic | Expected; upgrade the plan to avoid it |
 | Deploy workflow skipped | CI failed, or the push was not on `main` | Fix CI; deploys only follow green CI on `main` |
 

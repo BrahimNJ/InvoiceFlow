@@ -191,6 +191,11 @@ The defaults work out of the box. To change credentials or ports, copy `.env.exa
 | `test` | In-memory H2 (PostgreSQL mode) | `./mvnw test`, CI |
 | `prod` | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` from the environment | Production |
 
+The frontend reads the API base URL from `frontend/src/environments/`: `environment.development.ts`
+(`http://localhost:8080`) for `npm start`, `environment.ts` (Render URL) for production builds.
+The backend only accepts browser calls from the origins in `CORS_ALLOWED_ORIGINS`
+(default `http://localhost:4200` in dev, the Vercel URL in prod).
+
 The schema is managed by Flyway migrations in `backend/src/main/resources/db/migration`;
 Hibernate only validates it. Never edit an applied migration, add a new `V<n>__<description>.sql` instead.
 
