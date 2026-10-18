@@ -14,5 +14,11 @@ export const routes: Routes = [
     canActivate: [guestGuard],
     loadComponent: () => import('./auth/login/login').then((m) => m.Login),
   },
+  {
+    path: 'register',
+    title: 'Create your account · InvoiceFlow',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./auth/register/register').then((m) => m.Register),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -23,7 +23,7 @@ export function checkPassword(password: string): PasswordChecks {
   };
 }
 
-/** Error key {@code passwordPolicy}, with the failed checks, so the template can say what is missing. */
+/** Error key `passwordPolicy`, with the failed checks, so the template can say what is missing. */
 export const passwordPolicyValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value: unknown = control.value;
   if (typeof value !== 'string' || value === '') {
@@ -33,7 +33,7 @@ export const passwordPolicyValidator: ValidatorFn = (control: AbstractControl): 
   return Object.values(checks).every(Boolean) ? null : { passwordPolicy: checks };
 };
 
-/** Group validator: error {@code passwordMismatch} on the group when the two fields differ. */
+/** Group validator: error `passwordMismatch` on the group when the two fields differ. */
 export function matchingPasswordsValidator(passwordKey: string, confirmKey: string): ValidatorFn {
   return (group: AbstractControl): ValidationErrors | null => {
     const confirm: unknown = group.get(confirmKey)?.value;
