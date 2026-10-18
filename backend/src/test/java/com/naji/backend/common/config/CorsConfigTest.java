@@ -1,10 +1,12 @@
 package com.naji.backend.common.config;
 
+import com.naji.backend.common.security.SecurityConfig;
 import com.naji.backend.customer.CustomerController;
 import com.naji.backend.customer.CustomerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -15,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerController.class)
+@Import(SecurityConfig.class)
 @TestPropertySource(properties = "app.cors.allowed-origins=https://app.example.com")
 class CorsConfigTest {
 
