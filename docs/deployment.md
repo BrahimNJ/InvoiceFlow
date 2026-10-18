@@ -15,6 +15,7 @@ Quick checks:
 
 ```bash
 curl https://invoiceflow-backend-84wn.onrender.com/actuator/health   # {"status":"UP"} (includes the database)
+curl https://invoiceflow-backend-84wn.onrender.com/actuator/info     # {"app":{"commit":"<deployed SHA>"}}
 curl -i https://invoiceflow-backend-84wn.onrender.com/api/customers  # 401: the API requires a sign-in (#19)
 ```
 
@@ -45,13 +46,15 @@ merge / push on main
   │       │ success only
   │       ▼
   │   Deploy backend (deploy-backend.yml)
-  │       POST RENDER_DEPLOY_HOOK_URL
+  │       check the hook is a Render service hook ─► POST hook&ref=<sha> ─► require a deploy id
   │       ▼
-  │   Render: clone main ─► docker build backend/ ─► start container (prod profile)
+  │   Render: checkout <sha> ─► docker build backend/ ─► start container (prod profile)
   │       ▼
   │   Spring Boot starts ─► Flyway migrates Neon ─► Hibernate validates schema
   │       ▼
   │   Render health check /actuator/health = UP ─► traffic switches to the new container
+  │       ▼
+  │   Workflow waits for /actuator/info = <sha> ─► smoke test (health, 401, CORS) ─► green
   │
   └─► Frontend CI (frontend-ci.yml)  npm ci, ng build, Vitest
           │ success only
@@ -66,10 +69,14 @@ merge / push on main
    (`<issue>-<type>/<name>`), and on every pull request.
 2. **Deploy workflows wait for CI.** They are triggered by `workflow_run` when a CI workflow *completes*.
    The job only runs if that CI run was a `push` on `main` **and** succeeded. A red CI deploys nothing.
-3. **Backend deploy.** The workflow calls the Render deploy hook. Render then clones `main`, builds
+3. **Backend deploy.** The workflow checks that the secret is a Render *service* deploy hook, then calls it with
+   `ref=<sha>` so Render deploys exactly the commit that passed CI, and requires a deploy id in the answer. Render builds
    `backend/Dockerfile` (Maven package, JRE 21 runtime, non-root user) and starts it with `SPRING_PROFILES_ACTIVE=prod`.
    On startup Flyway applies any new migration to Neon. Render only routes traffic to the new container once
    `/actuator/health` answers `UP`; if it never does, the previous version keeps running.
+   **The run only turns green once production serves that commit**: it polls `/actuator/info` (which reports
+   `RENDER_GIT_COMMIT`) for up to 15 minutes, then smoke-tests health, authentication (`/api/customers` → 401)
+   and CORS for the Vercel origin. A deploy that fails on Render therefore fails the workflow too.
 4. **Frontend deploy.** The workflow checks out the commit that passed `Frontend CI` and runs the Vercel CLI
    from the repository root. Using the project settings pulled from Vercel (Root Directory `frontend`), it runs
    `npm ci` and `npm run build` from `frontend/vercel.json`, then uploads the prebuilt output as the production deployment.
@@ -102,7 +109,7 @@ Nothing secret is stored in the repository. GitHub never shows a secret again; t
 | `VERCEL_TOKEN` | GitHub → Settings → Secrets and variables → Actions | Vercel → Account Settings → Tokens |
 | `VERCEL_ORG_ID` | GitHub (same place) | Vercel → Team Settings → General → Team ID |
 | `VERCEL_PROJECT_ID` | GitHub (same place) | Vercel → Project → Settings → General → Project ID |
-| `RENDER_DEPLOY_HOOK_URL` | GitHub (same place) | Render → service → Settings → Deploy Hook |
+| `RENDER_DEPLOY_HOOK_URL` | GitHub (same place) | Render → **invoiceflow-backend** (the service) → Settings → Deploy Hook. Format `https://api.render.com/deploy/srv-…?key=…`. **Not** the Blueprint sync URL (`exs-…`) nor a Vercel hook: the workflow rejects both |
 | `DB_URL` | Render → service → Environment | Neon → Connect, converted to `jdbc:postgresql://<host>/<db>?sslmode=require` |
 | `DB_USERNAME`, `DB_PASSWORD` | Render → service → Environment | Neon → Connect |
 | `SPRING_PROFILES_ACTIVE=prod` | Render → service → Environment | Fixed value (also the Docker image default) |
@@ -142,11 +149,12 @@ The deploy hook URL is a credential: anyone who has it can trigger a deploy.
 ## Checking a deployment
 
 1. **GitHub → Actions**: after a merge you should see, in order, `Backend CI` + `Frontend CI`, then
-   `Deploy backend` + `Deploy frontend`, all green. The frontend run shows the deployment URL.
+   `Deploy backend` + `Deploy frontend`, all green. The frontend run shows the deployment URL; the backend run
+   summary shows the Render deploy id, and green already means production serves the commit (smoke test included).
 2. **Render → service → Events / Logs**: the deploy goes *Build → Deploy → Live*. Startup logs show
    `The following 1 profile is active: "prod"` and Flyway's `Successfully applied … migration` or `Schema … is up to date`.
 3. **Vercel → project → Deployments**: the newest production deployment matches the commit.
-4. **Smoke test**: the two `curl` commands at the top of this page.
+4. **Smoke test**: the `curl` commands at the top of this page; `/actuator/info` must show the merge commit.
 
 ## Troubleshooting
 
@@ -154,6 +162,11 @@ The deploy hook URL is a credential: anyone who has it can trigger a deploy.
 |---------|-------|-----|
 | Render: `lstat /opt/render/project/src/backend/backend: no such file or directory` | Root Directory set to `backend` | Empty Root Directory (see settings above) |
 | Deploy backend: `RENDER_DEPLOY_HOOK_URL secret is not set` | Missing GitHub secret | Add it, rerun the workflow |
+| Deploy backend: `… is not a Render service deploy hook` | The secret holds another URL (seen: a Vercel deploy hook, the Render Blueprint sync URL) | Copy the service hook (see Secrets), `gh secret set RENDER_DEPLOY_HOOK_URL`, rerun |
+| Deploy backend: `Render did not create a deploy` | Hook revoked or regenerated on Render | Copy the current hook, overwrite the secret, rerun |
+| Deploy backend: `Production still does not serve <sha> after 15 minutes` | The deploy failed on Render (build error, crash at startup such as a missing `JWT_SECRET`) | Render → service → Events → failed deploy → logs; fix, rerun |
+| Deploy backend: smoke test `CORS preflight … not allowed` | `CORS_ALLOWED_ORIGINS` on Render does not contain the Vercel origin | Fix the variable (exact origin, no trailing slash), rerun |
+| Browser: CORS errors on every call, even `/actuator/health` | Usually not CORS: production runs an old version or is down, and its error page has no CORS headers | `curl …/actuator/info` to see the live commit; if old, see the rows above |
 | Deploy frontend: `You specified VERCEL_ORG_ID but you forgot to specify VERCEL_PROJECT_ID` | Missing GitHub secret | Add `VERCEL_PROJECT_ID`, rerun |
 | Deploy frontend: `sh: 1: ng: not found` / `Command "ng build" exited with 127` | CLI run inside `frontend/` while Root Directory is `frontend`: it resolved `frontend/frontend`, skipped `npm ci` and ignored `vercel.json` | Run the CLI from the repository root (done in `deploy-frontend.yml`, #15) |
 | Deploy frontend: `Project not found` | `VERCEL_ORG_ID` is not the team that owns the project, or the token has no access to it | Overwrite `VERCEL_ORG_ID` with the right Team ID |
