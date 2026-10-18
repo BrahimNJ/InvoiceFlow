@@ -1,0 +1,8 @@
+/* Shared by the sign-in and sign-up pages (content projected into AuthLayout). */
+h1 { font-size: clamp(1.7rem, 4vw, 2.1rem); font-weight: 750; }
+.lead { margin-top: .5rem; color: var(--ink-500); }
+.alert { margin-top: 1.5rem; }
+.form { margin-top: 1.75rem; }
+.switch { margin-top: 1.75rem; text-align: center; font-size: .925rem; color: var(--ink-500); }
+.switch a { color: var(--brand); font-weight: 600; }
+.switch a:hover { text-decoration: underline; }
