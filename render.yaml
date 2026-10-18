@@ -22,3 +22,7 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
+      # Access token signing key. Render generates a random 256-bit value once, at creation.
+      # Rotating it only invalidates current access tokens; clients renew them with their refresh cookie.
+      - key: JWT_SECRET
+        generateValue: true
