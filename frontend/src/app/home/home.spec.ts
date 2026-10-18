@@ -1,8 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { environment } from '../../environments/environment';
+import { authResponse } from '../core/auth/auth.fixtures';
+import { AUTH_ENDPOINTS, AuthService } from '../core/auth/auth.service';
 import { Home } from './home';
 
 describe('Home', () => {
@@ -11,7 +14,7 @@ describe('Home', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Home],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
   });
@@ -52,5 +55,26 @@ describe('Home', () => {
     http.expectOne(`${environment.apiUrl}/actuator/health`).flush({ status: 'UP' });
     await fixture.whenStable();
     expect(pill()?.textContent).toContain('API online');
+  });
+
+  it('invites visitors to sign in or create an account', async () => {
+    const page = await render();
+
+    const header = page.querySelector('app-site-header')!;
+    expect(header.querySelector('a[href="/login"]')?.textContent).toContain('Sign in');
+    expect(header.querySelector('a[href="/register"]')?.textContent).toContain('Get started');
+    expect(page.querySelector('#get-started a[href="/register"]')).toBeTruthy();
+  });
+
+  it('takes signed-in users to their dashboard', async () => {
+    localStorage.clear();
+    TestBed.inject(AuthService).login({ email: 'jane@acme.fr', password: 'Correct-horse-42' }).subscribe();
+    http.expectOne(AUTH_ENDPOINTS.login).flush(authResponse());
+
+    const page = await render();
+
+    const header = page.querySelector('app-site-header')!;
+    expect(header.querySelector('a[href="/dashboard"]')?.textContent).toContain('Open dashboard');
+    expect(header.querySelector('a[href="/login"]')).toBeNull();
   });
 });

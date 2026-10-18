@@ -8,6 +8,8 @@
 
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; height: var(--header-height); }
 
+.actions { display: flex; gap: .5rem; }
+
 nav { display: none; }
 nav ul { display: flex; gap: .25rem; }
 nav a {

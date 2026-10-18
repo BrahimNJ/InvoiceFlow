@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { guestGuard } from './core/auth/auth.guards';
+import { authGuard, guestGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
   {
@@ -19,6 +19,12 @@ export const routes: Routes = [
     title: 'Create your account · InvoiceFlow',
     canActivate: [guestGuard],
     loadComponent: () => import('./auth/register/register').then((m) => m.Register),
+  },
+  {
+    path: 'dashboard',
+    title: 'Dashboard · InvoiceFlow',
+    canActivate: [authGuard],
+    loadComponent: () => import('./dashboard/dashboard').then((m) => m.Dashboard),
   },
   { path: '**', redirectTo: '' },
 ];
