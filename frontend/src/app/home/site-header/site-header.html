@@ -10,6 +10,13 @@
       </ul>
     </nav>
 
-    <a class="btn btn-primary btn-sm" href="#get-started">Get started</a>
+    <div class="actions">
+      @if (isAuthenticated()) {
+        <a class="btn btn-primary btn-sm" routerLink="/dashboard">Open dashboard</a>
+      } @else {
+        <a class="btn btn-ghost btn-sm" routerLink="/login">Sign in</a>
+        <a class="btn btn-primary btn-sm" routerLink="/register">Get started</a>
+      }
+    </div>
   </div>
 </header>

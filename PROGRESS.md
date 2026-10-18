@@ -1,7 +1,7 @@
 # InvoiceFlow — progress
 
 > Single source of truth for project status. Updated at the end of every task (see `CLAUDE.md`, rule 7).
-> Last update: **2026-10-17**
+> Last update: **2026-10-18**
 
 ## Status legend
 
@@ -16,7 +16,8 @@
 
 ## Next task
 
-➡️ **Product entity and CRUD API** (phase 2) — follow the `customer` module.
+➡️ After #20 is merged: check `JWT_SECRET` on Render and sign up on the live site, then **Customers UI** (1.3),
+now that the API requires a signed-in user. Product CRUD (2.1) stays next on the backend side.
 
 ---
 
@@ -33,8 +34,8 @@
 | 0.7 | Continuous deployment: Vercel (frontend), Render + Neon (backend) | ✅ Done | #8 / #10, #11 / #12 | Live, checked 2026-10-17: frontend, `/actuator/health` UP, `/api/customers` reads Neon. See `docs/deployment.md` |
 | 0.8 | Deployment guide + end-to-end check of automatic deploy on merge | ✅ Done | #13 / #14 | First automatic run: backend deployed, frontend failed (fixed in 0.8.1) |
 | 0.8.1 | Fix frontend deploy: run Vercel CLI from repo root (Root Directory `frontend`) | ✅ Done | #15 / #16 | Reproduced locally; validated on `main` by the merge of this fix |
-| 0.9 | CORS + frontend API base URL (dev and prod) | 🔍 In review | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; live cross-origin call to check after deploy |
-| 0.11 | Landing page (product presentation, live API status) | 🔍 In review | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
+| 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; live cross-origin call to check after deploy |
+| 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
 
 ## Phase 1 — Customers
@@ -81,7 +82,7 @@
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 6.1 | Authentication (JWT / OAuth2 / OIDC) | 📋 Planned | — | |
+| 6.1 | Authentication: JWT access tokens, rotating refresh tokens, sign-up/sign-in pages | 🔍 In review | #19 / #20 | Moved forward: every UI needs it. 86 backend / 83 frontend tests. Needs `JWT_SECRET` on Render. See `docs/authentication.md` |
 | 6.2 | Role-based access | 📋 Planned | — | |
 
 ## Phase 7 — AI features
@@ -97,7 +98,8 @@
 
 | Date | Change |
 |------|--------|
-| 2026-10-17 | CORS, API base URL per environment and landing page in review (#17 / #18). |
+| 2026-10-18 | Authentication in review (#19 / #20): API secured, sign-up/sign-in pages, protected dashboard. |
+| 2026-10-17 | CORS, API base URL per environment and landing page merged (#17 / #18). |
 | 2026-10-17 | Frontend deploy fix: Vercel CLI from repo root (#15). |
 | 2026-10-17 | Frontend, backend and database live; deployment guide rewritten (#14). Automatic backend deploy validated. |
 | 2026-10-17 | Render build fix: Docker context resolved as `backend/backend` (#11). |
