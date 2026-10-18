@@ -1,7 +1,8 @@
 name: Deploy backend
 
 # Production deploy to Render, only after Backend CI succeeded on a push to main.
-# Render builds backend/Dockerfile from the latest main commit (see render.yaml).
+# Green means production serves the commit that passed CI: the run checks the hook, triggers the
+# deploy of that exact commit, then waits until /actuator/info reports it (#21).
 on:
   workflow_run:
     workflows: ["Backend CI"]
@@ -23,10 +24,19 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    environment: production-backend
+    timeout-minutes: 20
+    environment:
+      name: production-backend
+      url: https://invoiceflow-backend-84wn.onrender.com/actuator/info
+
+    env:
+      BACKEND_URL: https://invoiceflow-backend-84wn.onrender.com
+      FRONTEND_ORIGIN: https://invoice-flow-seven-omega.vercel.app
+      # The commit that passed CI (workflow_run), or main's head for a manual run
+      COMMIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
     steps:
-      - name: Trigger Render deploy hook
+      - name: Check the deploy hook
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
@@ -34,4 +44,64 @@ jobs:
             echo "::error::RENDER_DEPLOY_HOOK_URL secret is not set"
             exit 1
           fi
-          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"
+          # Only a service deploy hook deploys. Seen before: a Vercel hook (rebuilds the frontend)
+          # and the Blueprint sync URL (exs-…, applies render.yaml without deploying). See docs/deployment.md.
+          if [[ ! "$RENDER_DEPLOY_HOOK_URL" =~ ^https://api\.render\.com/deploy/srv-[a-z0-9]+\?key= ]]; then
+            echo "::error::RENDER_DEPLOY_HOOK_URL is not a Render service deploy hook. Copy it from Render → invoiceflow-backend → Settings → Deploy Hook (https://api.render.com/deploy/srv-…)."
+            exit 1
+          fi
+          echo "Deploy hook format OK"
+
+      - name: Trigger the deploy of ${{ env.COMMIT_SHA }}
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          # ref= pins the deploy to the commit that passed CI instead of "latest on main"
+          response=$(curl --fail --silent --show-error -X POST "${RENDER_DEPLOY_HOOK_URL}&ref=${COMMIT_SHA}")
+          deploy_id=$(jq -r '.deploy.id // empty' <<<"$response" 2>/dev/null || true)
+          if [ -z "$deploy_id" ]; then
+            echo "::error::Render did not create a deploy. Response: $response"
+            exit 1
+          fi
+          echo "Render deploy created: $deploy_id"
+          echo "### Render deploy \`$deploy_id\` for \`${COMMIT_SHA:0:7}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Wait until production serves ${{ env.COMMIT_SHA }}
+        run: |
+          set -uo pipefail
+          # Docker build + start on the free plan takes about 4 minutes
+          deadline=$((SECONDS + 15 * 60))
+          while [ $SECONDS -lt $deadline ]; do
+            live=$(curl --silent --max-time 30 "$BACKEND_URL/actuator/info" | jq -r '.app.commit // empty' 2>/dev/null)
+            if [ "$live" = "$COMMIT_SHA" ]; then
+              echo "Production serves $COMMIT_SHA"
+              exit 0
+            fi
+            echo "$(date -u +%H:%M:%S) live commit: ${live:-unknown}, waiting…"
+            sleep 20
+          done
+          echo "::error::Production still does not serve $COMMIT_SHA after 15 minutes. Check Render → invoiceflow-backend → Events and the deploy logs."
+          exit 1
+
+      - name: Smoke test production
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+
+          health=$(curl --silent --max-time 30 "$BACKEND_URL/actuator/health" | jq -r '.status')
+          [ "$health" = "UP" ] || fail "Health is '$health', expected UP"
+          echo "✓ health UP"
+
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 30 "$BACKEND_URL/api/customers")
+          [ "$status" = "401" ] || fail "GET /api/customers without a token returned $status, expected 401"
+          echo "✓ API requires authentication"
+
+          allowed=$(curl --silent --output /dev/null --dump-header - --max-time 30 \
+            -X OPTIONS "$BACKEND_URL/api/auth/login" \
+            -H "Origin: $FRONTEND_ORIGIN" -H "Access-Control-Request-Method: POST" \
+            | tr -d '\r' | grep -i '^access-control-allow-origin:' | cut -d' ' -f2 || true)
+          [ "$allowed" = "$FRONTEND_ORIGIN" ] || fail "CORS preflight from $FRONTEND_ORIGIN not allowed (got '${allowed}')"
+          echo "✓ CORS allows the frontend"
+
+          echo "Smoke test passed: health, authentication and CORS" >> "$GITHUB_STEP_SUMMARY"
