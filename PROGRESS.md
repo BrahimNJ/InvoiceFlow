@@ -16,8 +16,8 @@
 
 ## Next task
 
-➡️ After #20 is merged: check `JWT_SECRET` on Render and sign up on the live site, then **Customers UI** (1.3),
-now that the API requires a signed-in user. Product CRUD (2.1) stays next on the backend side.
+➡️ After #22 is merged: watch *Deploy backend* reach "Production serves <sha>", then **Customers UI** (1.3).
+Product CRUD (2.1) stays next on the backend side.
 
 ---
 
@@ -34,9 +34,10 @@ now that the API requires a signed-in user. Product CRUD (2.1) stays next on the
 | 0.7 | Continuous deployment: Vercel (frontend), Render + Neon (backend) | ✅ Done | #8 / #10, #11 / #12 | Live, checked 2026-10-17: frontend, `/actuator/health` UP, `/api/customers` reads Neon. See `docs/deployment.md` |
 | 0.8 | Deployment guide + end-to-end check of automatic deploy on merge | ✅ Done | #13 / #14 | First automatic run: backend deployed, frontend failed (fixed in 0.8.1) |
 | 0.8.1 | Fix frontend deploy: run Vercel CLI from repo root (Root Directory `frontend`) | ✅ Done | #15 / #16 | Reproduced locally; validated on `main` by the merge of this fix |
-| 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; live cross-origin call to check after deploy |
+| 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; cross-origin calls verified in production on 2026-10-18 |
 | 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
+| 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | 🔍 In review | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
 
 ## Phase 1 — Customers
 
@@ -82,7 +83,7 @@ now that the API requires a signed-in user. Product CRUD (2.1) stays next on the
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 6.1 | Authentication: JWT access tokens, rotating refresh tokens, sign-up/sign-in pages | 🔍 In review | #19 / #20 | Moved forward: every UI needs it. 86 backend / 83 frontend tests. Needs `JWT_SECRET` on Render. See `docs/authentication.md` |
+| 6.1 | Authentication: JWT access tokens, rotating refresh tokens, sign-up/sign-in pages | ✅ Done | #19 / #20 | Verified in production on 2026-10-18 (register, me, refresh, CSRF, logout). See `docs/authentication.md`. Follow-up: Safari third-party cookies |
 | 6.2 | Role-based access | 📋 Planned | — | |
 
 ## Phase 7 — AI features
@@ -98,7 +99,9 @@ now that the API requires a signed-in user. Product CRUD (2.1) stays next on the
 
 | Date | Change |
 |------|--------|
-| 2026-10-18 | Authentication in review (#19 / #20): API secured, sign-up/sign-in pages, protected dashboard. |
+| 2026-10-18 | Verified backend deploy and README rewrite in review (#21 / #22). |
+| 2026-10-18 | Production deployed for the first time since #12 after fixing `RENDER_DEPLOY_HOOK_URL`; authentication and CORS verified live. |
+| 2026-10-18 | Authentication merged (#19 / #20): API secured, sign-up/sign-in pages, protected dashboard. |
 | 2026-10-17 | CORS, API base URL per environment and landing page merged (#17 / #18). |
 | 2026-10-17 | Frontend deploy fix: Vercel CLI from repo root (#15). |
 | 2026-10-17 | Frontend, backend and database live; deployment guide rewritten (#14). Automatic backend deploy validated. |
