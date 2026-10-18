@@ -51,10 +51,10 @@ This project is also an opportunity to explore how AI coding agents can be used 
 - Recent invoices
 
 ### Authentication & security
-- User authentication
+- Sign-up and sign-in pages (available)
+- Stateless JWT access tokens with rotating refresh tokens in an HttpOnly cookie (available)
+- Secure REST API: every endpoint requires a signed-in user (available)
 - Role-based access
-- Secure REST API
-- JWT / OAuth2 / OIDC
 
 ### AI features
 - Create invoices using natural language
@@ -195,6 +195,10 @@ The frontend reads the API base URL from `frontend/src/environments/`: `environm
 (`http://localhost:8080`) for `npm start`, `environment.ts` (Render URL) for production builds.
 The backend only accepts browser calls from the origins in `CORS_ALLOWED_ORIGINS`
 (default `http://localhost:4200` in dev, the Vercel URL in prod).
+
+The API requires a signed-in user: create an account at http://localhost:4200/register.
+Access tokens are signed with `JWT_SECRET` (a dev-only default is used locally; production requires it).
+How authentication works, and why: [`docs/authentication.md`](docs/authentication.md).
 
 The schema is managed by Flyway migrations in `backend/src/main/resources/db/migration`;
 Hibernate only validates it. Never edit an applied migration, add a new `V<n>__<description>.sql` instead.
