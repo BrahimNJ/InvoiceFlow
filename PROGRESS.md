@@ -16,8 +16,7 @@
 
 ## Next task
 
-➡️ After #24 is merged: watch *Deploy backend* reach "Production serves <sha>" (Flyway V4 deletes the ownerless
-customers), then **Products & services end to end** (2.1 + 2.2).
+➡️ After #26 is merged: check that *Deploy backend* goes green, then **Products & services end to end** (2.1 + 2.2).
 
 ---
 
@@ -37,6 +36,7 @@ customers), then **Products & services end to end** (2.1 + 2.2).
 | 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; cross-origin calls verified in production on 2026-10-18 |
 | 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
+| 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | 🔍 In review | #25 / #26 | Run for #24 failed after 38 s although production served the commit |
 | 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | ✅ Done | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
 
 ## Phase 1 — Customers
@@ -44,8 +44,8 @@ customers), then **Products & services end to end** (2.1 + 2.2).
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
 | 1.1 | Customer entity and CRUD API | ✅ Done | #3 / #4 | Reference module; 10 tests |
-| 1.2 | Customers scoped to their owner; pagination and search on `GET /api/customers` | 🔍 In review | #23 / #24 | Flyway V4 deletes the customers created before authentication |
-| 1.3 | Customers UI (list, search, pagination, create/edit form, delete) | 🔍 In review | #23 / #24 | Same PR as 1.2. Follow-up: details page with invoices |
+| 1.2 | Customers scoped to their owner; pagination and search on `GET /api/customers` | ✅ Done | #23 / #24 | Flyway V4 deletes the customers created before authentication |
+| 1.3 | Customers UI (list, search, pagination, create/edit form, delete) | ✅ Done | #23 / #24 | Same PR as 1.2. Follow-up: details page with invoices |
 
 ## Phase 2 — Products & services
 
@@ -99,6 +99,7 @@ customers), then **Products & services end to end** (2.1 + 2.2).
 
 | Date | Change |
 |------|--------|
+| 2026-10-19 | Customer management merged (#24); production serves it. Deploy wait-step fix in review (#25 / #26). |
 | 2026-10-19 | Customer management end to end in review (#23 / #24): per-user customers, paginated search, customers UI. |
 | 2026-10-18 | Verified backend deploy and README rewrite in review (#21 / #22). |
 | 2026-10-18 | Production deployed for the first time since #12 after fixing `RENDER_DEPLOY_HOOK_URL`; authentication and CORS verified live. |
