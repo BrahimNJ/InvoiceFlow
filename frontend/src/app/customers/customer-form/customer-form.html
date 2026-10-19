@@ -1,0 +1,64 @@
+<app-header />
+
+<main class="container page">
+  <a class="back" routerLink="/customers"><app-icon name="chevron-left" [size]="16" />Customers</a>
+  <h1>{{ editing() ? 'Edit customer' : 'New customer' }}</h1>
+
+  @if (loadError(); as message) {
+    <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
+    <a class="btn btn-ghost" routerLink="/customers">Back to customers</a>
+  } @else if (loading()) {
+    <p class="status" role="status"><span class="spinner" aria-hidden="true"></span>Loading the customer…</p>
+  } @else {
+    @if (error(); as message) {
+      <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
+    }
+
+    <form class="card form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @for (section of sections; track section.title) {
+        <fieldset>
+          <legend>{{ section.title }}</legend>
+          <div class="fields">
+            @for (field of section.fields; track field.name) {
+              <div class="field" [class.wide]="field.name === 'street'">
+                <label [for]="'customer-' + field.name">{{ field.label }}</label>
+                <input
+                  class="input"
+                  [id]="'customer-' + field.name"
+                  [type]="field.type ?? 'text'"
+                  [formControlName]="field.name"
+                  [attr.name]="field.name"
+                  [attr.autocomplete]="field.autocomplete"
+                  [attr.inputmode]="field.inputmode ?? null"
+                  [attr.spellcheck]="field.type === 'email' ? 'false' : null"
+                  [attr.aria-invalid]="showError(form.controls[field.name])"
+                  [attr.aria-describedby]="
+                    message(field.name)
+                      ? 'customer-' + field.name + '-error'
+                      : field.hint
+                        ? 'customer-' + field.name + '-hint'
+                        : null
+                  "
+                />
+                @if (message(field.name); as text) {
+                  <p class="field-error" [id]="'customer-' + field.name + '-error'">{{ text }}</p>
+                } @else if (field.hint) {
+                  <p class="hint" [id]="'customer-' + field.name + '-hint'">{{ field.hint }}</p>
+                }
+              </div>
+            }
+          </div>
+        </fieldset>
+      }
+
+      <div class="footer">
+        <a class="btn btn-ghost" routerLink="/customers">Cancel</a>
+        <app-submit-button
+          [label]="editing() ? 'Save changes' : 'Create customer'"
+          [busyLabel]="editing() ? 'Saving…' : 'Creating…'"
+          [busy]="submitting()"
+        />
+      </div>
+    </form>
+  }
+</main>

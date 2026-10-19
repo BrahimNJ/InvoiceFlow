@@ -1,0 +1,132 @@
+<app-header />
+
+<main class="container page">
+  <div class="head">
+    <div>
+      <h1>Customers</h1>
+      @if (result(); as page) {
+        <p class="lead">
+          @if (activeSearch()) {
+            {{ page.totalElements }} {{ page.totalElements === 1 ? 'match' : 'matches' }} for “{{ activeSearch() }}”
+          } @else {
+            {{ page.totalElements }} {{ page.totalElements === 1 ? 'customer' : 'customers' }}
+          }
+        </p>
+      }
+    </div>
+    <a class="btn btn-primary" routerLink="/customers/new"><app-icon name="plus" [size]="18" />New customer</a>
+  </div>
+
+  <form class="search" role="search" [formGroup]="searchForm" (ngSubmit)="search()">
+    <label class="visually-hidden" for="customer-search">Search customers</label>
+    <div class="input-group">
+      <app-icon name="search" [size]="18" />
+      <input
+        id="customer-search"
+        class="input"
+        type="search"
+        placeholder="Search by name or email"
+        autocomplete="off"
+        spellcheck="false"
+        formControlName="search"
+      />
+    </div>
+    <button class="btn btn-ghost" type="submit">Search</button>
+    @if (activeSearch()) {
+      <button class="btn btn-ghost" type="button" (click)="clearSearch()">Clear</button>
+    }
+  </form>
+
+  <p class="notice" role="status">{{ notice() }}</p>
+
+  @if (error(); as message) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="18" />
+      <span>{{ message }}</span>
+      <button class="btn btn-ghost btn-sm" type="button" (click)="retry()">Retry</button>
+    </div>
+  }
+
+  @if (loading() && !result()) {
+    <p class="status" role="status"><span class="spinner" aria-hidden="true"></span>Loading customers…</p>
+  } @else if (result(); as page) {
+    @if (page.content.length === 0) {
+      <div class="empty">
+        @if (activeSearch()) {
+          <h2>No customer matches “{{ activeSearch() }}”</h2>
+          <p>Try another name or email address.</p>
+        } @else {
+          <app-icon name="users" [size]="28" />
+          <h2>No customers yet</h2>
+          <p>Add your first customer to start invoicing.</p>
+          <a class="btn btn-primary" routerLink="/customers/new"><app-icon name="plus" [size]="18" />New customer</a>
+        }
+      </div>
+    } @else {
+      <div class="table-wrap" [attr.aria-busy]="loading()">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col" class="optional">City</th>
+              <th scope="col" class="optional">SIRET</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (customer of customersOnPage(); track customer.id) {
+              <tr>
+                <td class="name">
+                  <a [routerLink]="['/customers', customer.id, 'edit']">{{ customer.name }}</a>
+                </td>
+                <td class="email">{{ customer.email }}</td>
+                <td class="optional">{{ customer.city ?? '—' }}</td>
+                <td class="optional mono">{{ customer.siret ?? '—' }}</td>
+                <td class="actions">
+                  <div class="row-actions">
+                    <a class="btn btn-ghost btn-sm" [routerLink]="['/customers', customer.id, 'edit']">
+                      Edit<span class="visually-hidden"> {{ customer.name }}</span>
+                    </a>
+                    <button
+                      class="btn btn-ghost btn-sm danger"
+                      type="button"
+                      [disabled]="deletingId() !== null"
+                      [attr.aria-busy]="deletingId() === customer.id"
+                      (click)="delete(customer)"
+                    >
+                      <app-icon name="trash" [size]="16" />
+                      <span class="visually-hidden">Delete {{ customer.name }}</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (page.totalPages > 1) {
+        <nav class="pager" aria-label="Pagination">
+          <button
+            class="btn btn-ghost btn-sm"
+            type="button"
+            [disabled]="!hasPrevious() || loading()"
+            (click)="goTo(page.page - 1)"
+          >
+            <app-icon name="chevron-left" [size]="16" />Previous
+          </button>
+          <span>Page {{ page.page + 1 }} of {{ page.totalPages }}</span>
+          <button
+            class="btn btn-ghost btn-sm"
+            type="button"
+            [disabled]="!hasNext() || loading()"
+            (click)="goTo(page.page + 1)"
+          >
+            Next<app-icon name="chevron-right" [size]="16" />
+          </button>
+        </nav>
+      }
+    }
+  }
+</main>

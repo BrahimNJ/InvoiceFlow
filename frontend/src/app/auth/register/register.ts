@@ -8,13 +8,13 @@ import { finalize } from 'rxjs';
 import { safeReturnUrl } from '../../core/auth/auth.guards';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http/problem-detail';
+import { applyServerErrors, focusFirstInvalid, showError } from '../../shared/forms/forms';
+import { SubmitButton } from '../../shared/forms/submit-button';
 import { Icon } from '../../shared/icon/icon';
 import { AuthLayout } from '../shared/auth-layout';
-import { applyServerErrors, focusFirstInvalid, showError } from '../shared/forms';
 import { PasswordStrength } from '../shared/password-strength';
 import { PasswordToggle } from '../shared/password-toggle';
 import { matchingPasswordsValidator, passwordPolicyValidator } from '../shared/password.validators';
-import { SubmitButton } from '../shared/submit-button';
 
 const REQUIRED_MESSAGES = {
   firstName: 'Enter your first name.',
