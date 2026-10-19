@@ -2,6 +2,7 @@ package com.naji.backend.customer;
 
 import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.common.security.SecurityConfig;
+import com.naji.backend.common.web.PageResponse;
 import com.naji.backend.customer.dto.CustomerRequest;
 import com.naji.backend.customer.dto.CustomerResponse;
 import org.junit.jupiter.api.Test;
@@ -47,12 +48,33 @@ class CustomerControllerTest {
     private CustomerService customerService;
 
     @Test
-    void findAll_returnsCustomers() throws Exception {
-        when(customerService.findAll(OWNER_ID)).thenReturn(List.of(response(1L)));
+    void search_returnsAPageOfCustomers() throws Exception {
+        when(customerService.search(OWNER_ID, "acme", 2, 10))
+                .thenReturn(new PageResponse<>(List.of(response(1L)), 2, 10, 21, 3));
+
+        mockMvc.perform(get("/api/customers").param("search", "acme").param("page", "2").param("size", "10")
+                        .with(owner()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("ACME"))
+                .andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.totalElements").value(21))
+                .andExpect(jsonPath("$.totalPages").value(3));
+    }
+
+    @Test
+    void search_defaultsToTheFirstPageOf20WithoutFilter() throws Exception {
+        when(customerService.search(OWNER_ID, null, 0, 20)).thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 0));
 
         mockMvc.perform(get("/api/customers").with(owner()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("ACME"));
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
+    void search_returns400OnANonNumericPage() throws Exception {
+        mockMvc.perform(get("/api/customers").param("page", "abc").with(owner()))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

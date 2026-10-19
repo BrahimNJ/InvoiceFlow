@@ -1,5 +1,6 @@
 package com.naji.backend.customer;
 
+import com.naji.backend.common.web.PageResponse;
 import com.naji.backend.customer.dto.CustomerRequest;
 import com.naji.backend.customer.dto.CustomerResponse;
 import jakarta.validation.Valid;
@@ -14,10 +15,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.List;
 
 /** Customers of the signed-in user, identified by the subject of the access token. */
 @RestController
@@ -27,9 +28,14 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
+    /** {@code GET /api/customers?search=acme&page=0&size=20}: sorted by name, {@code size} capped at 100. */
     @GetMapping
-    public List<CustomerResponse> findAll(@AuthenticationPrincipal Jwt jwt) {
-        return customerService.findAll(ownerId(jwt));
+    public PageResponse<CustomerResponse> search(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return customerService.search(ownerId(jwt), search, page, size);
     }
 
     @GetMapping("/{id}")

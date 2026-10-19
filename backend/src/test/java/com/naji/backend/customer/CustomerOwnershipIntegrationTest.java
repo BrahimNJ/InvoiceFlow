@@ -48,7 +48,7 @@ class CustomerOwnershipIntegrationTest {
         // Bob neither sees nor changes Alice's customer: 404, as if it did not exist
         mockMvc.perform(get("/api/customers").header(HttpHeaders.AUTHORIZATION, bob))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.totalElements").value(0));
         mockMvc.perform(get(url).header(HttpHeaders.AUTHORIZATION, bob))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Customer with id " + id + " not found"));
@@ -60,8 +60,8 @@ class CustomerOwnershipIntegrationTest {
 
         // Alice still has it, unchanged
         mockMvc.perform(get("/api/customers").header(HttpHeaders.AUTHORIZATION, alice))
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].name").value("ACME"));
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("ACME"));
         mockMvc.perform(delete(url).header(HttpHeaders.AUTHORIZATION, alice))
                 .andExpect(status().isNoContent());
     }

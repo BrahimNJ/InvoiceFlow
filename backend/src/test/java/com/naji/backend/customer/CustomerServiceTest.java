@@ -1,6 +1,7 @@
 package com.naji.backend.customer;
 
 import com.naji.backend.common.exception.ResourceNotFoundException;
+import com.naji.backend.common.web.PageResponse;
 import com.naji.backend.customer.dto.CustomerRequest;
 import com.naji.backend.customer.dto.CustomerResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,13 +10,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +42,53 @@ class CustomerServiceTest {
     @BeforeEach
     void setUp() {
         customerService = new CustomerService(customerRepository, new CustomerMapper());
+    }
+
+    @Test
+    void search_returnsAPageSortedByName() {
+        Pageable expected = PageRequest.of(1, 20, Sort.by("name").ascending().and(Sort.by("id").ascending()));
+        Page<Customer> page = new PageImpl<>(List.of(customer(1L, "ACME")), expected, 21);
+        when(customerRepository.search(OWNER_ID, "%", expected)).thenReturn(page);
+
+        PageResponse<CustomerResponse> response = customerService.search(OWNER_ID, null, 1, 20);
+
+        assertThat(response.content()).extracting(CustomerResponse::name).containsExactly("ACME");
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(20);
+        assertThat(response.totalElements()).isEqualTo(21);
+        assertThat(response.totalPages()).isEqualTo(2);
+    }
+
+    @Test
+    void search_buildsACaseInsensitiveLiteralPattern() {
+        when(customerRepository.search(eq(OWNER_ID), anyString(), any(Pageable.class))).thenReturn(Page.empty());
+
+        customerService.search(OWNER_ID, "  100%_Bio! ", 0, 20);
+
+        verify(customerRepository).search(eq(OWNER_ID), eq("%100!%!_bio!!%"), any(Pageable.class));
+    }
+
+    @Test
+    void search_treatsABlankSearchAsNoFilter() {
+        when(customerRepository.search(eq(OWNER_ID), anyString(), any(Pageable.class))).thenReturn(Page.empty());
+
+        customerService.search(OWNER_ID, "   ", 0, 20);
+
+        verify(customerRepository).search(eq(OWNER_ID), eq("%"), any(Pageable.class));
+    }
+
+    @Test
+    void search_clampsPageAndSize() {
+        when(customerRepository.search(eq(OWNER_ID), anyString(), any(Pageable.class))).thenReturn(Page.empty());
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+
+        customerService.search(OWNER_ID, null, -3, 5000);
+        customerService.search(OWNER_ID, null, 0, 0);
+
+        verify(customerRepository, times(2)).search(eq(OWNER_ID), eq("%"), pageable.capture());
+        assertThat(pageable.getAllValues().get(0).getPageNumber()).isZero();
+        assertThat(pageable.getAllValues().get(0).getPageSize()).isEqualTo(CustomerService.MAX_PAGE_SIZE);
+        assertThat(pageable.getAllValues().get(1).getPageSize()).isEqualTo(1);
     }
 
     @Test
