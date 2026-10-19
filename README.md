@@ -49,7 +49,7 @@ goes issue → branch → small commits → tests → pull request → human rev
 | Landing page with live API status | ✅ Live |
 | Accounts: sign-up, sign-in, sessions (JWT + rotating refresh tokens) | ✅ Live |
 | Secured REST API, CORS, RFC 9457 errors | ✅ Live |
-| Customers API (CRUD) | ✅ Live · UI planned |
+| Customers (per user: list, search, create, edit, delete) | ✅ Live |
 | Products & services, invoices, VAT, numbering, payments | 📋 Planned |
 | PDF and Factur-X | 📋 Planned |
 | Dashboard (revenue, paid / pending / overdue) | 📋 Planned |
@@ -122,7 +122,8 @@ Authentication is designed for a browser app talking to an API on another site. 
 | `POST` | `/api/auth/refresh` | refresh cookie | New access token, rotated refresh token |
 | `POST` | `/api/auth/logout` | refresh cookie | End the session |
 | `GET` | `/api/auth/me` | bearer | Current user |
-| `GET` `POST` `PUT` `DELETE` | `/api/customers[/{id}]` | bearer | Customers CRUD |
+| `GET` | `/api/customers?search=&page=&size=` | bearer | The user's customers, paginated (≤ 100), searched by name or email |
+| `GET` `POST` `PUT` `DELETE` | `/api/customers[/{id}]` | bearer | Customer CRUD, scoped to the owner (another user's id → `404`) |
 | `GET` | `/actuator/health` | — | Liveness, includes the database |
 | `GET` | `/actuator/info` | — | Deployed commit |
 
