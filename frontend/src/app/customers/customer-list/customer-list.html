@@ -37,6 +37,8 @@
     }
   </form>
 
+  <p class="notice" role="status">{{ notice() }}</p>
+
   @if (error(); as message) {
     <div class="alert" role="alert">
       <app-icon name="alert" [size]="18" />
@@ -82,9 +84,21 @@
                 <td class="optional">{{ customer.city ?? '—' }}</td>
                 <td class="optional mono">{{ customer.siret ?? '—' }}</td>
                 <td class="actions">
-                  <a class="btn btn-ghost btn-sm" [routerLink]="['/customers', customer.id, 'edit']">
-                    Edit<span class="visually-hidden"> {{ customer.name }}</span>
-                  </a>
+                  <div class="row-actions">
+                    <a class="btn btn-ghost btn-sm" [routerLink]="['/customers', customer.id, 'edit']">
+                      Edit<span class="visually-hidden"> {{ customer.name }}</span>
+                    </a>
+                    <button
+                      class="btn btn-ghost btn-sm danger"
+                      type="button"
+                      [disabled]="deletingId() !== null"
+                      [attr.aria-busy]="deletingId() === customer.id"
+                      (click)="delete(customer)"
+                    >
+                      <app-icon name="trash" [size]="16" />
+                      <span class="visually-hidden">Delete {{ customer.name }}</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             }

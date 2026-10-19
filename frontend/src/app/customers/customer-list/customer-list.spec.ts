@@ -43,7 +43,7 @@ describe('CustomerList', () => {
 
   it('shows a loading state, then the first page of customers', async () => {
     await fixture.whenStable();
-    expect(page.querySelector('[role="status"]')?.textContent).toContain('Loading customers');
+    expect(page.querySelector('.status[role="status"]')?.textContent).toContain('Loading customers');
 
     const request = listRequest();
     expect(request.request.params.get('page')).toBe('0');
@@ -124,6 +124,72 @@ describe('CustomerList', () => {
 
     expect(page.querySelector('[role="alert"]')).toBeNull();
     expect(page.querySelectorAll('tbody tr').length).toBe(1);
+  });
+
+  describe('deleting', () => {
+    const deleteButton = (name: string) => button(`Delete ${name}`)!;
+
+    it('asks for confirmation and does nothing when cancelled', async () => {
+      const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      await fixture.whenStable();
+      await respond(listRequest(), pageOf([testCustomer()]));
+
+      deleteButton('ACME').click();
+
+      expect(confirm).toHaveBeenCalledWith('Delete ACME? This cannot be undone.');
+      http.expectNone(`${CUSTOMERS_API}/1`);
+    });
+
+    it('deletes the customer, announces it and reloads the page', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      await fixture.whenStable();
+      await respond(listRequest(), pageOf([testCustomer(), testCustomer({ id: 2, name: 'Globex' })]));
+
+      deleteButton('ACME').click();
+      await fixture.whenStable();
+      expect(deleteButton('Globex').disabled).toBe(true);
+      const request = http.expectOne(`${CUSTOMERS_API}/1`);
+      expect(request.request.method).toBe('DELETE');
+      request.flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+
+      expect(page.querySelector('.notice')?.textContent).toContain('ACME was deleted.');
+      const reload = listRequest();
+      expect(reload.request.params.get('page')).toBe('0');
+      await respond(reload, pageOf([testCustomer({ id: 2, name: 'Globex' })]));
+      expect(page.querySelectorAll('tbody tr').length).toBe(1);
+      expect(deleteButton('Globex').disabled).toBe(false);
+    });
+
+    it('goes back one page after deleting the last customer of a page', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      await fixture.whenStable();
+      await respond(listRequest(), pageOf([testCustomer()], 0, 21));
+      button('Next')!.click();
+      await fixture.whenStable();
+      await respond(listRequest(), pageOf([testCustomer({ id: 21, name: 'Zeta' })], 1, 21));
+
+      deleteButton('Zeta').click();
+      http.expectOne(`${CUSTOMERS_API}/21`).flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+
+      expect(listRequest().request.params.get('page')).toBe('0');
+    });
+
+    it('shows the error when the deletion fails', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      await fixture.whenStable();
+      await respond(listRequest(), pageOf([testCustomer()]));
+
+      deleteButton('ACME').click();
+      http
+        .expectOne(`${CUSTOMERS_API}/1`)
+        .flush({ status: 404, detail: 'Customer with id 1 not found' }, { status: 404, statusText: 'Not Found' });
+      await fixture.whenStable();
+
+      expect(page.querySelector('[role="alert"]')?.textContent).toContain('Customer with id 1 not found');
+      expect(page.querySelector('.notice')?.textContent).toBe('');
+    });
   });
 
   it('ignores the answer of a request replaced by a newer one', async () => {

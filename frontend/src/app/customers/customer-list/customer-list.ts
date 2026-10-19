@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
+import { Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import { Page } from '../../core/http/page';
 import { errorMessage } from '../../core/http/problem-detail';
@@ -25,6 +25,7 @@ type ListResult = { page: Page<Customer> } | { error: unknown };
 })
 export class CustomerList {
   private readonly customers = inject(CustomerService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Each request replaces the previous one (switchMap): a slow old page never overwrites a newer one. */
   private readonly requests = new Subject<{ search: string; page: number }>();
@@ -35,6 +36,10 @@ export class CustomerList {
   protected readonly result = signal<Page<Customer> | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  /** Id of the customer being deleted; one deletion at a time. */
+  protected readonly deletingId = signal<number | null>(null);
+  /** Outcome of the last deletion, announced to screen readers. */
+  protected readonly notice = signal<string | null>(null);
 
   protected readonly customersOnPage = computed(() => this.result()?.content ?? []);
   protected readonly hasPrevious = computed(() => (this.result()?.page ?? 0) > 0);
@@ -70,6 +75,7 @@ export class CustomerList {
   }
 
   protected search(): void {
+    this.notice.set(null);
     this.activeSearch.set(this.searchForm.controls.search.value.trim());
     this.load(0);
   }
@@ -80,7 +86,32 @@ export class CustomerList {
   }
 
   protected goTo(page: number): void {
+    this.notice.set(null);
     this.load(page);
+  }
+
+  protected delete(customer: Customer): void {
+    if (this.deletingId() !== null || !confirm(`Delete ${customer.name}? This cannot be undone.`)) {
+      return;
+    }
+    this.deletingId.set(customer.id);
+    this.notice.set(null);
+    this.customers
+      .delete(customer.id)
+      .pipe(
+        finalize(() => this.deletingId.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.notice.set(`${customer.name} was deleted.`);
+          // Deleting the last customer of a page goes back to the previous page
+          const current = this.result();
+          const emptied = current !== null && current.content.length === 1 && current.page > 0;
+          this.load(emptied ? current.page - 1 : (current?.page ?? 0));
+        },
+        error: (error: unknown) => this.error.set(errorMessage(error)),
+      });
   }
 
   protected retry(): void {

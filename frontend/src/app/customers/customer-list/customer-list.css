@@ -35,7 +35,15 @@ th { font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform:
 .name a:hover { color: var(--brand); text-decoration: underline; }
 .email { color: var(--ink-700); overflow-wrap: anywhere; }
 .mono { font-variant-numeric: tabular-nums; }
-.actions { text-align: right; white-space: nowrap; }
+.actions { width: 1%; white-space: nowrap; }
+.row-actions { display: flex; justify-content: flex-end; gap: .4rem; }
+.danger { color: var(--danger); }
+.danger:hover { border-color: rgb(217 61 66 / .4); }
+
+/* Always in the DOM so that screen readers announce the text when it changes */
+.notice:empty { display: none; }
+.notice { margin-top: 1.25rem; padding: .7rem 1rem; border-radius: 12px; background: var(--accent-50);
+          color: #0b7a5a; font-size: .9rem; font-weight: 600; }
 .optional { display: none; }
 @media (min-width: 720px) { .optional { display: table-cell; } }
 
