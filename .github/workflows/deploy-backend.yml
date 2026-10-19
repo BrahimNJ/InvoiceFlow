@@ -73,7 +73,9 @@ jobs:
           # Docker build + start on the free plan takes about 4 minutes
           deadline=$((SECONDS + 15 * 60))
           while [ $SECONDS -lt $deadline ]; do
-            live=$(curl --silent --max-time 30 "$BACKEND_URL/actuator/info" | jq -r '.app.commit // empty' 2>/dev/null)
+            # A timeout or connection error while Render swaps instances means "not ready yet", not a failure:
+            # without || true, the failing pipeline would make bash -e abort on the first attempt.
+            live=$(curl --silent --max-time 30 "$BACKEND_URL/actuator/info" | jq -r '.app.commit // empty' 2>/dev/null || true)
             if [ "$live" = "$COMMIT_SHA" ]; then
               echo "Production serves $COMMIT_SHA"
               exit 0
