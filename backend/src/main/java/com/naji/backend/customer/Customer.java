@@ -25,6 +25,10 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Id of the user who owns this customer (JWT subject). Only the owner can see or change it. */
+    @Column(nullable = false, updatable = false)
+    private Long ownerId;
+
     @Column(nullable = false)
     private String name;
 

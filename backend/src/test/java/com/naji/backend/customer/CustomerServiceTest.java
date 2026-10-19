@@ -6,6 +6,7 @@ import com.naji.backend.customer.dto.CustomerResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -21,6 +22,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CustomerServiceTest {
 
+    private static final Long OWNER_ID = 7L;
+
     @Mock
     private CustomerRepository customerRepository;
 
@@ -32,24 +35,27 @@ class CustomerServiceTest {
     }
 
     @Test
-    void create_savesAndReturnsCustomer() {
+    void create_savesCustomerForTheOwner() {
         when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> {
             Customer saved = invocation.getArgument(0);
             saved.setId(1L);
             return saved;
         });
 
-        CustomerResponse response = customerService.create(request("ACME"));
+        CustomerResponse response = customerService.create(OWNER_ID, request("ACME"));
 
+        ArgumentCaptor<Customer> saved = ArgumentCaptor.forClass(Customer.class);
+        verify(customerRepository).save(saved.capture());
+        assertThat(saved.getValue().getOwnerId()).isEqualTo(OWNER_ID);
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.name()).isEqualTo("ACME");
     }
 
     @Test
-    void findById_throwsWhenMissing() {
-        when(customerRepository.findById(42L)).thenReturn(Optional.empty());
+    void findById_throwsWhenMissingOrOwnedBySomeoneElse() {
+        when(customerRepository.findByIdAndOwnerId(42L, OWNER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> customerService.findById(42L))
+        assertThatThrownBy(() -> customerService.findById(OWNER_ID, 42L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("42");
     }
@@ -57,19 +63,29 @@ class CustomerServiceTest {
     @Test
     void update_changesExistingCustomer() {
         Customer existing = customer(1L, "Old name");
-        when(customerRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(customerRepository.findByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(existing));
         when(customerRepository.saveAndFlush(existing)).thenReturn(existing);
 
-        CustomerResponse response = customerService.update(1L, request("New name"));
+        CustomerResponse response = customerService.update(OWNER_ID, 1L, request("New name"));
 
         assertThat(response.name()).isEqualTo("New name");
+        assertThat(existing.getOwnerId()).isEqualTo(OWNER_ID);
     }
 
     @Test
-    void delete_throwsWhenMissing() {
-        when(customerRepository.findById(42L)).thenReturn(Optional.empty());
+    void update_throwsWhenOwnedBySomeoneElse() {
+        when(customerRepository.findByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> customerService.delete(42L))
+        assertThatThrownBy(() -> customerService.update(OWNER_ID, 1L, request("New name")))
+                .isInstanceOf(ResourceNotFoundException.class);
+        verify(customerRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void delete_throwsWhenMissingOrOwnedBySomeoneElse() {
+        when(customerRepository.findByIdAndOwnerId(42L, OWNER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> customerService.delete(OWNER_ID, 42L))
                 .isInstanceOf(ResourceNotFoundException.class);
         verify(customerRepository, never()).delete(any());
     }
@@ -81,6 +97,7 @@ class CustomerServiceTest {
     private static Customer customer(Long id, String name) {
         Customer customer = new Customer();
         customer.setId(id);
+        customer.setOwnerId(OWNER_ID);
         customer.setName(name);
         customer.setEmail("contact@acme.fr");
         return customer;
