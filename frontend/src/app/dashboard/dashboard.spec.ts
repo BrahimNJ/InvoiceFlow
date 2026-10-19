@@ -31,4 +31,13 @@ describe('Dashboard', () => {
     expect(page.querySelector('dl')?.textContent).toContain('jane@acme.fr');
     expect(page.querySelector('app-header')).toBeTruthy();
   });
+
+  it('links to the customers page', async () => {
+    const fixture = TestBed.createComponent(Dashboard);
+    await fixture.whenStable();
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('.next a');
+    expect(link?.textContent).toContain('Customers');
+    expect(link?.getAttribute('href')).toBe('/customers');
+  });
 });

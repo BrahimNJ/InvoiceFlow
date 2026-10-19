@@ -16,6 +16,7 @@ import { Logo } from './logo';
         <a routerLink="/dashboard" aria-label="InvoiceFlow dashboard"><app-logo /></a>
         <nav aria-label="Main">
           <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">Dashboard</a>
+          <a routerLink="/customers" routerLinkActive="active" ariaCurrentWhenActive="page">Customers</a>
         </nav>
         <div class="account">
           <span class="who">{{ user()?.firstName }} {{ user()?.lastName }}</span>

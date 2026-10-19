@@ -22,7 +22,7 @@ describe('AppHeader', () => {
 
   afterEach(() => http.verify());
 
-  it('links to the dashboard and shows the signed-in user', async () => {
+  it('links to the business screens and shows the signed-in user', async () => {
     const fixture = TestBed.createComponent(AppHeader);
     await fixture.whenStable();
     const header = fixture.nativeElement as HTMLElement;
@@ -30,6 +30,7 @@ describe('AppHeader', () => {
     const links = [...header.querySelectorAll<HTMLAnchorElement>('nav a')];
     expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
       ['Dashboard', '/dashboard'],
+      ['Customers', '/customers'],
     ]);
     expect(header.querySelector('.who')?.textContent).toContain('Jane Doe');
   });
