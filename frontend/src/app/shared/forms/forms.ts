@@ -14,7 +14,8 @@ export function showError(control: AbstractControl): boolean {
 export function focusFirstInvalid(form: FormGroup, host: HTMLElement, fallback?: string): void {
   const name = Object.keys(form.controls).find((key) => form.controls[key].invalid) ?? fallback;
   if (name) {
-    host.querySelector<HTMLElement>(`[formcontrolname="${name}"]`)?.focus();
+    // A bound [formControlName] renders no attribute: such inputs are found by their name attribute
+    host.querySelector<HTMLElement>(`[formcontrolname="${name}"], [name="${name}"]`)?.focus();
   }
 }
 

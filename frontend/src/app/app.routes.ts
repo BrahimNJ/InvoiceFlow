@@ -32,5 +32,17 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./customers/customer-list/customer-list').then((m) => m.CustomerList),
   },
+  {
+    path: 'customers/new',
+    title: 'New customer · InvoiceFlow',
+    canActivate: [authGuard],
+    loadComponent: () => import('./customers/customer-form/customer-form').then((m) => m.CustomerForm),
+  },
+  {
+    path: 'customers/:id/edit',
+    title: 'Edit customer · InvoiceFlow',
+    canActivate: [authGuard],
+    loadComponent: () => import('./customers/customer-form/customer-form').then((m) => m.CustomerForm),
+  },
   { path: '**', redirectTo: '' },
 ];
