@@ -1,26 +1,20 @@
 <app-header />
 
-<main class="container page">
-  <div class="head">
-    <div>
-      <h1>Customers</h1>
-      @if (result(); as page) {
-        <p class="lead">
-          @if (activeSearch()) {
-            {{ page.totalElements }} {{ page.totalElements === 1 ? 'match' : 'matches' }} for “{{ activeSearch() }}”
-          } @else {
-            {{ page.totalElements }} {{ page.totalElements === 1 ? 'customer' : 'customers' }}
-          }
-        </p>
-      }
-    </div>
+<main class="container app-page">
+  <app-page-header
+    icon="users"
+    heading="Customers"
+    subtitle="The companies and people you invoice, with their billing and legal details."
+  >
     <a class="btn btn-primary" routerLink="/customers/new"><app-icon name="plus" [size]="18" />New customer</a>
-  </div>
+  </app-page-header>
 
-  <form class="search" role="search" [formGroup]="searchForm" (ngSubmit)="search()">
-    <label class="visually-hidden" for="customer-search">Search customers</label>
-    <div class="input-group">
+  <app-help-tip storageKey="customers" heading="Why keep your customers here" [tips]="tips" />
+
+  <div class="toolbar">
+    <form class="search-field" role="search" (submit)="submitSearch($event)">
       <app-icon name="search" [size]="18" />
+      <label class="visually-hidden" for="customer-search">Search customers</label>
       <input
         id="customer-search"
         class="input"
@@ -28,16 +22,25 @@
         placeholder="Search by name or email"
         autocomplete="off"
         spellcheck="false"
-        formControlName="search"
+        [formControl]="searchControl"
       />
-    </div>
-    <button class="btn btn-ghost" type="submit">Search</button>
-    @if (activeSearch()) {
-      <button class="btn btn-ghost" type="button" (click)="clearSearch()">Clear</button>
-    }
-  </form>
+      @if (searchControl.value) {
+        <button class="icon-btn clear" type="button" aria-label="Clear the search" (click)="clearSearch()">
+          <app-icon name="x" [size]="16" />
+        </button>
+      }
+    </form>
 
-  <p class="notice" role="status">{{ notice() }}</p>
+    @if (result(); as page) {
+      <p class="result-count" aria-live="polite">
+        @if (activeSearch()) {
+          {{ page.totalElements }} {{ page.totalElements === 1 ? 'match' : 'matches' }} for “{{ activeSearch() }}”
+        } @else {
+          {{ page.totalElements }} {{ page.totalElements === 1 ? 'customer' : 'customers' }}
+        }
+      </p>
+    }
+  </div>
 
   @if (error(); as message) {
     <div class="alert" role="alert">
@@ -48,55 +51,81 @@
   }
 
   @if (loading() && !result()) {
-    <p class="status" role="status"><span class="spinner" aria-hidden="true"></span>Loading customers…</p>
+    <div class="panel data-table-wrap" role="status" aria-label="Loading customers">
+      @for (row of skeletonRows; track row) {
+        <div class="skeleton-row">
+          <span class="skeleton avatar"></span>
+          <span class="skeleton" style="width: 35%"></span>
+          <span class="skeleton" style="width: 20%"></span>
+        </div>
+      }
+    </div>
   } @else if (result(); as page) {
     @if (page.content.length === 0) {
-      <div class="empty">
-        @if (activeSearch()) {
-          <h2>No customer matches “{{ activeSearch() }}”</h2>
-          <p>Try another name or email address.</p>
-        } @else {
-          <app-icon name="users" [size]="28" />
-          <h2>No customers yet</h2>
-          <p>Add your first customer to start invoicing.</p>
-          <a class="btn btn-primary" routerLink="/customers/new"><app-icon name="plus" [size]="18" />New customer</a>
-        }
-      </div>
+      @if (activeSearch()) {
+        <app-empty-state
+          icon="search"
+          [heading]="'No customer matches “' + activeSearch() + '”'"
+          text="Try another name or email address."
+        >
+          <button class="btn btn-ghost" type="button" (click)="clearSearch()">Clear the search</button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          icon="users"
+          heading="No customers yet"
+          text="Add your first customer: you will pick them when you create an invoice."
+        >
+          <a class="btn btn-primary" routerLink="/customers/new"><app-icon name="plus" [size]="18" />Add your first customer</a>
+        </app-empty-state>
+      }
     } @else {
-      <div class="table-wrap" [attr.aria-busy]="loading()">
-        <table>
+      <div class="panel data-table-wrap" [attr.aria-busy]="loading()">
+        <table class="data-table">
           <thead>
             <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Email</th>
-              <th scope="col" class="optional">City</th>
-              <th scope="col" class="optional">SIRET</th>
+              <th scope="col">Customer</th>
+              <th scope="col">City</th>
+              <th scope="col">SIRET</th>
               <th scope="col"><span class="visually-hidden">Actions</span></th>
             </tr>
           </thead>
           <tbody>
-            @for (customer of customersOnPage(); track customer.id) {
+            @for (customer of page.content; track customer.id) {
               <tr>
-                <td class="name">
-                  <a [routerLink]="['/customers', customer.id, 'edit']">{{ customer.name }}</a>
+                <td>
+                  <div class="customer">
+                    <span class="avatar" [attr.data-tone]="avatarTone(customer)" aria-hidden="true">
+                      {{ initials(customer.name) }}
+                    </span>
+                    <div class="customer-text">
+                      <a class="name" [routerLink]="['/customers', customer.id, 'edit']">{{ customer.name }}</a>
+                      <span class="email">{{ customer.email }}</span>
+                    </div>
+                  </div>
                 </td>
-                <td class="email">{{ customer.email }}</td>
-                <td class="optional">{{ customer.city ?? '—' }}</td>
-                <td class="optional mono">{{ customer.siret ?? '—' }}</td>
-                <td class="actions">
+                <td data-label="City" [class.muted]="!customer.city">{{ customer.city ?? '—' }}</td>
+                <td data-label="SIRET" class="siret" [class.muted]="!customer.siret">{{ customer.siret ?? '—' }}</td>
+                <td>
                   <div class="row-actions">
-                    <a class="btn btn-ghost btn-sm" [routerLink]="['/customers', customer.id, 'edit']">
-                      Edit<span class="visually-hidden"> {{ customer.name }}</span>
+                    <a
+                      class="icon-btn"
+                      [routerLink]="['/customers', customer.id, 'edit']"
+                      [attr.aria-label]="'Edit ' + customer.name"
+                      title="Edit"
+                    >
+                      <app-icon name="pencil" [size]="16" />
                     </a>
                     <button
-                      class="btn btn-ghost btn-sm danger"
+                      class="icon-btn danger"
                       type="button"
+                      [attr.aria-label]="'Delete ' + customer.name"
+                      title="Delete"
                       [disabled]="deletingId() !== null"
                       [attr.aria-busy]="deletingId() === customer.id"
                       (click)="delete(customer)"
                     >
                       <app-icon name="trash" [size]="16" />
-                      <span class="visually-hidden">Delete {{ customer.name }}</span>
                     </button>
                   </div>
                 </td>
@@ -107,22 +136,12 @@
       </div>
 
       @if (page.totalPages > 1) {
-        <nav class="pager" aria-label="Pagination">
-          <button
-            class="btn btn-ghost btn-sm"
-            type="button"
-            [disabled]="!hasPrevious() || loading()"
-            (click)="goTo(page.page - 1)"
-          >
+        <nav class="pagination" aria-label="Pagination">
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasPrevious() || loading()" (click)="goTo(page.page - 1)">
             <app-icon name="chevron-left" [size]="16" />Previous
           </button>
           <span>Page {{ page.page + 1 }} of {{ page.totalPages }}</span>
-          <button
-            class="btn btn-ghost btn-sm"
-            type="button"
-            [disabled]="!hasNext() || loading()"
-            (click)="goTo(page.page + 1)"
-          >
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasNext() || loading()" (click)="goTo(page.page + 1)">
             Next<app-icon name="chevron-right" [size]="16" />
           </button>
         </nav>

@@ -1,9 +1,6 @@
 .alert { align-items: center; }
 .alert span { flex: 1; }
 
-.skeleton-row { display: flex; gap: 2rem; padding: 1.25rem 1rem; }
-.skeleton-row + .skeleton-row { border-top: 1px solid var(--line); }
-
 .th-hint { display: block; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-300); }
 
 .product { display: flex; align-items: center; gap: .85rem; min-width: 0; }
