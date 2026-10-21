@@ -1,0 +1,168 @@
+<app-header />
+
+<main class="container app-page narrow">
+  <app-page-header
+    icon="package"
+    [heading]="editing() ? 'Edit product' : 'New product'"
+    subtitle="Describe it once, then add it to any invoice in one click."
+    backLink="/products"
+    backLabel="Products & services"
+  />
+
+  @if (loadError(); as message) {
+    <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
+    <a class="btn btn-ghost" routerLink="/products">Back to the catalogue</a>
+  } @else if (loading()) {
+    <p class="status-line" role="status"><span class="spinner" aria-hidden="true"></span>Loading the product…</p>
+  } @else {
+    @if (error(); as message) {
+      <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
+    }
+
+    <form class="panel form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <fieldset class="form-section">
+        <legend><app-icon name="grid" [size]="18" />What do you sell?</legend>
+        <p class="section-help">Required on every invoice by the e-invoicing reform.</p>
+        <div class="type-options">
+          @for (option of typeOptions; track option.type) {
+            <label class="type-option" [class.selected]="value().type === option.type">
+              <input type="radio" class="visually-hidden" formControlName="type" name="type" [value]="option.type" />
+              <span class="type-icon" aria-hidden="true"><app-icon [name]="option.icon" [size]="22" /></span>
+              <span class="type-text">
+                <strong>{{ option.label }}</strong>
+                <span>{{ option.help }}</span>
+              </span>
+              <app-icon class="check" name="check-circle" [size]="20" />
+            </label>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <legend><app-icon name="info" [size]="18" />Details</legend>
+        <p class="section-help">What your customer reads on the invoice line.</p>
+        <div class="form-grid">
+          <div class="field wide">
+            <label for="product-name">Name</label>
+            <input
+              id="product-name"
+              class="input"
+              formControlName="name"
+              name="name"
+              autocomplete="off"
+              placeholder="e.g. Web development, day rate"
+              [attr.aria-invalid]="showError(form.controls.name)"
+              [attr.aria-describedby]="describedBy('name')"
+            />
+            @if (message('name'); as text) {
+              <p class="field-error" id="product-name-error">{{ text }}</p>
+            } @else {
+              <p class="hint" id="product-name-hint">Short and clear: it is the title of the invoice line.</p>
+            }
+          </div>
+
+          <div class="field wide">
+            <label for="product-description">Description (optional)</label>
+            <textarea
+              id="product-description"
+              class="input"
+              formControlName="description"
+              name="description"
+              rows="3"
+              placeholder="e.g. Front-end development with Angular, remote"
+              [attr.aria-invalid]="showError(form.controls.description)"
+              [attr.aria-describedby]="describedBy('description') + ' product-description-counter'"
+            ></textarea>
+            <div class="field-meta">
+              @if (message('description'); as text) {
+                <p class="field-error" id="product-description-error">{{ text }}</p>
+              } @else {
+                <p class="hint" id="product-description-hint">Printed under the name, to give details.</p>
+              }
+              <span class="counter" id="product-description-counter" [class.over]="descriptionLength() > descriptionMax">
+                {{ descriptionLength() }} / {{ descriptionMax }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <legend><app-icon name="euro" [size]="18" />Price and VAT</legend>
+        <p class="section-help">Enter the price excluding VAT: the VAT is added for you.</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="product-unitPrice">Unit price, excl. VAT</label>
+            <div class="input-affix">
+              <input
+                id="product-unitPrice"
+                class="input"
+                formControlName="unitPrice"
+                name="unitPrice"
+                inputmode="decimal"
+                autocomplete="off"
+                placeholder="0,00"
+                [attr.aria-invalid]="showError(form.controls.unitPrice)"
+                [attr.aria-describedby]="describedBy('unitPrice')"
+              />
+              <span class="affix" aria-hidden="true">€</span>
+            </div>
+            @if (message('unitPrice'); as text) {
+              <p class="field-error" id="product-unitPrice-error">{{ text }}</p>
+            } @else {
+              <p class="hint" id="product-unitPrice-hint">Use a comma or a dot for cents.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="product-unit">Sold per</label>
+            <select id="product-unit" class="input" formControlName="unit" name="unit" aria-describedby="product-unit-hint">
+              @for (option of unitOptions; track option.unit) {
+                <option [ngValue]="option.unit">{{ option.label }}</option>
+              }
+            </select>
+            <p class="hint" id="product-unit-hint">Quantities on invoices are counted in this unit.</p>
+          </div>
+
+          <div class="field wide">
+            <label for="product-vatRate">VAT rate</label>
+            <select id="product-vatRate" class="input" formControlName="vatRate" name="vatRate" [attr.aria-describedby]="describedBy('vatRate')">
+              @for (rate of vatRates; track rate.value) {
+                <option [ngValue]="rate.value">{{ formatPercent(rate.value) }} · {{ rate.label }}</option>
+              }
+            </select>
+            @if (message('vatRate'); as text) {
+              <p class="field-error" id="product-vatRate-error">{{ text }}</p>
+            } @else {
+              <p class="hint" id="product-vatRate-hint">
+                {{ selectedRate()?.help }} Not sure? Ask your accountant.
+              </p>
+            }
+          </div>
+        </div>
+
+        <div class="preview" aria-live="polite">
+          @if (preview(); as amounts) {
+            <p class="preview-title">On an invoice, one {{ amounts.per }} costs</p>
+            <dl>
+              <div><dt>Price excl. VAT</dt><dd>{{ amounts.excludingVat }}</dd></div>
+              <div><dt>VAT {{ amounts.rate }}</dt><dd>{{ amounts.vat }}</dd></div>
+              <div class="total"><dt>Price incl. VAT</dt><dd>{{ amounts.total }}</dd></div>
+            </dl>
+          } @else {
+            <p class="preview-empty"><app-icon name="info" [size]="16" />Enter a price to see the amount including VAT.</p>
+          }
+        </div>
+      </fieldset>
+
+      <div class="form-footer">
+        <a class="btn btn-ghost" routerLink="/products">Cancel</a>
+        <app-submit-button
+          [label]="editing() ? 'Save changes' : 'Add to catalogue'"
+          [busyLabel]="editing() ? 'Saving…' : 'Adding…'"
+          [busy]="submitting()"
+        />
+      </div>
+    </form>
+  }
+</main>
