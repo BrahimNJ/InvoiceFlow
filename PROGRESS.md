@@ -52,8 +52,8 @@
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 2.1 | Product entity and CRUD API (type, price, VAT rate, unit), scoped to the owner | 🚧 In progress | #27 | Flyway V5, `@FrenchVatRate` (20 / 10 / 5.5 / 2.1 / 0), `BigDecimal` amounts. Branch complete, PR not opened yet |
-| 2.2 | Products UI and shared UI kit (page header, help tips, empty states, confirmation dialog, toasts, responsive tables) | 🚧 In progress | #27 | Same branch as 2.1. Not checked in a real browser yet (tests and build only) |
+| 2.1 | Product entity and CRUD API (type, price, VAT rate, unit), scoped to the owner | 🔍 In review | #27 / #29 | Flyway V5, `@FrenchVatRate` (20 / 10 / 5.5 / 2.1 / 0), `BigDecimal` amounts. CI green |
+| 2.2 | Products UI and shared UI kit (page header, help tips, empty states, confirmation dialog, toasts, responsive tables) | 🔍 In review | #27 / #29 | Same PR as 2.1. Not checked in a real browser yet (tests and build only) |
 
 ## Phase 3 — Invoices
 
