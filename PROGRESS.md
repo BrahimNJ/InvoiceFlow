@@ -46,7 +46,7 @@
 | 1.1 | Customer entity and CRUD API | ✅ Done | #3 / #4 | Reference module; 10 tests |
 | 1.2 | Customers scoped to their owner; pagination and search on `GET /api/customers` | ✅ Done | #23 / #24 | Flyway V4 deletes the customers created before authentication |
 | 1.3 | Customers UI (list, search, pagination, create/edit form, delete) | ✅ Done | #23 / #24 | Same PR as 1.2. Follow-up: details page with invoices |
-| 1.4 | Customers screens on the shared UI kit (help tips, icons, confirmation dialog, toasts, cards on phones) | 🚧 In progress | #28 | Branched from `27-feat/product-catalogue` (needs the kit): merge after #27. Branch complete, PR not opened yet. Not checked in a real browser yet |
+| 1.4 | Customers screens on the shared UI kit (help tips, icons, confirmation dialog, toasts, cards on phones) | 🔍 In review | #28 / #30 | Stacked on #29 (needs the kit): merge after it. CI green. Not checked in a real browser yet |
 
 ## Phase 2 — Products & services
 
