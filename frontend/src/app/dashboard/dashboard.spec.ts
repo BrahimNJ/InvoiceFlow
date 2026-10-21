@@ -32,12 +32,14 @@ describe('Dashboard', () => {
     expect(page.querySelector('app-header')).toBeTruthy();
   });
 
-  it('links to the customers page', async () => {
+  it('links to the customers and products pages', async () => {
     const fixture = TestBed.createComponent(Dashboard);
     await fixture.whenStable();
 
-    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('.next a');
-    expect(link?.textContent).toContain('Customers');
-    expect(link?.getAttribute('href')).toBe('/customers');
+    const links = [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('.next a')];
+    expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
+      ['Customers', '/customers'],
+      ['Products & services', '/products'],
+    ]);
   });
 });
