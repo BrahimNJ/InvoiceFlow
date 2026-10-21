@@ -1,0 +1,168 @@
+<app-header />
+
+<main class="container app-page">
+  <app-page-header
+    icon="package"
+    heading="Products & services"
+    subtitle="Everything you sell, with its price and VAT rate, ready to add to an invoice."
+  >
+    <a class="btn btn-primary" routerLink="/products/new"><app-icon name="plus" [size]="18" />New product</a>
+  </app-page-header>
+
+  <app-help-tip storageKey="products" heading="How your catalogue works" [tips]="tips" />
+
+  <div class="toolbar">
+    <form class="search-field" role="search" (submit)="submitSearch($event)">
+      <app-icon name="search" [size]="18" />
+      <label class="visually-hidden" for="product-search">Search products</label>
+      <input
+        id="product-search"
+        class="input"
+        type="search"
+        placeholder="Search by name or description"
+        autocomplete="off"
+        [formControl]="searchControl"
+      />
+      @if (searchControl.value) {
+        <button class="icon-btn clear" type="button" aria-label="Clear the search" (click)="clearSearch()">
+          <app-icon name="x" [size]="16" />
+        </button>
+      }
+    </form>
+
+    <div class="chips" role="group" aria-label="Show">
+      @for (filter of filters; track filter.label) {
+        <button type="button" [attr.aria-pressed]="activeType() === filter.type" (click)="filterBy(filter.type)">
+          <app-icon [name]="filter.icon" [size]="16" />{{ filter.label }}
+        </button>
+      }
+    </div>
+
+    @if (result(); as page) {
+      <p class="result-count" aria-live="polite">
+        {{ page.totalElements }} {{ page.totalElements === 1 ? 'item' : 'items' }}{{ filtered() ? ' found' : '' }}
+      </p>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="18" />
+      <span>{{ message }}</span>
+      <button class="btn btn-ghost btn-sm" type="button" (click)="retry()">Retry</button>
+    </div>
+  }
+
+  @if (loading() && !result()) {
+    <div class="panel data-table-wrap" role="status" aria-label="Loading products">
+      @for (row of skeletonRows; track row) {
+        <div class="skeleton-row">
+          <span class="skeleton" style="width: 40%"></span>
+          <span class="skeleton" style="width: 18%"></span>
+          <span class="skeleton" style="width: 12%"></span>
+        </div>
+      }
+    </div>
+  } @else if (result(); as page) {
+    @if (page.content.length === 0) {
+      @if (filtered()) {
+        <app-empty-state
+          icon="search"
+          heading="Nothing matches your filters"
+          text="Try another word, or show every type of product."
+        >
+          <button class="btn btn-ghost" type="button" (click)="clearFilters()">Clear filters</button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          icon="package"
+          heading="Your catalogue is empty"
+          text="Add what you sell once (a day of consulting, a product, a subscription) and reuse it on every invoice."
+        >
+          <a class="btn btn-primary" routerLink="/products/new"><app-icon name="plus" [size]="18" />Add your first product</a>
+        </app-empty-state>
+      }
+    } @else {
+      <div class="panel data-table-wrap" [attr.aria-busy]="loading()">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Product</th>
+              <th scope="col" class="num">Unit price <span class="th-hint">excl. VAT</span></th>
+              <th scope="col" class="num">VAT</th>
+              <th scope="col" class="num">Unit price <span class="th-hint">incl. VAT</span></th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of page.content; track product.id) {
+              <tr>
+                <td>
+                  <div class="product">
+                    <span class="type-icon" [class.goods]="product.type === 'GOODS'" aria-hidden="true">
+                      <app-icon [name]="types[product.type].icon" [size]="18" />
+                    </span>
+                    <div class="product-text">
+                      <a class="name" [routerLink]="['/products', product.id, 'edit']">{{ product.name }}</a>
+                      <span class="meta">
+                        <span class="tag" [class.accent]="product.type === 'GOODS'">{{ types[product.type].label }}</span>
+                        @if (product.description) {
+                          <span class="description">{{ product.description }}</span>
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td class="num" data-label="Price excl. VAT">
+                  <span>
+                    <strong>{{ formatEuros(product.unitPrice) }}</strong>
+                    <span class="muted"> / {{ units[product.unit].per }}</span>
+                  </span>
+                </td>
+                <td class="num" data-label="VAT">{{ formatPercent(product.vatRate) }}</td>
+                <td class="num" data-label="Price incl. VAT">
+                  {{ formatEuros(priceIncludingVat(product.unitPrice, product.vatRate)) }}
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <a
+                      class="icon-btn"
+                      [routerLink]="['/products', product.id, 'edit']"
+                      [attr.aria-label]="'Edit ' + product.name"
+                      title="Edit"
+                    >
+                      <app-icon name="pencil" [size]="16" />
+                    </a>
+                    <button
+                      class="icon-btn danger"
+                      type="button"
+                      [attr.aria-label]="'Delete ' + product.name"
+                      title="Delete"
+                      [disabled]="deletingId() !== null"
+                      [attr.aria-busy]="deletingId() === product.id"
+                      (click)="delete(product)"
+                    >
+                      <app-icon name="trash" [size]="16" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (page.totalPages > 1) {
+        <nav class="pagination" aria-label="Pagination">
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasPrevious() || loading()" (click)="goTo(page.page - 1)">
+            <app-icon name="chevron-left" [size]="16" />Previous
+          </button>
+          <span>Page {{ page.page + 1 }} of {{ page.totalPages }}</span>
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasNext() || loading()" (click)="goTo(page.page + 1)">
+            Next<app-icon name="chevron-right" [size]="16" />
+          </button>
+        </nav>
+      }
+    }
+  }
+</main>

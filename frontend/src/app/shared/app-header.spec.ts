@@ -31,7 +31,9 @@ describe('AppHeader', () => {
     expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
       ['Dashboard', '/dashboard'],
       ['Customers', '/customers'],
+      ['Products', '/products'],
     ]);
+    expect(header.querySelectorAll('nav a app-icon').length).toBe(3);
     expect(header.querySelector('.who')?.textContent).toContain('Jane Doe');
   });
 

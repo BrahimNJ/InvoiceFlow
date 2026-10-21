@@ -44,5 +44,23 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./customers/customer-form/customer-form').then((m) => m.CustomerForm),
   },
+  {
+    path: 'products',
+    title: 'Products & services · InvoiceFlow',
+    canActivate: [authGuard],
+    loadComponent: () => import('./products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'products/new',
+    title: 'New product · InvoiceFlow',
+    canActivate: [authGuard],
+    loadComponent: () => import('./products/product-form/product-form').then((m) => m.ProductForm),
+  },
+  {
+    path: 'products/:id/edit',
+    title: 'Edit product · InvoiceFlow',
+    canActivate: [authGuard],
+    loadComponent: () => import('./products/product-form/product-form').then((m) => m.ProductForm),
+  },
   { path: '**', redirectTo: '' },
 ];

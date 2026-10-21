@@ -22,4 +22,12 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
+
+  it('should host the notifications and the confirmation dialog of every page', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-toasts')).toBeTruthy();
+    expect(compiled.querySelector('app-confirm-dialog')).toBeTruthy();
+  });
 });
