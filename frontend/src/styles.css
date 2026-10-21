@@ -211,6 +211,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 .skeleton { display: block; height: .9rem; border-radius: 6px;
             background: linear-gradient(90deg, var(--line) 25%, #eef2f8 50%, var(--line) 75%) 0 0 / 200% 100%;
             animation: shimmer 1.4s linear infinite; }
+.skeleton-row { display: flex; align-items: center; gap: 1.5rem; padding: 1.1rem 1rem; }
+.skeleton-row + .skeleton-row { border-top: 1px solid var(--line); }
 
 .pagination { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
               color: var(--ink-500); font-size: .9rem; }
