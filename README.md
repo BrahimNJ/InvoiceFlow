@@ -171,7 +171,7 @@ from the environment, fails fast when a secret is missing).
 
 ```bash
 cd backend  && ./mvnw verify                                   # 147 tests
-cd frontend && npm run build && npm test -- --watch=false      # 147 tests
+cd frontend && npm run build && npm test -- --watch=false      # 148 tests
 ```
 
 | Layer | What is covered |
