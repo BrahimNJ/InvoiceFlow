@@ -50,7 +50,8 @@ goes issue → branch → small commits → tests → pull request → human rev
 | Accounts: sign-up, sign-in, sessions (JWT + rotating refresh tokens) | ✅ Live |
 | Secured REST API, CORS, RFC 9457 errors | ✅ Live |
 | Customers (per user: list, search, create, edit, delete) | ✅ Live |
-| Products & services, invoices, VAT, numbering, payments | 📋 Planned |
+| Products & services (per user: goods or service, price excl. VAT, French VAT rate, unit) | ✅ Live |
+| Invoices, VAT totals, numbering, payments | 📋 Planned |
 | PDF and Factur-X | 📋 Planned |
 | Dashboard (revenue, paid / pending / overdue) | 📋 Planned |
 | Role-based access | 📋 Planned |
@@ -76,14 +77,18 @@ backend/src/main/java/com/naji/backend/
 ├── common/        config (CORS, clock), security (JWT, filter chain), exceptions (ProblemDetail), validation
 ├── user/          accounts: entity, repository, mapper
 ├── auth/          register, login, refresh, logout; access and refresh tokens
-└── customer/      reference CRUD module: entity, repository, service, controller, DTOs, mapper
+├── customer/      reference CRUD module: entity, repository, service, controller, DTOs, mapper
+└── product/       catalogue of goods and services, same layout as customer
 
 frontend/src/app/
 ├── core/          auth service, HTTP interceptor, guards, API status, error mapping
 ├── auth/          sign-in and sign-up pages, password rules, shared form components
+├── customers/     customers list and form
+├── products/      products catalogue and form
 ├── dashboard/     first signed-in page
 ├── home/          landing page sections
-└── shared/        logo, icons, status pill
+└── shared/        logo, icons, forms, money formatting, UI kit (page header, help tip, empty state,
+                   confirmation dialog, toasts)
 ```
 
 Each backend module follows the same layout (entity → repository → service → controller, DTO records and a mapper,
@@ -124,6 +129,8 @@ Authentication is designed for a browser app talking to an API on another site. 
 | `GET` | `/api/auth/me` | bearer | Current user |
 | `GET` | `/api/customers?search=&page=&size=` | bearer | The user's customers, paginated (≤ 100), searched by name or email |
 | `GET` `POST` `PUT` `DELETE` | `/api/customers[/{id}]` | bearer | Customer CRUD, scoped to the owner (another user's id → `404`) |
+| `GET` | `/api/products?search=&type=&page=&size=` | bearer | The user's products, paginated (≤ 100), searched by name or description, `type` = `GOODS` or `SERVICE` |
+| `GET` `POST` `PUT` `DELETE` | `/api/products[/{id}]` | bearer | Product CRUD, scoped to the owner; VAT rate must be 20, 10, 5.5, 2.1 or 0 |
 | `GET` | `/actuator/health` | — | Liveness, includes the database |
 | `GET` | `/actuator/info` | — | Deployed commit |
 
@@ -163,8 +170,8 @@ from the environment, fails fast when a secret is missing).
 ## Tests
 
 ```bash
-cd backend  && ./mvnw verify                                   # 89 tests
-cd frontend && npm run build && npm test -- --watch=false      # 83 tests
+cd backend  && ./mvnw verify                                   # 147 tests
+cd frontend && npm run build && npm test -- --watch=false      # 147 tests
 ```
 
 | Layer | What is covered |

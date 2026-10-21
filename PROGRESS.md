@@ -1,7 +1,7 @@
 # InvoiceFlow — progress
 
 > Single source of truth for project status. Updated at the end of every task (see `CLAUDE.md`, rule 7).
-> Last update: **2026-10-19**
+> Last update: **2026-10-21**
 
 ## Status legend
 
@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ After #26 is merged: check that *Deploy backend* goes green, then **Products & services end to end** (2.1 + 2.2).
+➡️ Review and merge **Products & services** (#27, branch `27-feat/product-catalogue`), then **restyle the customers screens with the shared UI kit** (1.4).
 
 ---
 
@@ -36,7 +36,7 @@
 | 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; cross-origin calls verified in production on 2026-10-18 |
 | 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
-| 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | 🔍 In review | #25 / #26 | Run for #24 failed after 38 s although production served the commit |
+| 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | ✅ Done | #25 / #26 | Run for #24 failed after 38 s although production served the commit. *Deploy backend* green on the merge commit `f6bebad` |
 | 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | ✅ Done | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
 
 ## Phase 1 — Customers
@@ -46,13 +46,14 @@
 | 1.1 | Customer entity and CRUD API | ✅ Done | #3 / #4 | Reference module; 10 tests |
 | 1.2 | Customers scoped to their owner; pagination and search on `GET /api/customers` | ✅ Done | #23 / #24 | Flyway V4 deletes the customers created before authentication |
 | 1.3 | Customers UI (list, search, pagination, create/edit form, delete) | ✅ Done | #23 / #24 | Same PR as 1.2. Follow-up: details page with invoices |
+| 1.4 | Customers screens on the shared UI kit (help tips, icons, confirmation dialog, toasts, cards on phones) | 📋 Planned | — | Kit introduced by #27 |
 
 ## Phase 2 — Products & services
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 2.1 | Product entity and CRUD API (price, VAT rate, description) | 📋 Planned | — | `BigDecimal` for amounts |
-| 2.2 | Products UI | 📋 Planned | — | |
+| 2.1 | Product entity and CRUD API (type, price, VAT rate, unit), scoped to the owner | 🚧 In progress | #27 | Flyway V5, `@FrenchVatRate` (20 / 10 / 5.5 / 2.1 / 0), `BigDecimal` amounts. Branch complete, PR not opened yet |
+| 2.2 | Products UI and shared UI kit (page header, help tips, empty states, confirmation dialog, toasts, responsive tables) | 🚧 In progress | #27 | Same branch as 2.1. Not checked in a real browser yet (tests and build only) |
 
 ## Phase 3 — Invoices
 
@@ -99,6 +100,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-21 | Deploy wait-step fix merged (#26), production deploy green. Products & services and shared UI kit implemented on `27-feat/product-catalogue` (#27): 147 backend and 147 frontend tests pass. |
 | 2026-10-19 | Customer management merged (#24); production serves it. Deploy wait-step fix in review (#25 / #26). |
 | 2026-10-19 | Customer management end to end in review (#23 / #24): per-user customers, paginated search, customers UI. |
 | 2026-10-18 | Verified backend deploy and README rewrite in review (#21 / #22). |
