@@ -19,7 +19,9 @@ import { errorMessage } from '../../core/http/problem-detail';
 import { AppHeader } from '../../shared/app-header';
 import { applyServerErrors, focusFirstInvalid, showError } from '../../shared/forms/forms';
 import { SubmitButton } from '../../shared/forms/submit-button';
-import { Icon } from '../../shared/icon/icon';
+import { Icon, IconName } from '../../shared/icon/icon';
+import { PageHeader } from '../../shared/ui/page-header';
+import { ToastService } from '../../shared/ui/toast.service';
 import { Customer, CustomerPayload } from '../customer.models';
 import { CustomerService } from '../customer.service';
 
@@ -31,33 +33,85 @@ interface FieldDefinition {
   type?: 'email' | 'tel';
   autocomplete: string;
   inputmode?: 'numeric' | 'email' | 'tel';
-  hint?: string;
+  placeholder?: string;
+  /** Takes the full width of the form. */
+  wide?: boolean;
+  hint: string;
 }
 
 /** Form layout, in display order. `autocomplete` lets browsers fill in an organization's details. */
-export const SECTIONS: { title: string; fields: FieldDefinition[] }[] = [
+export const SECTIONS: { title: string; icon: IconName; help: string; fields: FieldDefinition[] }[] = [
   {
     title: 'Contact',
+    icon: 'users',
+    help: 'Who you invoice, and where invoices are sent.',
     fields: [
-      { name: 'name', label: 'Company or full name', autocomplete: 'organization' },
-      { name: 'email', label: 'Billing email', type: 'email', autocomplete: 'email', inputmode: 'email' },
-      { name: 'phone', label: 'Phone (optional)', type: 'tel', autocomplete: 'tel', inputmode: 'tel' },
+      {
+        name: 'name',
+        label: 'Company or full name',
+        autocomplete: 'organization',
+        placeholder: 'e.g. ACME SAS',
+        wide: true,
+        hint: 'As it should appear on your invoices.',
+      },
+      {
+        name: 'email',
+        label: 'Billing email',
+        type: 'email',
+        autocomplete: 'email',
+        inputmode: 'email',
+        placeholder: 'e.g. accounting@acme.fr',
+        hint: 'Invoices and payment reminders are sent to this address.',
+      },
+      {
+        name: 'phone',
+        label: 'Phone (optional)',
+        type: 'tel',
+        autocomplete: 'tel',
+        inputmode: 'tel',
+        placeholder: 'e.g. +33 1 23 45 67 89',
+        hint: 'To reach your contact about a payment.',
+      },
     ],
   },
   {
     title: 'Address',
+    icon: 'map-pin',
+    help: 'Printed on the invoice. Required by law for business customers.',
     fields: [
-      { name: 'street', label: 'Street (optional)', autocomplete: 'street-address' },
-      { name: 'postalCode', label: 'Postal code (optional)', autocomplete: 'postal-code' },
-      { name: 'city', label: 'City (optional)', autocomplete: 'address-level2' },
-      { name: 'country', label: 'Country (optional)', autocomplete: 'country-name' },
+      {
+        name: 'street',
+        label: 'Street (optional)',
+        autocomplete: 'street-address',
+        placeholder: 'e.g. 1 rue de la Paix',
+        wide: true,
+        hint: 'Number, street, and building or floor if needed.',
+      },
+      { name: 'postalCode', label: 'Postal code (optional)', autocomplete: 'postal-code', hint: 'e.g. 75002' },
+      { name: 'city', label: 'City (optional)', autocomplete: 'address-level2', hint: 'e.g. Paris' },
+      { name: 'country', label: 'Country (optional)', autocomplete: 'country-name', hint: 'e.g. France' },
     ],
   },
   {
     title: 'Legal identifiers',
+    icon: 'shield',
+    help: 'Business customers only: leave empty for an individual.',
     fields: [
-      { name: 'siret', label: 'SIRET (optional)', autocomplete: 'off', inputmode: 'numeric', hint: '14 digits' },
-      { name: 'vatNumber', label: 'VAT number (optional)', autocomplete: 'off', hint: 'e.g. FR12345678901' },
+      {
+        name: 'siret',
+        label: 'SIRET (optional)',
+        autocomplete: 'off',
+        inputmode: 'numeric',
+        placeholder: '14 digits',
+        hint: 'On the customer’s invoices or Kbis, or at annuaire-entreprises.data.gouv.fr.',
+      },
+      {
+        name: 'vatNumber',
+        label: 'VAT number (optional)',
+        autocomplete: 'off',
+        placeholder: 'e.g. FR12345678901',
+        hint: 'Intra-EU VAT number, required for business customers in the EU.',
+      },
     ],
   },
 ];
@@ -70,13 +124,14 @@ const REQUIRED_MESSAGES: Partial<Record<Field, string>> = {
 /** Creates a customer (`/customers/new`) or edits one (`/customers/:id/edit`). */
 @Component({
   selector: 'app-customer-form',
-  imports: [AppHeader, Icon, ReactiveFormsModule, RouterLink, SubmitButton],
+  imports: [AppHeader, Icon, PageHeader, ReactiveFormsModule, RouterLink, SubmitButton],
   templateUrl: './customer-form.html',
   styleUrl: './customer-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomerForm implements OnInit {
   private readonly customers = inject(CustomerService);
+  private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
   private readonly destroyRef = inject(DestroyRef);
@@ -157,7 +212,12 @@ export class CustomerForm implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => void this.router.navigateByUrl('/customers'),
+        next: (customer) => {
+          this.toasts.success(
+            id === undefined ? `${customer.name} was added to your customers.` : `${customer.name} was saved.`,
+          );
+          void this.router.navigateByUrl('/customers');
+        },
         error: (error: unknown) => {
           this.error.set(errorMessage(error));
           applyServerErrors(this.form, error);

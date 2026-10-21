@@ -1,26 +1,32 @@
 <app-header />
 
-<main class="container page">
-  <a class="back" routerLink="/customers"><app-icon name="chevron-left" [size]="16" />Customers</a>
-  <h1>{{ editing() ? 'Edit customer' : 'New customer' }}</h1>
+<main class="container app-page narrow">
+  <app-page-header
+    icon="users"
+    [heading]="editing() ? 'Edit customer' : 'New customer'"
+    subtitle="Only the name and the billing email are required: you can complete the rest later."
+    backLink="/customers"
+    backLabel="Customers"
+  />
 
   @if (loadError(); as message) {
     <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
     <a class="btn btn-ghost" routerLink="/customers">Back to customers</a>
   } @else if (loading()) {
-    <p class="status" role="status"><span class="spinner" aria-hidden="true"></span>Loading the customer…</p>
+    <p class="status-line" role="status"><span class="spinner" aria-hidden="true"></span>Loading the customer…</p>
   } @else {
     @if (error(); as message) {
       <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
     }
 
-    <form class="card form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form class="panel form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       @for (section of sections; track section.title) {
-        <fieldset>
-          <legend>{{ section.title }}</legend>
-          <div class="fields">
+        <fieldset class="form-section">
+          <legend><app-icon [name]="section.icon" [size]="18" />{{ section.title }}</legend>
+          <p class="section-help">{{ section.help }}</p>
+          <div class="form-grid">
             @for (field of section.fields; track field.name) {
-              <div class="field" [class.wide]="field.name === 'street'">
+              <div class="field" [class.wide]="field.wide">
                 <label [for]="'customer-' + field.name">{{ field.label }}</label>
                 <input
                   class="input"
@@ -30,19 +36,14 @@
                   [attr.name]="field.name"
                   [attr.autocomplete]="field.autocomplete"
                   [attr.inputmode]="field.inputmode ?? null"
+                  [attr.placeholder]="field.placeholder ?? null"
                   [attr.spellcheck]="field.type === 'email' ? 'false' : null"
                   [attr.aria-invalid]="showError(form.controls[field.name])"
-                  [attr.aria-describedby]="
-                    message(field.name)
-                      ? 'customer-' + field.name + '-error'
-                      : field.hint
-                        ? 'customer-' + field.name + '-hint'
-                        : null
-                  "
+                  [attr.aria-describedby]="'customer-' + field.name + (message(field.name) ? '-error' : '-hint')"
                 />
                 @if (message(field.name); as text) {
                   <p class="field-error" [id]="'customer-' + field.name + '-error'">{{ text }}</p>
-                } @else if (field.hint) {
+                } @else {
                   <p class="hint" [id]="'customer-' + field.name + '-hint'">{{ field.hint }}</p>
                 }
               </div>
@@ -51,7 +52,7 @@
         </fieldset>
       }
 
-      <div class="footer">
+      <div class="form-footer">
         <a class="btn btn-ghost" routerLink="/customers">Cancel</a>
         <app-submit-button
           [label]="editing() ? 'Save changes' : 'Create customer'"

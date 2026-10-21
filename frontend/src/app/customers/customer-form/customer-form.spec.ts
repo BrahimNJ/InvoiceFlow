@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { ToastService } from '../../shared/ui/toast.service';
 import { testCustomer } from '../customer.fixtures';
 import { CUSTOMERS_API } from '../customer.service';
 import { CustomerForm } from './customer-form';
@@ -51,12 +52,20 @@ describe('CustomerForm', () => {
   describe('creating', () => {
     beforeEach(() => open());
 
-    it('renders a labelled form with autofill hints', () => {
+    it('renders a labelled form that explains every section and field', () => {
       expect(page.querySelector('h1')?.textContent).toContain('New customer');
-      expect(page.querySelectorAll('fieldset legend').length).toBe(3);
+      expect([...page.querySelectorAll('fieldset legend')].map((legend) => legend.textContent?.trim())).toEqual([
+        'Contact',
+        'Address',
+        'Legal identifiers',
+      ]);
+      expect(page.querySelectorAll('.section-help').length).toBe(3);
       for (const field of ['name', 'email', 'phone', 'street', 'postalCode', 'city', 'country', 'siret', 'vatNumber']) {
         expect(page.querySelector(`label[for="customer-${field}"]`)).toBeTruthy();
+        expect(input(field).getAttribute('aria-describedby')).toBe(`customer-${field}-hint`);
+        expect(page.querySelector(`#customer-${field}-hint`)?.textContent?.trim()).not.toBe('');
       }
+      expect(page.querySelector('#customer-siret-hint')?.textContent).toContain('annuaire-entreprises');
       expect(input('name').autocomplete).toBe('organization');
       expect(input('email').type).toBe('email');
       expect(input('siret').getAttribute('inputmode')).toBe('numeric');
@@ -99,6 +108,7 @@ describe('CustomerForm', () => {
       request.flush(testCustomer());
       await fixture.whenStable();
 
+      expect(TestBed.inject(ToastService).toasts()[0].message).toBe('ACME was added to your customers.');
       expect(navigateByUrl).toHaveBeenCalledWith('/customers');
     });
 
@@ -139,6 +149,7 @@ describe('CustomerForm', () => {
       request.flush(testCustomer({ name: 'ACME Corp' }));
       await fixture.whenStable();
 
+      expect(TestBed.inject(ToastService).toasts()[0].message).toBe('ACME Corp was saved.');
       expect(navigateByUrl).toHaveBeenCalledWith('/customers');
     });
 
