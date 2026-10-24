@@ -62,52 +62,7 @@
 
           <section class="panel block" aria-labelledby="customer-title">
             <h2 id="customer-title"><span class="step">1</span>Customer</h2>
-            @if (customer(); as selected) {
-              <div class="customer-card">
-                <span class="avatar" aria-hidden="true">{{ (selected.details.name ?? '?').charAt(0) }}</span>
-                <div class="customer-text">
-                  <strong>{{ selected.details.name }}</strong>
-                  @for (part of address(); track $index) {
-                    <span>{{ part }}</span>
-                  } @empty {
-                    <span class="missing"><app-icon name="alert" [size]="14" />No billing address</span>
-                  }
-                  @if (selected.details.siret) {
-                    <span class="muted">SIRET {{ selected.details.siret }}</span>
-                  }
-                  @if (selected.details.email) {
-                    <span class="muted">{{ selected.details.email }}</span>
-                  }
-                </div>
-                <div class="customer-actions">
-                  @if (selected.id !== null) {
-                    <a class="btn btn-ghost btn-sm" [routerLink]="['/customers', selected.id, 'edit']" target="_blank">
-                      <app-icon name="pencil" [size]="14" />Edit details
-                    </a>
-                  }
-                  <button class="btn btn-ghost btn-sm" type="button" (click)="changeCustomer()">Change</button>
-                </div>
-              </div>
-            } @else {
-              <app-autocomplete
-                #customerPicker
-                label="Customer"
-                placeholder="Search a customer by name or email"
-                icon="users"
-                emptyText="Your customers"
-                inputId="customer-picker"
-                [clearOnPick]="true"
-                [search]="searchCustomers"
-                (picked)="pickCustomer($event)"
-              >
-                <ng-template #option let-customer>
-                  <span class="option">
-                    <span class="option-name">{{ customer.name }}</span>
-                    <span class="option-meta">{{ customer.email }}{{ customer.city ? ' · ' + customer.city : '' }}</span>
-                  </span>
-                </ng-template>
-              </app-autocomplete>
-            }
+            <app-invoice-customer [(customer)]="customer" (customerChange)="customerChanged()" />
           </section>
 
           <section class="panel block" aria-labelledby="terms-title">

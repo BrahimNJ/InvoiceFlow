@@ -10,7 +10,6 @@ import {
   inject,
   input,
   signal,
-  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -19,18 +18,15 @@ import { Observable, finalize, map, startWith, switchMap } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ProblemDetail, errorMessage } from '../../core/http/problem-detail';
-import { Customer } from '../../customers/customer.models';
-import { CustomerService } from '../../customers/customer.service';
 import { AppHeader } from '../../shared/app-header';
 import { formatEuros, formatPercent } from '../../shared/format/money';
 import { showError } from '../../shared/forms/forms';
 import { Icon } from '../../shared/icon/icon';
-import { Autocomplete } from '../../shared/ui/autocomplete';
 import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
 import { computeTotals, dueDate, formatDate, lineTotal, operationNature, readiness, todayIso } from '../invoice-calc';
 import { InvoiceDocument, InvoiceDocumentView } from '../invoice-document/invoice-document';
-import { BilledCustomer, Invoice, PAYMENT_TERMS, PaymentTerms, READINESS, ReadinessCode } from '../invoice.models';
+import { Invoice, PAYMENT_TERMS, PaymentTerms, READINESS, ReadinessCode } from '../invoice.models';
 import { InvoiceService } from '../invoice.service';
 import {
   NOTES_MAX_LENGTH,
@@ -40,27 +36,9 @@ import {
   pricedLine,
   toPayload,
 } from './invoice-form';
+import { InvoiceCustomer, SelectedCustomer } from './invoice-customer';
 import { InvoiceLines } from './invoice-lines';
 import { InvoiceSidePanel } from './invoice-side-panel';
-
-/** The customer billed by the draft: its id and the details printed on the invoice. */
-export interface SelectedCustomer {
-  id: number | null;
-  details: BilledCustomer;
-}
-
-export function billedCustomer(customer: Customer): BilledCustomer {
-  return {
-    name: customer.name,
-    email: customer.email,
-    street: customer.street,
-    postalCode: customer.postalCode,
-    city: customer.city,
-    country: customer.country,
-    siret: customer.siret,
-    vatNumber: customer.vatNumber,
-  };
-}
 
 /**
  * Writes a draft invoice (`/invoices/new`, `/invoices/:id/edit`) in one workspace: customer, payment terms, lines and
@@ -70,8 +48,8 @@ export function billedCustomer(customer: Customer): BilledCustomer {
   selector: 'app-invoice-editor',
   imports: [
     AppHeader,
-    Autocomplete,
     Icon,
+    InvoiceCustomer,
     InvoiceDocumentView,
     InvoiceLines,
     InvoiceSidePanel,
@@ -84,7 +62,6 @@ export function billedCustomer(customer: Customer): BilledCustomer {
 })
 export class InvoiceEditor implements OnInit {
   private readonly invoices = inject(InvoiceService);
-  private readonly customers = inject(CustomerService);
   private readonly toasts = inject(ToastService);
   private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
@@ -95,8 +72,6 @@ export class InvoiceEditor implements OnInit {
 
   /** From the `:id` route parameter (router input binding); absent for a new draft. */
   readonly id = input<string>();
-
-  private readonly customerPicker = viewChild<Autocomplete<Customer>>('customerPicker');
 
   protected readonly termOptions = (Object.keys(PAYMENT_TERMS) as PaymentTerms[]).map((terms) => ({
     terms,
@@ -158,19 +133,6 @@ export class InvoiceEditor implements OnInit {
       notes: this.value().notes.trim() || null,
     }),
   );
-  protected readonly address = computed(() => {
-    const details = this.customer()?.details;
-    if (!details) {
-      return [];
-    }
-    return [details.street, [details.postalCode, details.city].filter(Boolean).join(' '), details.country].filter(
-      (part): part is string => !!part,
-    );
-  });
-
-  protected readonly searchCustomers = (text: string): Observable<Customer[]> =>
-    this.customers.list({ search: text, size: 8 }).pipe(map((page) => page.content));
-
   constructor() {
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.form.dirty) {
@@ -191,15 +153,8 @@ export class InvoiceEditor implements OnInit {
     return this.dirty() && !this.saving();
   }
 
-  protected pickCustomer(customer: Customer): void {
-    this.customer.set({ id: customer.id, details: billedCustomer(customer) });
+  protected customerChanged(): void {
     this.dirty.set(true);
-  }
-
-  protected changeCustomer(): void {
-    this.customer.set(null);
-    this.dirty.set(true);
-    setTimeout(() => this.customerPicker()?.focus());
   }
 
   protected notesLength(): number {

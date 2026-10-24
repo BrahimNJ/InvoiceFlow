@@ -75,8 +75,8 @@ describe('InvoiceEditor', () => {
     expect(page.textContent).toContain('No line yet');
 
     await pick('customer-picker', CUSTOMERS_API, 'acme', [testCustomer({ id: 3, name: 'Acme SAS' })]);
-    expect(page.querySelector('.customer-card')?.textContent).toContain('Acme SAS');
-    expect(page.querySelector('.customer-card')?.textContent).toContain('75002 Paris');
+    expect(page.querySelector('app-invoice-customer .card')?.textContent).toContain('Acme SAS');
+    expect(page.querySelector('app-invoice-customer .card')?.textContent).toContain('75002 Paris');
 
     page.querySelectorAll<HTMLInputElement>('.term input')[0].click();
     await fixture.whenStable();
@@ -126,7 +126,7 @@ describe('InvoiceEditor', () => {
     http.expectOne(`${INVOICES_API}/1`).flush(testInvoice({ notes: 'Thanks' }));
     await fixture.whenStable();
 
-    expect(page.querySelector('.customer-card')?.textContent).toContain('Acme SAS');
+    expect(page.querySelector('app-invoice-customer .card')?.textContent).toContain('Acme SAS');
     expect(page.querySelector<HTMLTextAreaElement>('#invoice-notes')?.value).toBe('Thanks');
     expect(page.querySelectorAll('.line').length).toBe(1);
     expect(totalsText()).toContain('Total incl. VAT 1 560,00 €');
@@ -144,6 +144,34 @@ describe('InvoiceEditor', () => {
     await fixture.whenStable();
   });
 
+  it('creates a new customer in a drawer and bills it at once', async () => {
+    await fixture.whenStable();
+    const input = page.querySelector<HTMLInputElement>('#customer-picker')!;
+    input.value = 'Globex';
+    input.dispatchEvent(new Event('input'));
+    await debounce();
+    http.expectOne((r) => r.url === CUSTOMERS_API).flush(pageOf([]));
+    await fixture.whenStable();
+
+    const create = [...page.querySelectorAll<HTMLElement>('li[role="option"]')].at(-1)!;
+    expect(create.textContent).toContain('New customer “Globex”');
+    create.click();
+    await fixture.whenStable();
+    expect(page.querySelector<HTMLInputElement>('#drawer-name')?.value).toBe('Globex');
+
+    for (const [id, value] of [['email', 'billing@globex.test'], ['street', '5 avenue Foch'], ['postalCode', '69006'], ['city', 'Lyon']]) {
+      await type(`#drawer-${id}`, value);
+    }
+    page.querySelector('app-customer-drawer form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    http.expectOne(CUSTOMERS_API).flush(testCustomer({ id: 9, name: 'Globex', street: '5 avenue Foch', postalCode: '69006', city: 'Lyon' }));
+    await fixture.whenStable();
+
+    expect(page.querySelector('app-customer-drawer')).toBeNull();
+    expect(page.querySelector('app-invoice-customer .card')?.textContent).toContain('69006 Lyon');
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+  });
+
   it('lets the user change the customer', async () => {
     fixture.componentRef.setInput('id', '1');
     await fixture.whenStable();
@@ -153,7 +181,7 @@ describe('InvoiceEditor', () => {
     button('Change').click();
     await fixture.whenStable();
 
-    expect(page.querySelector('.customer-card')).toBeNull();
+    expect(page.querySelector('app-invoice-customer .card')).toBeNull();
     expect(page.querySelector('#customer-picker')).toBeTruthy();
     expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
   });
