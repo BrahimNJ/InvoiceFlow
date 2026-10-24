@@ -2,6 +2,7 @@ package com.naji.backend.invoice;
 
 import com.naji.backend.customer.Customer;
 import com.naji.backend.customer.CustomerRepository;
+import com.naji.backend.invoice.dto.InvoiceTotals;
 import com.naji.backend.product.ProductType;
 import com.naji.backend.product.ProductUnit;
 import com.naji.backend.user.User;
@@ -139,6 +140,25 @@ class InvoiceRepositoryTest {
     }
 
     @Test
+    void totals_countAndSumTheOwnersInvoicesPerStatusDueDateAndIssueDate() {
+        save(withTotal(draft(ownerId, "Draft"), "100.00"));
+        save(withTotal(issued(ownerId, "Late", "F-2026-0001", LocalDate.of(2026, 9, 1), TODAY.minusDays(1)), "1200.50"));
+        save(withTotal(issued(ownerId, "Recent", "F-2026-0002", LocalDate.of(2026, 10, 2), TODAY.plusDays(20)), "300.25"));
+        save(withTotal(issued(otherOwnerId, "Other", "F-2026-0001", TODAY, TODAY), "999.00"));
+
+        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.DRAFT, null, null))
+                .isEqualTo(new InvoiceTotals(1L, new BigDecimal("100.00")));
+        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, null))
+                .isEqualTo(new InvoiceTotals(2L, new BigDecimal("1500.75")));
+        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, TODAY, null))
+                .isEqualTo(new InvoiceTotals(1L, new BigDecimal("1200.50")));
+        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, LocalDate.of(2026, 10, 1)))
+                .isEqualTo(new InvoiceTotals(1L, new BigDecimal("300.25")));
+        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.CANCELLED, null, null))
+                .isEqualTo(new InvoiceTotals(0L, new BigDecimal("0.00")));
+    }
+
+    @Test
     void anOwnerCannotUseTheSameNumberTwice() {
         save(issued(ownerId, "Acme", "F-2026-0001", TODAY, TODAY));
         save(issued(otherOwnerId, "Acme", "F-2026-0001", TODAY, TODAY));
@@ -178,6 +198,11 @@ class InvoiceRepositoryTest {
         invoice.setNumber(number);
         invoice.setIssueDate(issueDate);
         invoice.setDueDate(dueDate);
+        return invoice;
+    }
+
+    private static Invoice withTotal(Invoice invoice, String total) {
+        invoice.setTotal(new BigDecimal(total));
         return invoice;
     }
 

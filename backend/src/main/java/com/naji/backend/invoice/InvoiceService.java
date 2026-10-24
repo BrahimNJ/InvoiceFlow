@@ -11,6 +11,7 @@ import com.naji.backend.invoice.dto.InvoiceLineRequest;
 import com.naji.backend.invoice.dto.InvoiceListItem;
 import com.naji.backend.invoice.dto.InvoiceRequest;
 import com.naji.backend.invoice.dto.InvoiceResponse;
+import com.naji.backend.invoice.dto.InvoiceSummaryResponse;
 import com.naji.backend.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -74,6 +75,16 @@ public class InvoiceService {
                         filters.issuedTo(),
                         pageRequest),
                 invoice -> invoiceMapper.toListItem(invoice, today));
+    }
+
+    /** Key figures for the list: drafts, outstanding, overdue and issued this month (in Paris time). */
+    public InvoiceSummaryResponse summary(Long ownerId) {
+        LocalDate today = today();
+        return new InvoiceSummaryResponse(
+                invoiceRepository.totals(ownerId, InvoiceStatus.DRAFT, null, null),
+                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, null),
+                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, today, null),
+                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, today.withDayOfMonth(1)));
     }
 
     public InvoiceResponse findById(Long ownerId, Long id) {

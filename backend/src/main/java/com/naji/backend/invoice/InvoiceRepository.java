@@ -1,5 +1,6 @@
 package com.naji.backend.invoice;
 
+import com.naji.backend.invoice.dto.InvoiceTotals;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,23 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             Pageable pageable);
 
     Optional<Invoice> findByIdAndOwnerId(Long id, Long ownerId);
+
+    /**
+     * Count and total including VAT of the owner's invoices in a status, optionally due strictly before
+     * {@code dueBefore} and issued on or after {@code issuedFrom} ({@code null}: no limit).
+     */
+    @Query("""
+            select new com.naji.backend.invoice.dto.InvoiceTotals(count(i), sum(i.total)) from Invoice i
+            where i.ownerId = :ownerId
+              and i.status = :status
+              and (:dueBefore is null or i.dueDate < :dueBefore)
+              and (:issuedFrom is null or i.issueDate >= :issuedFrom)
+            """)
+    InvoiceTotals totals(
+            @Param("ownerId") Long ownerId,
+            @Param("status") InvoiceStatus status,
+            @Param("dueBefore") LocalDate dueBefore,
+            @Param("issuedFrom") LocalDate issuedFrom);
 
     /**
      * Same as {@link #findByIdAndOwnerId}, with the row locked until the transaction ends: two requests changing the

@@ -10,6 +10,8 @@ import com.naji.backend.invoice.dto.InvoiceLineRequest;
 import com.naji.backend.invoice.dto.InvoiceListItem;
 import com.naji.backend.invoice.dto.InvoiceRequest;
 import com.naji.backend.invoice.dto.InvoiceResponse;
+import com.naji.backend.invoice.dto.InvoiceSummaryResponse;
+import com.naji.backend.invoice.dto.InvoiceTotals;
 import com.naji.backend.product.Product;
 import com.naji.backend.product.ProductRepository;
 import com.naji.backend.product.ProductType;
@@ -122,6 +124,22 @@ class InvoiceServiceTest {
         invoiceService.search(OWNER_ID, new InvoiceSearch(null, null, null, null, null, InvoiceSort.DUE_DATE, null), -2, 5000);
 
         verify(invoiceRepository).search(OWNER_ID, "%", null, null, null, null, null, expected);
+    }
+
+    @Test
+    void summary_countsDraftsOutstandingOverdueAndIssuedThisMonth() {
+        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.DRAFT, null, null)).thenReturn(totals(3, "2400"));
+        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, null, null)).thenReturn(totals(12, "18950"));
+        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, TODAY, null)).thenReturn(totals(2, "3120"));
+        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, null, LocalDate.of(2026, 10, 1)))
+                .thenReturn(totals(7, "9800"));
+
+        InvoiceSummaryResponse summary = invoiceService.summary(OWNER_ID);
+
+        assertThat(summary.drafts()).isEqualTo(totals(3, "2400.00"));
+        assertThat(summary.outstanding().count()).isEqualTo(12);
+        assertThat(summary.overdue().total()).hasToString("3120.00");
+        assertThat(summary.issuedThisMonth().count()).isEqualTo(7);
     }
 
     @Test
@@ -354,6 +372,10 @@ class InvoiceServiceTest {
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Invoice F-2026-0001 is already cancelled");
         verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    private static InvoiceTotals totals(long count, String total) {
+        return new InvoiceTotals(count, new BigDecimal(total).setScale(2));
     }
 
     /** A draft that passes every required check. */
