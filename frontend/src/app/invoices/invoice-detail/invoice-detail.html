@@ -1,0 +1,128 @@
+<app-header />
+
+<main class="container app-page">
+  <a class="back" routerLink="/invoices"><app-icon name="chevron-left" [size]="16" />Invoices</a>
+
+  @if (loading()) {
+    <p class="status-line" role="status"><span class="spinner dark" aria-hidden="true"></span>Loading the invoice…</p>
+  } @else if (loadError(); as message) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="18" /><span>{{ message }}</span>
+      <a class="btn btn-ghost btn-sm" routerLink="/invoices">Back to invoices</a>
+    </div>
+  } @else if (invoice(); as inv) {
+    @let status = badge()!;
+    <header class="head">
+      <div class="title">
+        <h1>{{ inv.number ?? 'Draft invoice' }}</h1>
+        <span [class]="'status-badge tone-' + status.tone"><app-icon [name]="status.icon" [size]="13" />{{ status.label }}</span>
+      </div>
+      <p class="subtitle">
+        {{ inv.customer.name ?? 'No customer yet' }} · <strong>{{ formatEuros(inv.total) }}</strong> incl. VAT
+      </p>
+    </header>
+
+    <div class="layout">
+      <div class="document">
+        <app-invoice-document [doc]="doc()" />
+      </div>
+
+      <aside class="side">
+        <section class="panel card actions" aria-label="Actions">
+          @switch (inv.status) {
+            @case ('DRAFT') {
+              <a class="btn btn-primary" [routerLink]="['/invoices', inv.id, 'edit']"><app-icon name="pencil" [size]="16" />Edit draft</a>
+              <button
+                class="btn btn-ghost"
+                type="button"
+                [disabled]="busy() !== null || blocking().length > 0"
+                [attr.aria-busy]="busy() === 'issue'"
+                (click)="issue()"
+              >
+                <app-icon name="send" [size]="16" />Issue invoice
+              </button>
+              @if (blocking().length > 0) {
+                <p class="note warn">
+                  <app-icon name="alert" [size]="14" />
+                  To issue it, complete: {{ blockingText() }}.
+                </p>
+              }
+              <button class="btn btn-ghost danger" type="button" [disabled]="busy() !== null" (click)="delete()">
+                <app-icon name="trash" [size]="16" />Delete draft
+              </button>
+            }
+            @case ('ISSUED') {
+              <button class="btn btn-primary" type="button" disabled title="Coming with PDF generation">
+                <app-icon name="download" [size]="16" />Download PDF
+              </button>
+              <button class="btn btn-ghost" type="button" [disabled]="busy() !== null" (click)="duplicate()">
+                <app-icon name="copy" [size]="16" />Duplicate
+              </button>
+              <button class="btn btn-ghost danger" type="button" [disabled]="busy() !== null" (click)="cancel()">
+                <app-icon name="x" [size]="16" />Cancel invoice
+              </button>
+              <p class="note">
+                <app-icon name="lock" [size]="14" />
+                Issued invoices are frozen by law. To correct one, cancel it and issue a corrected duplicate.
+              </p>
+            }
+            @case ('CANCELLED') {
+              <button class="btn btn-primary" type="button" [disabled]="busy() !== null" (click)="duplicate()">
+                <app-icon name="copy" [size]="16" />Duplicate
+              </button>
+              <p class="note"><app-icon name="info" [size]="14" />Cancelled invoices keep their number in your records.</p>
+            }
+          }
+        </section>
+
+        <section class="panel card" aria-labelledby="timeline-title">
+          <h2 id="timeline-title">Timeline</h2>
+          <ol class="timeline">
+            @for (step of timeline(); track step.label) {
+              <li [class]="step.tone ?? 'upcoming'">
+                <span class="dot" aria-hidden="true"><app-icon [name]="step.icon" [size]="13" /></span>
+                <span class="step-text">
+                  <strong>{{ step.label }}</strong>
+                  @if (step.when; as when) {
+                    <small>{{ isInstant(when) ? (when | date: 'dd/MM/yyyy, HH:mm') : formatDate(when) }}</small>
+                  }
+                  @if (step.detail) {
+                    <small>{{ step.detail }}</small>
+                  }
+                </span>
+              </li>
+            }
+          </ol>
+        </section>
+
+        <section class="panel card" aria-labelledby="amounts-title">
+          <h2 id="amounts-title">Amounts</h2>
+          <dl class="amounts">
+            <div><dt>Total excl. VAT</dt><dd>{{ formatEuros(inv.subtotal) }}</dd></div>
+            @for (vat of inv.vatBreakdown; track vat.rate) {
+              <div class="vat"><dt>VAT {{ formatPercent(vat.rate) }}</dt><dd>{{ formatEuros(vat.amount) }}</dd></div>
+            }
+            <div class="grand"><dt>Total incl. VAT</dt><dd>{{ formatEuros(inv.total) }}</dd></div>
+          </dl>
+        </section>
+
+        @if (inv.customer.name) {
+          <section class="panel card" aria-labelledby="customer-title">
+            <h2 id="customer-title">Customer</h2>
+            <p class="customer">
+              <strong>{{ inv.customer.name }}</strong>
+              @if (inv.customer.email) {
+                <a [href]="'mailto:' + inv.customer.email">{{ inv.customer.email }}</a>
+              }
+            </p>
+            @if (inv.customerId !== null) {
+              <a class="link" [routerLink]="['/customers', inv.customerId, 'edit']">Customer details<app-icon name="arrow-right" [size]="14" /></a>
+            } @else {
+              <p class="note"><app-icon name="info" [size]="14" />This customer was deleted; the invoice keeps their details.</p>
+            }
+          </section>
+        }
+      </aside>
+    </div>
+  }
+</main>
