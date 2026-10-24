@@ -14,10 +14,11 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { Observable, finalize, map, startWith } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
+import { Observable, finalize, map, startWith, switchMap } from 'rxjs';
 
-import { errorMessage } from '../../core/http/problem-detail';
+import { AuthService } from '../../core/auth/auth.service';
+import { ProblemDetail, errorMessage } from '../../core/http/problem-detail';
 import { Customer } from '../../customers/customer.models';
 import { CustomerService } from '../../customers/customer.service';
 import { AppHeader } from '../../shared/app-header';
@@ -25,9 +26,11 @@ import { formatEuros, formatPercent } from '../../shared/format/money';
 import { showError } from '../../shared/forms/forms';
 import { Icon } from '../../shared/icon/icon';
 import { Autocomplete } from '../../shared/ui/autocomplete';
+import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
-import { computeTotals, dueDate, formatDate, todayIso } from '../invoice-calc';
-import { BilledCustomer, Invoice, PAYMENT_TERMS, PaymentTerms } from '../invoice.models';
+import { computeTotals, dueDate, formatDate, lineTotal, operationNature, readiness, todayIso } from '../invoice-calc';
+import { InvoiceDocument, InvoiceDocumentView } from '../invoice-document/invoice-document';
+import { BilledCustomer, Invoice, PAYMENT_TERMS, PaymentTerms, READINESS, ReadinessCode } from '../invoice.models';
 import { InvoiceService } from '../invoice.service';
 import {
   NOTES_MAX_LENGTH,
@@ -38,6 +41,7 @@ import {
   toPayload,
 } from './invoice-form';
 import { InvoiceLines } from './invoice-lines';
+import { InvoiceSidePanel } from './invoice-side-panel';
 
 /** The customer billed by the draft: its id and the details printed on the invoice. */
 export interface SelectedCustomer {
@@ -64,7 +68,16 @@ export function billedCustomer(customer: Customer): BilledCustomer {
  */
 @Component({
   selector: 'app-invoice-editor',
-  imports: [AppHeader, Autocomplete, Icon, InvoiceLines, ReactiveFormsModule, RouterLink],
+  imports: [
+    AppHeader,
+    Autocomplete,
+    Icon,
+    InvoiceDocumentView,
+    InvoiceLines,
+    InvoiceSidePanel,
+    ReactiveFormsModule,
+    RouterLink,
+  ],
   templateUrl: './invoice-editor.html',
   styleUrl: './invoice-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,7 +86,10 @@ export class InvoiceEditor implements OnInit {
   private readonly invoices = inject(InvoiceService);
   private readonly customers = inject(CustomerService);
   private readonly toasts = inject(ToastService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly router = inject(Router);
   private readonly location = inject(Location);
+  private readonly user = inject(AuthService).user;
   private readonly destroyRef = inject(DestroyRef);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
 
@@ -104,12 +120,44 @@ export class InvoiceEditor implements OnInit {
   protected readonly loading = signal(false);
   protected readonly loadError = signal<string | null>(null);
   protected readonly saving = signal(false);
+  protected readonly issuing = signal(false);
+  /** Phones and tablets: the A4 preview opens full screen. */
+  protected readonly previewOpen = signal(false);
   protected readonly error = signal<string | null>(null);
   /** Changes since the last save (form or customer). */
   protected readonly dirty = signal(false);
 
   protected readonly totals = computed(() => computeTotals(this.value().lines.map(pricedLine)));
   protected readonly dueIfIssuedToday = computed(() => dueDate(this.value().paymentTerms, this.today));
+  protected readonly checks = computed(() => readiness(this.customer()?.details ?? null, this.value().lines.length));
+  protected readonly blocking = computed(() => this.checks().filter((check) => check.required && !check.passed));
+  /** The invoice as it would be printed if issued today. */
+  protected readonly doc = computed(
+    (): InvoiceDocument => ({
+      number: null,
+      cancelled: false,
+      issueDate: this.today,
+      dueDate: this.dueIfIssuedToday(),
+      paymentTerms: this.value().paymentTerms,
+      seller: [this.user()?.firstName, this.user()?.lastName].filter(Boolean).join(' ') || 'Your company',
+      customer: this.customer()?.details ?? null,
+      lines: this.value().lines.map((line) => {
+        const priced = pricedLine(line);
+        return {
+          label: line.label,
+          details: line.details || null,
+          quantity: priced.quantity,
+          unit: line.unit,
+          unitPrice: priced.unitPrice,
+          vatRate: priced.vatRate,
+          lineTotal: lineTotal(priced.quantity, priced.unitPrice),
+        };
+      }),
+      totals: this.totals(),
+      operationNature: operationNature(this.value().lines.map((line) => line.type)),
+      notes: this.value().notes.trim() || null,
+    }),
+  );
   protected readonly address = computed(() => {
     const details = this.customer()?.details;
     if (!details) {
@@ -166,6 +214,45 @@ export class InvoiceEditor implements OnInit {
   }
 
   /**
+   * Saves the draft, then issues it once the user confirms: it gets its number and can no longer be changed.
+   * Opens the issued invoice.
+   */
+  protected async issue(): Promise<void> {
+    if (this.issuing() || this.saving() || this.blocking().length > 0) {
+      return;
+    }
+    const confirmed = await this.confirm.ask({
+      title: 'Issue this invoice?',
+      message:
+        `It gets the next invoice number and is dated today, ${formatDate(this.today)}. ` +
+        'An issued invoice can no longer be changed or deleted, only cancelled.',
+      confirmLabel: 'Issue invoice',
+    });
+    if (!confirmed) {
+      return;
+    }
+    this.issuing.set(true);
+    this.persist()
+      .pipe(
+        switchMap((draft) => this.invoices.issue(draft.id)),
+        finalize(() => this.issuing.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (invoice) => {
+          this.toasts.success(`Invoice ${invoice.number} issued.`);
+          void this.router.navigate(['/invoices', invoice.id]);
+        },
+        error: (error: unknown) => {
+          // A form that is not valid already shows its errors
+          if (!(error instanceof InvalidForm)) {
+            this.error.set(issueErrorMessage(error));
+          }
+        },
+      });
+  }
+
+  /**
    * Creates or updates the draft. Emits the saved invoice; on a rejected save, shows the errors and errors out.
    * A new draft moves to its edit URL, so that the next save updates it.
    */
@@ -179,7 +266,7 @@ export class InvoiceEditor implements OnInit {
         this.form.markAllAsTouched();
         this.error.set('Some lines need your attention.');
         this.focusFirstInvalid();
-        subscriber.error(new Error('invalid'));
+        subscriber.error(new InvalidForm());
         return;
       }
       const payload = toPayload(this.form, this.customer()?.id ?? null);
@@ -247,4 +334,18 @@ export class InvoiceEditor implements OnInit {
           ),
       });
   }
+}
+
+/** The draft was not sent: some fields are not valid. */
+class InvalidForm extends Error {}
+
+/** The missing mentions of a 422, in words; the generic message otherwise. */
+function issueErrorMessage(error: unknown): string {
+  const missing =
+    error instanceof HttpErrorResponse && error.status === 422
+      ? ((error.error as ProblemDetail & { missing?: ReadinessCode[] }).missing ?? [])
+      : [];
+  return missing.length > 0
+    ? `This invoice cannot be issued yet. Missing: ${missing.map((code) => READINESS[code].label.toLowerCase()).join(', ')}.`
+    : errorMessage(error);
 }

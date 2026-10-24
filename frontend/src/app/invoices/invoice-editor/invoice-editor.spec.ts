@@ -2,13 +2,14 @@ import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { testCustomer } from '../../customers/customer.fixtures';
 import { CUSTOMERS_API } from '../../customers/customer.service';
 import { testProduct } from '../../products/product.fixtures';
 import { PRODUCTS_API } from '../../products/product.service';
 import { AUTOCOMPLETE_DEBOUNCE_MS } from '../../shared/ui/autocomplete';
+import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
 import { pageOf, testInvoice, testIssuedInvoice } from '../invoice.fixtures';
 import { INVOICES_API } from '../invoice.service';
@@ -40,7 +41,7 @@ describe('InvoiceEditor', () => {
     )!;
   /** Each total as "label amount", one after the other. */
   const totalsText = () =>
-    [...page.querySelectorAll('.totals dl > div')]
+    [...page.querySelectorAll('dl.totals > div')]
       .map((row) => `${plain(row.querySelector('dt')?.textContent)} ${plain(row.querySelector('dd')?.textContent)}`)
       .join(' | ');
 
@@ -87,8 +88,8 @@ describe('InvoiceEditor', () => {
     ]);
     expect(page.querySelectorAll('.line').length).toBe(2);
     expect(totalsText()).toContain('Total excl. VAT 699,90 €');
-    expect(totalsText()).toContain('VAT 20 % 130,00 €');
-    expect(totalsText()).toContain('VAT 5,5 % 2,74 €');
+    expect(totalsText()).toContain('VAT 20 % on 650,00 € 130,00 €');
+    expect(totalsText()).toContain('VAT 5,5 % on 49,90 € 2,74 €');
     expect(totalsText()).toContain('Total incl. VAT 832,64 €');
 
     // 2,5 days instead of 1
@@ -182,6 +183,97 @@ describe('InvoiceEditor', () => {
 
     expect(page.querySelector('[role="alert"]')?.textContent).toContain('Please check the highlighted fields.');
     expect(page.querySelector('.cell[data-label="Qty"] .field-error')?.textContent).toBe('must be greater than 0');
+  });
+
+  it('lists what is missing and only lets a complete invoice be issued', async () => {
+    await fixture.whenStable();
+    const checklist = () => [...page.querySelectorAll('.readiness li')].map((item) => item.className);
+
+    expect(checklist()).toEqual(['missing', 'missing', 'missing', 'warn', 'pending']);
+    expect(page.querySelector('.score')?.textContent).toBe('0/4');
+    expect(button('Issue invoice').disabled).toBe(true);
+
+    await pick('customer-picker', CUSTOMERS_API, 'acme', [testCustomer({ id: 3, siret: null })]);
+    await pick('product-picker', PRODUCTS_API, 'web', [testProduct()]);
+
+    expect(checklist()).toEqual(['ok', 'ok', 'ok', 'warn', 'pending']);
+    expect(page.querySelector('.readiness')?.textContent).toContain('Recommended.');
+    expect(button('Issue invoice').disabled).toBe(false);
+  });
+
+  it('saves, then issues the draft once confirmed, and opens it', async () => {
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask').mockResolvedValue(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const success = vi.spyOn(TestBed.inject(ToastService), 'success');
+    fixture.componentRef.setInput('id', '1');
+    await fixture.whenStable();
+    http.expectOne(`${INVOICES_API}/1`).flush(testInvoice());
+    await fixture.whenStable();
+
+    button('Issue invoice').click();
+    await fixture.whenStable();
+    expect(ask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Issue this invoice?', confirmLabel: 'Issue invoice' }));
+    http.expectOne(`${INVOICES_API}/1`).flush(testInvoice());
+    await fixture.whenStable();
+    const issue = http.expectOne(`${INVOICES_API}/1/issue`);
+    expect(issue.request.method).toBe('POST');
+    issue.flush(testIssuedInvoice());
+    await fixture.whenStable();
+
+    expect(success).toHaveBeenCalledWith('Invoice F-2026-0001 issued.');
+    expect(navigate).toHaveBeenCalledWith(['/invoices', 1]);
+  });
+
+  it('does nothing when the user does not confirm the issue', async () => {
+    vi.spyOn(TestBed.inject(ConfirmService), 'ask').mockResolvedValue(false);
+    fixture.componentRef.setInput('id', '1');
+    await fixture.whenStable();
+    http.expectOne(`${INVOICES_API}/1`).flush(testInvoice());
+    await fixture.whenStable();
+
+    button('Issue invoice').click();
+    await fixture.whenStable();
+
+    http.expectNone(`${INVOICES_API}/1`);
+  });
+
+  it('explains a refused issue with the missing mentions', async () => {
+    vi.spyOn(TestBed.inject(ConfirmService), 'ask').mockResolvedValue(true);
+    fixture.componentRef.setInput('id', '1');
+    await fixture.whenStable();
+    http.expectOne(`${INVOICES_API}/1`).flush(testInvoice());
+    await fixture.whenStable();
+
+    button('Issue invoice').click();
+    await fixture.whenStable();
+    http.expectOne(`${INVOICES_API}/1`).flush(testInvoice());
+    await fixture.whenStable();
+    http
+      .expectOne(`${INVOICES_API}/1/issue`)
+      .flush(
+        { detail: 'This invoice cannot be issued yet', missing: ['CUSTOMER_ADDRESS'] },
+        { status: 422, statusText: 'Unprocessable Content' },
+      );
+    await fixture.whenStable();
+
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain(
+      'This invoice cannot be issued yet. Missing: customer billing address.',
+    );
+  });
+
+  it('shows the invoice as it will be printed, in the side panel or full screen', async () => {
+    await fixture.whenStable();
+
+    button('Preview').click();
+    await fixture.whenStable();
+    expect(page.querySelector('.side app-invoice-document .watermark')?.textContent).toBe('Draft');
+
+    page.querySelector<HTMLButtonElement>('.mobile-bar button')!.click();
+    await fixture.whenStable();
+    expect(page.querySelector('[role="dialog"][aria-label="Invoice preview"] app-invoice-document')).toBeTruthy();
+    button('Close the preview').click();
+    await fixture.whenStable();
+    expect(page.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it('refuses to edit an issued invoice', async () => {
