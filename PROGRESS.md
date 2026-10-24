@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ Review and merge **Invoices** (#31, branch `31-feat/invoices`). Then: payments (3.5) or company details (5.1).
+➡️ Review and merge **Invoices** (#31, PR #32, branch `31-feat/invoices`). Then: payments (3.5) or company details (5.1).
 
 ---
 
@@ -59,12 +59,12 @@
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 3.1 | Invoice and invoice line entities | 🔍 In review | #31 | Flyway V6; customer details copied onto the invoice, frozen once issued |
-| 3.2 | Subtotal / VAT / total calculation | 🔍 In review | #31 | Half up per line, VAT once per rate; same rules in the frontend preview |
-| 3.3 | Invoice numbering and status lifecycle | 🔍 In review | #31 | Draft → Issued → Cancelled, overdue derived; `F-<year>-<0001>` gap-free, tested concurrently. Paid comes with 3.5 |
-| 3.4 | Invoice CRUD API | 🔍 In review | #31 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
+| 3.1 | Invoice and invoice line entities | 🔍 In review | #31 / #32 | Flyway V6; customer details copied onto the invoice, frozen once issued |
+| 3.2 | Subtotal / VAT / total calculation | 🔍 In review | #31 / #32 | Half up per line, VAT once per rate; same rules in the frontend preview |
+| 3.3 | Invoice numbering and status lifecycle | 🔍 In review | #31 / #32 | Draft → Issued → Cancelled, overdue derived; `F-<year>-<0001>` gap-free, tested concurrently. Paid comes with 3.5 |
+| 3.4 | Invoice CRUD API | 🔍 In review | #31 / #32 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
 | 3.5 | Payment tracking | 📋 Planned | — | |
-| 3.6 | Invoices UI | 🔍 In review | #31 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Not checked in a real browser yet (tests and build only) |
+| 3.6 | Invoices UI | 🔍 In review | #31 / #32 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Not checked in a real browser yet (tests and build only) |
 
 ## Phase 4 — Documents
 
