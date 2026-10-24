@@ -1,7 +1,7 @@
 # InvoiceFlow — progress
 
 > Single source of truth for project status. Updated at the end of every task (see `CLAUDE.md`, rule 7).
-> Last update: **2026-10-21**
+> Last update: **2026-10-24**
 
 ## Status legend
 
@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ Review and merge **Products & services** (#27, branch `27-feat/product-catalogue`), then **the customers restyle** (#28, branch `28-feat/customer-ui-restyle`, stacked on #27).
+➡️ **Invoices** (#31, branch `31-feat/invoices`): draft, issue and follow invoices (tasks 3.1 to 3.4 and 3.6).
 
 ---
 
@@ -46,25 +46,25 @@
 | 1.1 | Customer entity and CRUD API | ✅ Done | #3 / #4 | Reference module; 10 tests |
 | 1.2 | Customers scoped to their owner; pagination and search on `GET /api/customers` | ✅ Done | #23 / #24 | Flyway V4 deletes the customers created before authentication |
 | 1.3 | Customers UI (list, search, pagination, create/edit form, delete) | ✅ Done | #23 / #24 | Same PR as 1.2. Follow-up: details page with invoices |
-| 1.4 | Customers screens on the shared UI kit (help tips, icons, confirmation dialog, toasts, cards on phones) | 🔍 In review | #28 / #30 | Stacked on #29 (needs the kit): merge after it. CI green. Not checked in a real browser yet |
+| 1.4 | Customers screens on the shared UI kit (help tips, icons, confirmation dialog, toasts, cards on phones) | ✅ Done | #28 / #30 | |
 
 ## Phase 2 — Products & services
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 2.1 | Product entity and CRUD API (type, price, VAT rate, unit), scoped to the owner | 🔍 In review | #27 / #29 | Flyway V5, `@FrenchVatRate` (20 / 10 / 5.5 / 2.1 / 0), `BigDecimal` amounts. CI green |
-| 2.2 | Products UI and shared UI kit (page header, help tips, empty states, confirmation dialog, toasts, responsive tables) | 🔍 In review | #27 / #29 | Same PR as 2.1. Not checked in a real browser yet (tests and build only) |
+| 2.1 | Product entity and CRUD API (type, price, VAT rate, unit), scoped to the owner | ✅ Done | #27 / #29 | Flyway V5, `@FrenchVatRate` (20 / 10 / 5.5 / 2.1 / 0), `BigDecimal` amounts |
+| 2.2 | Products UI and shared UI kit (page header, help tips, empty states, confirmation dialog, toasts, responsive tables) | ✅ Done | #27 / #29 | Same PR as 2.1 |
 
 ## Phase 3 — Invoices
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 3.1 | Invoice and invoice line entities | 📋 Planned | — | Depends on 1.1, 2.1 |
-| 3.2 | Subtotal / VAT / total calculation | 📋 Planned | — | Unit-tested business rules |
-| 3.3 | Invoice numbering and status lifecycle | 📋 Planned | — | Draft → Issued → Paid / Overdue |
-| 3.4 | Invoice CRUD API | 📋 Planned | — | |
+| 3.1 | Invoice and invoice line entities | 🚧 In progress | #31 | Depends on 1.1, 2.1 |
+| 3.2 | Subtotal / VAT / total calculation | 🚧 In progress | #31 | Unit-tested business rules |
+| 3.3 | Invoice numbering and status lifecycle | 🚧 In progress | #31 | Draft → Issued → Paid / Overdue |
+| 3.4 | Invoice CRUD API | 🚧 In progress | #31 | |
 | 3.5 | Payment tracking | 📋 Planned | — | |
-| 3.6 | Invoices UI | 📋 Planned | — | |
+| 3.6 | Invoices UI | 🚧 In progress | #31 | |
 
 ## Phase 4 — Documents
 
@@ -100,6 +100,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-24 | Products (#29) and customers restyle (#30) merged. Invoices started on `31-feat/invoices` (#31). |
 | 2026-10-21 | Customers screens restyled with the shared UI kit on `28-feat/customer-ui-restyle` (#28), stacked on #27: 148 frontend tests pass. |
 | 2026-10-21 | Deploy wait-step fix merged (#26), production deploy green. Products & services and shared UI kit implemented on `27-feat/product-catalogue` (#27): 147 backend and 147 frontend tests pass. |
 | 2026-10-19 | Customer management merged (#24); production serves it. Deploy wait-step fix in review (#25 / #26). |
