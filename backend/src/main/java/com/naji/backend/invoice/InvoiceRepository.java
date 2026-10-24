@@ -1,8 +1,10 @@
 package com.naji.backend.invoice;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,4 +41,12 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             Pageable pageable);
 
     Optional<Invoice> findByIdAndOwnerId(Long id, Long ownerId);
+
+    /**
+     * Same as {@link #findByIdAndOwnerId}, with the row locked until the transaction ends: two requests changing the
+     * status of the same invoice run one after the other (an invoice is never issued twice, burning a number).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from Invoice i where i.id = :id and i.ownerId = :ownerId")
+    Optional<Invoice> lockByIdAndOwnerId(@Param("id") Long id, @Param("ownerId") Long ownerId);
 }

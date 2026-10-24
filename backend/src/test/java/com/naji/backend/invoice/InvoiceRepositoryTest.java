@@ -90,6 +90,14 @@ class InvoiceRepositoryTest {
     }
 
     @Test
+    void lockByIdAndOwnerId_onlyReachesTheOwnersInvoice() {
+        Long id = save(draft(ownerId, "Acme"));
+
+        assertThat(invoiceRepository.lockByIdAndOwnerId(id, ownerId)).isPresent();
+        assertThat(invoiceRepository.lockByIdAndOwnerId(id, otherOwnerId)).isEmpty();
+    }
+
+    @Test
     void search_matchesTheNumberOrTheCustomerNameIgnoringCase() {
         save(issued(ownerId, "Acme", "F-2026-0001", TODAY, TODAY.plusDays(30)));
         save(issued(ownerId, "Globex", "F-2026-0002", TODAY, TODAY.plusDays(30)));

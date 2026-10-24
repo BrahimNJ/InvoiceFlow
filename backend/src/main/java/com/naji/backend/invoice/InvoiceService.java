@@ -2,6 +2,7 @@ package com.naji.backend.invoice;
 
 import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
+import com.naji.backend.common.exception.UnprocessableException;
 import com.naji.backend.common.persistence.SearchPatterns;
 import com.naji.backend.common.web.PageResponse;
 import com.naji.backend.customer.Customer;
@@ -20,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -40,6 +44,7 @@ public class InvoiceService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final InvoiceMapper invoiceMapper;
+    private final InvoiceNumberGenerator numberGenerator;
     private final Clock clock;
 
     /**
@@ -96,6 +101,52 @@ public class InvoiceService {
         invoiceRepository.delete(getDraft(ownerId, id, "deleted"));
     }
 
+    /**
+     * Issues a draft: it gets today's date, its due date and the next number of the year, and can no longer be
+     * changed. The customer's billing details are refreshed one last time, then frozen. Answers 422 with the failed
+     * checks when a required mention is missing.
+     */
+    @Transactional
+    public InvoiceResponse issue(Long ownerId, Long id) {
+        Invoice invoice = lockInvoice(ownerId, id);
+        requireDraft(invoice, "issued");
+        if (invoice.getCustomerId() != null) {
+            customerRepository.findByIdAndOwnerId(invoice.getCustomerId(), ownerId)
+                    .ifPresent(customer -> invoiceMapper.copyCustomer(invoice, customer));
+        }
+        List<InvoiceReadiness.Check> missing = InvoiceReadiness.blocking(invoice);
+        if (!missing.isEmpty()) {
+            throw new UnprocessableException("This invoice cannot be issued yet: some mandatory details are missing",
+                    Map.of("missing", missing.stream().map(Enum::name).toList()));
+        }
+
+        LocalDate today = today();
+        invoice.setIssueDate(today);
+        invoice.setDueDate(invoice.getPaymentTerms().dueDate(today));
+        invoice.setNumber(numberGenerator.next(ownerId, today.getYear()));
+        invoice.setStatus(InvoiceStatus.ISSUED);
+        invoice.setIssuedAt(clock.instant());
+        return toResponse(invoiceRepository.saveAndFlush(invoice));
+    }
+
+    /**
+     * Cancels an issued invoice. It keeps its number, so that the sequence has no gap, and stays in the records.
+     * A draft is deleted instead.
+     */
+    @Transactional
+    public InvoiceResponse cancel(Long ownerId, Long id) {
+        Invoice invoice = lockInvoice(ownerId, id);
+        switch (invoice.getStatus()) {
+            case DRAFT -> throw new ConflictException("A draft cannot be cancelled: delete it instead");
+            case CANCELLED -> throw new ConflictException("Invoice %s is already cancelled".formatted(invoice.getNumber()));
+            case ISSUED -> {
+                invoice.setStatus(InvoiceStatus.CANCELLED);
+                invoice.setCancelledAt(clock.instant());
+            }
+        }
+        return toResponse(invoiceRepository.saveAndFlush(invoice));
+    }
+
     /** A new draft with the same customer, terms, notes and lines, whatever the status of the original. */
     @Transactional
     public InvoiceResponse duplicate(Long ownerId, Long id) {
@@ -132,14 +183,23 @@ public class InvoiceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice", id));
     }
 
-    /** @param action what the caller wants to do, for the error message: "edited", "deleted"… */
+    private Invoice lockInvoice(Long ownerId, Long id) {
+        return invoiceRepository.lockByIdAndOwnerId(id, ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice", id));
+    }
+
     private Invoice getDraft(Long ownerId, Long id, String action) {
         Invoice invoice = getInvoice(ownerId, id);
+        requireDraft(invoice, action);
+        return invoice;
+    }
+
+    /** @param action what the caller wants to do, for the error message: "edited", "deleted"… */
+    private static void requireDraft(Invoice invoice, String action) {
         if (!invoice.isDraft()) {
             throw new ConflictException("Only a draft can be %s: invoice %s is %s"
-                    .formatted(action, invoice.getNumber(), invoice.getStatus().name().toLowerCase()));
+                    .formatted(action, invoice.getNumber(), invoice.getStatus().name().toLowerCase(Locale.ROOT)));
         }
-        return invoice;
     }
 
     private Customer getCustomer(Long ownerId, Long id) {

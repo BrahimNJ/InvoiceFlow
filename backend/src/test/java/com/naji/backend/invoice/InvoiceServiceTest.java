@@ -2,6 +2,7 @@ package com.naji.backend.invoice;
 
 import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
+import com.naji.backend.common.exception.UnprocessableException;
 import com.naji.backend.common.web.PageResponse;
 import com.naji.backend.customer.Customer;
 import com.naji.backend.customer.CustomerRepository;
@@ -59,12 +60,15 @@ class InvoiceServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private InvoiceNumberGenerator numberGenerator;
+
     private InvoiceService invoiceService;
 
     @BeforeEach
     void setUp() {
         invoiceService = new InvoiceService(invoiceRepository, customerRepository, productRepository,
-                new InvoiceMapper(), CLOCK);
+                new InvoiceMapper(), numberGenerator, CLOCK);
     }
 
     @Test
@@ -259,6 +263,108 @@ class InvoiceServiceTest {
         assertThat(copy.customer().name()).isNull();
     }
 
+    @Test
+    void issue_numbersAndDatesTheDraftWithTheLatestCustomerDetails() {
+        Invoice draft = readyDraft();
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        Customer customer = addressed(customer());
+        customer.setName("Acme SAS (renamed)");
+        when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(customer));
+        when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0007");
+        when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
+
+        InvoiceResponse response = invoiceService.issue(OWNER_ID, 1L);
+
+        assertThat(response.status()).isEqualTo(InvoiceStatus.ISSUED);
+        assertThat(response.number()).isEqualTo("F-2026-0007");
+        assertThat(response.issueDate()).isEqualTo(TODAY);
+        assertThat(response.dueDate()).isEqualTo(LocalDate.of(2026, 11, 23));
+        assertThat(response.issuedAt()).isEqualTo(CLOCK.instant());
+        assertThat(response.customer().name()).isEqualTo("Acme SAS (renamed)");
+        assertThat(response.overdue()).isFalse();
+    }
+
+    @Test
+    void issue_keepsTheCopiedDetailsWhenTheCustomerWasDeleted() {
+        Invoice draft = readyDraft();
+        draft.setCustomerId(null);
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0001");
+        when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
+
+        InvoiceResponse response = invoiceService.issue(OWNER_ID, 1L);
+
+        assertThat(response.customer().name()).isEqualTo("Acme SAS");
+        verify(customerRepository, never()).findByIdAndOwnerId(any(), any());
+    }
+
+    @Test
+    void issue_refusesAnIncompleteInvoiceWithTheMissingChecks() {
+        Invoice draft = draft(1L);
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+
+        assertThatThrownBy(() -> invoiceService.issue(OWNER_ID, 1L))
+                .isInstanceOfSatisfying(UnprocessableException.class, ex ->
+                        assertThat(ex.getProperties()).containsEntry("missing", List.of("CUSTOMER", "CUSTOMER_ADDRESS", "LINES")));
+        verify(numberGenerator, never()).next(any(), any(Integer.class));
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void issue_refusesAnInvoiceThatIsNotADraft() {
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(issued(1L)));
+
+        assertThatThrownBy(() -> invoiceService.issue(OWNER_ID, 1L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Only a draft can be issued: invoice F-2026-0001 is issued");
+        verify(numberGenerator, never()).next(any(), any(Integer.class));
+    }
+
+    @Test
+    void issue_throwsWhenMissingOrOwnedBySomeoneElse() {
+        when(invoiceRepository.lockByIdAndOwnerId(42L, OWNER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> invoiceService.issue(OWNER_ID, 42L)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void cancel_keepsTheNumberAndRecordsWhen() {
+        Invoice invoice = issued(1L);
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.saveAndFlush(invoice)).thenReturn(invoice);
+
+        InvoiceResponse response = invoiceService.cancel(OWNER_ID, 1L);
+
+        assertThat(response.status()).isEqualTo(InvoiceStatus.CANCELLED);
+        assertThat(response.number()).isEqualTo("F-2026-0001");
+        assertThat(response.cancelledAt()).isEqualTo(CLOCK.instant());
+    }
+
+    @Test
+    void cancel_refusesADraftOrACancelledInvoice() {
+        Invoice cancelled = issued(2L);
+        cancelled.setStatus(InvoiceStatus.CANCELLED);
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft(1L)));
+        when(invoiceRepository.lockByIdAndOwnerId(2L, OWNER_ID)).thenReturn(Optional.of(cancelled));
+
+        assertThatThrownBy(() -> invoiceService.cancel(OWNER_ID, 1L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("A draft cannot be cancelled: delete it instead");
+        assertThatThrownBy(() -> invoiceService.cancel(OWNER_ID, 2L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Invoice F-2026-0001 is already cancelled");
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    /** A draft that passes every required check. */
+    private static Invoice readyDraft() {
+        Invoice invoice = draft(1L);
+        InvoiceMapper mapper = new InvoiceMapper();
+        mapper.copyCustomer(invoice, addressed(customer()));
+        mapper.updateDraft(invoice, request(3L, line(null)));
+        return invoice;
+    }
+
     private static InvoiceRequest request(Long customerId, InvoiceLineRequest... lines) {
         return new InvoiceRequest(customerId, PaymentTerms.NET_30, null, List.of(lines));
     }
@@ -285,6 +391,13 @@ class InvoiceServiceTest {
         invoice.setIssueDate(TODAY);
         invoice.setDueDate(TODAY.plusDays(30));
         return invoice;
+    }
+
+    private static Customer addressed(Customer customer) {
+        customer.setStreet("12 rue de la Paix");
+        customer.setPostalCode("75002");
+        customer.setCity("Paris");
+        return customer;
     }
 
     private static Customer customer() {
