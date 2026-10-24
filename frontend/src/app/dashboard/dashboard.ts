@@ -16,7 +16,7 @@ import { Icon, IconName } from '../shared/icon/icon';
 
     <main class="container page">
       <h1>Welcome, {{ user()?.firstName }}</h1>
-      <p class="lead">Your workspace is ready. Start with your customers and what you sell.</p>
+      <p class="lead">Your workspace is ready. Add your customers and what you sell, then write your invoices.</p>
 
       <div class="grid">
         <section class="card" aria-labelledby="account-title">
@@ -75,7 +75,7 @@ export class Dashboard {
   protected readonly nextSteps: { icon: IconName; label: string; link?: string }[] = [
     { icon: 'users', label: 'Customers', link: '/customers' },
     { icon: 'package', label: 'Products & services', link: '/products' },
-    { icon: 'invoice', label: 'Invoices' },
+    { icon: 'invoice', label: 'Invoices', link: '/invoices' },
     { icon: 'chart', label: 'Revenue dashboard' },
   ];
 }

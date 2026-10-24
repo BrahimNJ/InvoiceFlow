@@ -60,6 +60,7 @@ export class AppHeader {
     { path: '/dashboard', label: 'Dashboard', icon: 'grid' },
     { path: '/customers', label: 'Customers', icon: 'users' },
     { path: '/products', label: 'Products', icon: 'package' },
+    { path: '/invoices', label: 'Invoices', icon: 'invoice' },
   ];
   protected readonly user = this.auth.user;
   protected readonly signingOut = signal(false);

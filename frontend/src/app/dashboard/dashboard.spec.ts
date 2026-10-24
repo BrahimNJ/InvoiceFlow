@@ -32,7 +32,7 @@ describe('Dashboard', () => {
     expect(page.querySelector('app-header')).toBeTruthy();
   });
 
-  it('links to the customers and products pages', async () => {
+  it('links to the customers, products and invoices pages', async () => {
     const fixture = TestBed.createComponent(Dashboard);
     await fixture.whenStable();
 
@@ -40,6 +40,7 @@ describe('Dashboard', () => {
     expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
       ['Customers', '/customers'],
       ['Products & services', '/products'],
+      ['Invoices', '/invoices'],
     ]);
   });
 });

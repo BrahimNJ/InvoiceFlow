@@ -39,6 +39,7 @@ import {
 import { InvoiceCustomer, SelectedCustomer } from './invoice-customer';
 import { InvoiceLines } from './invoice-lines';
 import { InvoiceSidePanel } from './invoice-side-panel';
+import { HasUnsavedChanges } from './unsaved-changes.guard';
 
 /**
  * Writes a draft invoice (`/invoices/new`, `/invoices/:id/edit`) in one workspace: customer, payment terms, lines and
@@ -59,8 +60,9 @@ import { InvoiceSidePanel } from './invoice-side-panel';
   templateUrl: './invoice-editor.html',
   styleUrl: './invoice-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
-export class InvoiceEditor implements OnInit {
+export class InvoiceEditor implements OnInit, HasUnsavedChanges {
   private readonly invoices = inject(InvoiceService);
   private readonly toasts = inject(ToastService);
   private readonly confirm = inject(ConfirmService);
@@ -151,6 +153,13 @@ export class InvoiceEditor implements OnInit {
   /** True when leaving the page would lose changes (used by the route guard). */
   hasUnsavedChanges(): boolean {
     return this.dirty() && !this.saving();
+  }
+
+  /** The browser asks before closing or reloading the tab with unsaved changes. */
+  protected onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+    }
   }
 
   protected customerChanged(): void {
