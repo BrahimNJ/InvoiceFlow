@@ -11,7 +11,7 @@ import { INVOICES_API } from '../invoice.service';
 import { InvoiceList, PAGE_SIZE, periodRange } from './invoice-list';
 
 /** Intl uses narrow no-break spaces in French amounts. */
-const plain = (text: string | null | undefined) => (text ?? '').replace(/[  ]/g, ' ').replace(/\s+/g, ' ').trim();
+const plain = (text: string | null | undefined) => (text ?? '').replace(/[  ]/g, ' ').replace(/\s+/g, ' ').trim();
 
 describe('periodRange', () => {
   it('gives the first and last issue dates of each period', () => {

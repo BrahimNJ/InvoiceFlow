@@ -4,7 +4,7 @@ import { testInvoice, testIssuedInvoice } from '../invoice.fixtures';
 import { InvoiceDocumentView, documentFromInvoice } from './invoice-document';
 
 /** Intl uses narrow no-break spaces in French amounts. */
-const plain = (text: string | null | undefined) => (text ?? '').replace(/[  ]/g, ' ').replace(/\s+/g, ' ');
+const plain = (text: string | null | undefined) => (text ?? '').replace(/[  ]/g, ' ').replace(/\s+/g, ' ');
 
 describe('InvoiceDocumentView', () => {
   let fixture: ComponentFixture<InvoiceDocumentView>;

@@ -1,0 +1,40 @@
+/* Desktop: one row per line, aligned columns. Phones: one card per line. */
+.grid { display: grid; gap: .5rem; }
+.head, .line { display: grid; grid-template-columns: minmax(0, 1fr) 76px 92px 120px 86px 104px auto; gap: .5rem;
+               align-items: start; }
+.head { padding: 0 .5rem; font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+        color: var(--ink-500); }
+.line { padding: .6rem .5rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+        animation: fade-up .25s var(--ease-out) both; transition: border-color .15s ease, box-shadow .15s ease; }
+.line:focus-within { border-color: rgb(79 107 255 / .45); box-shadow: 0 0 0 3px rgb(79 107 255 / .08); }
+.cell { display: grid; gap: .3rem; min-width: 0; }
+.input { min-height: 40px; padding: .45rem .65rem; border-radius: 10px; font-size: .925rem; }
+select.input { padding-right: 2rem; background-position: right .55rem center; }
+.input-affix .input { padding-right: 1.8rem; }
+.input-affix .affix { right: .65rem; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.label-row { display: flex; gap: .4rem; }
+.type { flex: 0 0 auto; width: 84px; min-height: 40px; padding: 0 .4rem; border: 1px solid var(--line); border-radius: 10px;
+        background: var(--bg); font: inherit; font-size: .78rem; font-weight: 700; color: var(--ink-700); cursor: pointer; }
+.details { min-height: 56px; font-size: .875rem; }
+.total { align-self: center; font-weight: 700; padding-right: .25rem; }
+.actions { display: flex; gap: .25rem; align-self: center; }
+.actions .icon-btn { width: 32px; height: 32px; border-radius: 8px; }
+.empty { display: flex; align-items: center; gap: .6rem; padding: 1rem; border: 1px dashed var(--line-strong);
+         border-radius: 12px; color: var(--ink-500); }
+.empty app-icon { color: var(--brand); }
+.add { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .9rem; }
+.picker { flex: 1 1 280px; }
+.option { display: grid; gap: .1rem; }
+.option-name { font-weight: 600; }
+.option-meta { font-size: .8rem; color: var(--ink-500); }
+.hint { margin-top: .5rem; }
+
+@media (max-width: 899px) {
+  .head { display: none; }
+  .line { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .8rem; }
+  .description, .actions { grid-column: 1 / -1; }
+  .cell[data-label]::before { content: attr(data-label); font-size: .75rem; font-weight: 600; color: var(--ink-500); }
+  .total { align-self: end; padding: .5rem 0; text-align: left; }
+  .actions { justify-content: flex-end; padding-top: .25rem; border-top: 1px solid var(--line); }
+}

@@ -1,0 +1,155 @@
+<app-header />
+
+<main class="workspace">
+  <div class="bar">
+    <div class="container bar-inner">
+      <a class="back" routerLink="/invoices"><app-icon name="chevron-left" [size]="16" />Invoices</a>
+      <div class="bar-title">
+        <h1>{{ invoice() ? 'Draft invoice' : 'New invoice' }}</h1>
+        <span class="save-state" [class.unsaved]="dirty()" role="status">
+          @if (saving()) {
+            <span class="spinner dark" aria-hidden="true"></span>Saving…
+          } @else if (dirty()) {
+            <span class="dot" aria-hidden="true"></span>Unsaved changes
+          } @else if (invoice()) {
+            <app-icon name="check" [size]="14" />Saved
+          } @else {
+            Not saved yet
+          }
+        </span>
+      </div>
+      <div class="bar-actions">
+        <button class="btn btn-ghost btn-sm" type="button" [disabled]="saving() || loading() || !!loadError()" (click)="save()">
+          Save draft
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    @if (loading()) {
+      <p class="status-line" role="status"><span class="spinner dark" aria-hidden="true"></span>Loading the invoice…</p>
+    } @else if (loadError(); as message) {
+      <div class="alert" role="alert">
+        <app-icon name="alert" [size]="18" />
+        <span>{{ message }}</span>
+        @if (invoice(); as issued) {
+          <a class="btn btn-ghost btn-sm" [routerLink]="['/invoices', issued.id]">Open it</a>
+        } @else {
+          <a class="btn btn-ghost btn-sm" routerLink="/invoices">Back to invoices</a>
+        }
+      </div>
+    } @else {
+      <div class="layout">
+        <div class="main">
+          @if (error(); as message) {
+            <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
+          }
+
+          <section class="panel block" aria-labelledby="customer-title">
+            <h2 id="customer-title"><span class="step">1</span>Customer</h2>
+            @if (customer(); as selected) {
+              <div class="customer-card">
+                <span class="avatar" aria-hidden="true">{{ (selected.details.name ?? '?').charAt(0) }}</span>
+                <div class="customer-text">
+                  <strong>{{ selected.details.name }}</strong>
+                  @for (part of address(); track $index) {
+                    <span>{{ part }}</span>
+                  } @empty {
+                    <span class="missing"><app-icon name="alert" [size]="14" />No billing address</span>
+                  }
+                  @if (selected.details.siret) {
+                    <span class="muted">SIRET {{ selected.details.siret }}</span>
+                  }
+                  @if (selected.details.email) {
+                    <span class="muted">{{ selected.details.email }}</span>
+                  }
+                </div>
+                <div class="customer-actions">
+                  @if (selected.id !== null) {
+                    <a class="btn btn-ghost btn-sm" [routerLink]="['/customers', selected.id, 'edit']" target="_blank">
+                      <app-icon name="pencil" [size]="14" />Edit details
+                    </a>
+                  }
+                  <button class="btn btn-ghost btn-sm" type="button" (click)="changeCustomer()">Change</button>
+                </div>
+              </div>
+            } @else {
+              <app-autocomplete
+                #customerPicker
+                label="Customer"
+                placeholder="Search a customer by name or email"
+                icon="users"
+                emptyText="Your customers"
+                inputId="customer-picker"
+                [clearOnPick]="true"
+                [search]="searchCustomers"
+                (picked)="pickCustomer($event)"
+              >
+                <ng-template #option let-customer>
+                  <span class="option">
+                    <span class="option-name">{{ customer.name }}</span>
+                    <span class="option-meta">{{ customer.email }}{{ customer.city ? ' · ' + customer.city : '' }}</span>
+                  </span>
+                </ng-template>
+              </app-autocomplete>
+            }
+          </section>
+
+          <section class="panel block" aria-labelledby="terms-title">
+            <h2 id="terms-title"><span class="step">2</span>Payment terms</h2>
+            <div class="terms" role="radiogroup" aria-labelledby="terms-title">
+              @for (option of termOptions; track option.terms) {
+                <label class="term" [class.selected]="value().paymentTerms === option.terms">
+                  <input type="radio" [formControl]="form.controls.paymentTerms" [value]="option.terms" />
+                  {{ option.label }}
+                </label>
+              }
+            </div>
+            <p class="hint">
+              <app-icon name="calendar" [size]="14" />
+              Issued today, it would be due on <strong>{{ formatDate(dueIfIssuedToday()) }}</strong>. The issue date is set
+              when you issue the invoice.
+            </p>
+          </section>
+
+          <section class="panel block" aria-labelledby="lines-title">
+            <h2 id="lines-title"><span class="step">3</span>Lines</h2>
+            <app-invoice-lines [lines]="form.controls.lines" />
+          </section>
+
+          <section class="panel block" aria-labelledby="notes-title">
+            <h2 id="notes-title"><span class="step">4</span>Notes <span class="optional">optional</span></h2>
+            <label class="visually-hidden" for="invoice-notes">Notes printed on the invoice</label>
+            <textarea
+              id="invoice-notes"
+              class="input"
+              rows="3"
+              placeholder="A thank-you, a purchase order number, bank details…"
+              [formControl]="form.controls.notes"
+              [attr.aria-invalid]="showError(form.controls.notes)"
+            ></textarea>
+            <div class="field-meta">
+              @if (showError(form.controls.notes)) {
+                <span class="field-error">Use at most {{ notesMax }} characters.</span>
+              }
+              <span class="counter">{{ notesLength() }} / {{ notesMax }}</span>
+            </div>
+          </section>
+        </div>
+
+        <aside class="side" aria-label="Totals">
+          <div class="panel totals">
+            <dl>
+              <div><dt>Total excl. VAT</dt><dd>{{ formatEuros(totals().subtotal) }}</dd></div>
+              @for (vat of totals().vatBreakdown; track vat.rate) {
+                <div class="vat"><dt>VAT {{ formatPercent(vat.rate) }}</dt><dd>{{ formatEuros(vat.amount) }}</dd></div>
+              }
+              <div class="grand"><dt>Total incl. VAT</dt><dd>{{ formatEuros(totals().total) }}</dd></div>
+            </dl>
+          </div>
+        </aside>
+      </div>
+    }
+  </div>
+</main>
