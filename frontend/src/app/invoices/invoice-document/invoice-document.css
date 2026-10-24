@@ -1,0 +1,45 @@
+/* Sizes in em of a font that follows the container width: the page keeps its A4 look at any size */
+:host { display: block; container-type: inline-size; }
+/* At least A4 proportions; a long invoice grows taller */
+.paper { position: relative; aspect-ratio: 210 / 297; padding: 7% 7.5%;
+         background: #fff; color: #1e293b; border-radius: 6px; box-shadow: var(--shadow-md);
+         font-size: clamp(7px, 1.75cqw, 13px); line-height: 1.45; display: flex; flex-direction: column; gap: 2.2em; }
+.mark-layer { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.watermark { position: absolute; white-space: nowrap; top: 42%; left: 50%; transform: translate(-50%, -50%) rotate(-24deg);
+             font-size: 7em; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+             color: rgb(79 107 255 / .07); pointer-events: none; }
+.watermark.cancelled { color: rgb(217 61 66 / .1); }
+.top { display: flex; justify-content: space-between; gap: 2em; }
+.seller { display: grid; gap: .3em; max-width: 50%; }
+.seller strong { font-size: 1.35em; }
+.pending { color: var(--warning); font-size: .85em; }
+.title { text-align: right; }
+.title h2 { font-size: 2.3em; font-weight: 800; letter-spacing: -.02em; color: var(--brand); }
+.number { font-weight: 700; font-variant-numeric: tabular-nums; }
+.draft .number { color: var(--ink-500); font-weight: 500; }
+.meta { display: flex; justify-content: space-between; gap: 2em; }
+.bill-to { display: grid; align-content: start; gap: .15em; padding: 1em 1.2em; min-width: 45%;
+           border-radius: .6em; background: #f6f8fc; }
+.caption { font-size: .8em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-500); }
+.dates { display: grid; gap: .3em; margin: 0; align-content: start; }
+.dates div { display: flex; justify-content: space-between; gap: 1.5em; }
+.dates dt { color: var(--ink-500); }
+.dates dd { margin: 0; font-weight: 600; text-align: right; }
+.lines { width: 100%; border-collapse: collapse; }
+.lines th { padding: .6em .5em; font-size: .8em; text-align: left; text-transform: uppercase; letter-spacing: .05em;
+            color: var(--ink-500); border-bottom: 2px solid #1e293b; }
+.lines td { padding: .7em .5em; vertical-align: top; border-bottom: 1px solid #e5e9f2; }
+.num { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.label { display: block; font-weight: 600; }
+.details { display: block; color: var(--ink-500); font-size: .9em; }
+.placeholder { color: var(--ink-300); font-style: italic; }
+.totals { display: flex; justify-content: flex-end; }
+.totals dl { display: grid; gap: .35em; width: 55%; margin: 0; }
+.totals div { display: flex; justify-content: space-between; gap: 1em; font-variant-numeric: tabular-nums; }
+.totals dd { margin: 0; }
+.vat { color: var(--ink-500); }
+.grand { margin-top: .3em; padding: .6em .8em; border-radius: .5em; background: var(--night); color: #fff;
+         font-weight: 700; font-size: 1.15em; }
+.legal { margin-top: auto; display: grid; gap: .35em; padding-top: 1.2em; border-top: 1px solid #e5e9f2;
+         font-size: .8em; color: var(--ink-500); }
+.notes { color: #1e293b; font-size: 1.15em; white-space: pre-line; }

@@ -1,0 +1,195 @@
+@let rows = lines().controls;
+<div class="grid" role="table" aria-label="Invoice lines">
+  @if (rows.length > 0) {
+    <div class="head" role="row">
+      <span role="columnheader">Description</span>
+      <span role="columnheader" class="num">Qty</span>
+      <span role="columnheader">Unit</span>
+      <span role="columnheader" class="num">Unit price</span>
+      <span role="columnheader">VAT</span>
+      <span role="columnheader" class="num">Total</span>
+      <span role="columnheader"><span class="visually-hidden">Actions</span></span>
+    </div>
+  }
+
+  @for (line of rows; track key(line); let i = $index, first = $first, last = $last) {
+    @let k = key(line);
+    <div class="line" role="row" [formGroup]="line" [attr.aria-label]="'Line ' + (i + 1)">
+      <div class="cell description" role="cell">
+        <div class="label-row">
+          <select
+            class="type"
+            formControlName="type"
+            [attr.aria-label]="'Line ' + (i + 1) + ' type'"
+            [title]="types[line.controls.type.value].label"
+          >
+            @for (type of typeOptions; track type) {
+              <option [value]="type">{{ types[type].label }}</option>
+            }
+          </select>
+          <input
+            class="input"
+            formControlName="label"
+            placeholder="What are you billing?"
+            autocomplete="off"
+            [id]="'line-' + k + '-label'"
+            [attr.aria-label]="'Line ' + (i + 1) + ' description'"
+            [attr.aria-invalid]="!!message(line, 'label')"
+            (keydown.enter)="onEnter($event, i)"
+          />
+        </div>
+        @if (detailsOpen(line)) {
+          <textarea
+            class="input details"
+            formControlName="details"
+            rows="2"
+            placeholder="Details shown under the description (optional)"
+            [id]="'line-' + k + '-details'"
+            [attr.aria-label]="'Line ' + (i + 1) + ' details'"
+          ></textarea>
+        }
+        @for (field of ['label', 'details']; track field) {
+          @if (message(line, $any(field)); as text) {
+            <span class="field-error">{{ text }}</span>
+          }
+        }
+      </div>
+
+      <div class="cell" role="cell" data-label="Qty">
+        <input
+          class="input num"
+          formControlName="quantity"
+          inputmode="decimal"
+          autocomplete="off"
+          [id]="'line-' + k + '-quantity'"
+          [attr.aria-label]="'Line ' + (i + 1) + ' quantity'"
+          [attr.aria-invalid]="!!message(line, 'quantity')"
+          (keydown.enter)="onEnter($event, i)"
+        />
+        @if (message(line, 'quantity'); as text) {
+          <span class="field-error">{{ text }}</span>
+        }
+      </div>
+
+      <div class="cell" role="cell" data-label="Unit">
+        <select class="input" formControlName="unit" [attr.aria-label]="'Line ' + (i + 1) + ' unit'">
+          @for (unit of unitOptions; track unit) {
+            <option [value]="unit">{{ units[unit].per }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="cell" role="cell" data-label="Unit price">
+        <div class="input-affix">
+          <input
+            class="input num"
+            formControlName="unitPrice"
+            inputmode="decimal"
+            autocomplete="off"
+            placeholder="0,00"
+            [attr.aria-label]="'Line ' + (i + 1) + ' unit price excluding VAT'"
+            [attr.aria-invalid]="!!message(line, 'unitPrice')"
+            (keydown.enter)="onEnter($event, i)"
+          />
+          <span class="affix" aria-hidden="true">€</span>
+        </div>
+        @if (message(line, 'unitPrice'); as text) {
+          <span class="field-error">{{ text }}</span>
+        }
+      </div>
+
+      <div class="cell" role="cell" data-label="VAT">
+        <select class="input" formControlName="vatRate" [attr.aria-label]="'Line ' + (i + 1) + ' VAT rate'">
+          @for (rate of vatRates; track rate.value) {
+            <option [ngValue]="rate.value">{{ formatPercent(rate.value) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="cell num total" role="cell" data-label="Total excl. VAT" aria-live="off">{{ total(line) }}</div>
+
+      <div class="cell actions" role="cell">
+        <button
+          class="icon-btn"
+          type="button"
+          [id]="'line-' + k + '-up'"
+          [attr.aria-label]="'Move line ' + (i + 1) + ' up'"
+          title="Move up"
+          [disabled]="first"
+          (click)="move(i, -1)"
+        >
+          <app-icon name="arrow-up" [size]="15" />
+        </button>
+        <button
+          class="icon-btn"
+          type="button"
+          [id]="'line-' + k + '-down'"
+          [attr.aria-label]="'Move line ' + (i + 1) + ' down'"
+          title="Move down"
+          [disabled]="last"
+          (click)="move(i, 1)"
+        >
+          <app-icon name="arrow-down" [size]="15" />
+        </button>
+        <button
+          class="icon-btn"
+          type="button"
+          [attr.aria-label]="(detailsOpen(line) ? 'Hide' : 'Add') + ' details of line ' + (i + 1)"
+          [attr.aria-expanded]="detailsOpen(line)"
+          title="Details"
+          [disabled]="line.controls.details.value !== ''"
+          (click)="toggleDetails(line)"
+        >
+          <app-icon name="info" [size]="15" />
+        </button>
+        <button
+          class="icon-btn"
+          type="button"
+          [attr.aria-label]="'Duplicate line ' + (i + 1)"
+          title="Duplicate"
+          (click)="duplicate(i)"
+        >
+          <app-icon name="copy" [size]="15" />
+        </button>
+        <button
+          class="icon-btn danger"
+          type="button"
+          [attr.aria-label]="'Remove line ' + (i + 1)"
+          title="Remove"
+          (click)="remove(i)"
+        >
+          <app-icon name="trash" [size]="15" />
+        </button>
+      </div>
+    </div>
+  } @empty {
+    <p class="empty">
+      <app-icon name="package" [size]="20" />
+      No line yet. Pick from your catalogue below, or add a free line for a one-off item.
+    </p>
+  }
+</div>
+
+<div class="add">
+  <app-autocomplete
+    class="picker"
+    label="Add from the catalogue"
+    placeholder="Add from the catalogue: type a product or service"
+    icon="package"
+    emptyText="Your catalogue"
+    inputId="product-picker"
+    [search]="searchProducts"
+    (picked)="addProduct($event)"
+  >
+    <ng-template #option let-product>
+      <span class="option">
+        <span class="option-name">{{ product.name }}</span>
+        <span class="option-meta">{{ productMeta(product) }}</span>
+      </span>
+    </ng-template>
+  </app-autocomplete>
+  <button class="btn btn-ghost" type="button" [disabled]="rows.length >= maxLines" (click)="addFreeLine()">
+    <app-icon name="plus" [size]="16" />Free line
+  </button>
+</div>
+<p class="hint">Enter moves to the next line, or adds one after the last. Prices exclude VAT.</p>

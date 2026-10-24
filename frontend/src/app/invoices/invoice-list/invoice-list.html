@@ -1,0 +1,203 @@
+<app-header />
+
+<main class="container app-page">
+  <app-page-header icon="invoice" heading="Invoices" subtitle="Drafts, issued invoices and what is late, at a glance.">
+    <a class="btn btn-primary" routerLink="/invoices/new"><app-icon name="plus" [size]="18" />New invoice</a>
+  </app-page-header>
+
+  <section class="kpis" aria-label="Key figures">
+    @for (kpi of kpis; track kpi.key) {
+      @let figures = summary()?.[kpi.key];
+      <button
+        type="button"
+        [class]="'kpi tone-' + kpi.tone"
+        [class.alert]="kpi.key === 'overdue' && (figures?.count ?? 0) > 0"
+        [attr.aria-label]="kpi.label + ': ' + (figures?.count ?? 0) + ', ' + formatEuros(figures?.total ?? 0) + '. Show them'"
+        (click)="filterByStatus(kpi.status)"
+      >
+        <span class="kpi-head"><app-icon [name]="kpi.icon" [size]="16" />{{ kpi.label }}</span>
+        @if (figures) {
+          <strong class="kpi-amount">{{ formatEuros(figures.total) }}</strong>
+          <span class="kpi-hint">{{ figures.count }} {{ figures.count === 1 ? 'invoice' : 'invoices' }} · {{ kpi.hint }}</span>
+        } @else {
+          <span class="skeleton" style="width: 70%; height: 1.4rem"></span>
+          <span class="skeleton" style="width: 50%"></span>
+        }
+      </button>
+    }
+  </section>
+
+  <app-help-tip storageKey="invoices" heading="How invoicing works" [tips]="tips" />
+
+  <section class="panel list-panel">
+    <div class="list-head">
+      <div class="tabs" role="group" aria-label="Status">
+        @for (tab of tabs; track tab.label) {
+          <button type="button" [attr.aria-pressed]="state().status === tab.status" (click)="filterByStatus(tab.status)">
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+
+      <div class="toolbar">
+        <form class="search-field" role="search" (submit)="submitSearch($event)">
+          <app-icon name="search" [size]="18" />
+          <label class="visually-hidden" for="invoice-search">Search invoices</label>
+          <input
+            id="invoice-search"
+            class="input"
+            type="search"
+            placeholder="Number or customer"
+            autocomplete="off"
+            [formControl]="searchControl"
+          />
+          @if (searchControl.value) {
+            <button class="icon-btn clear" type="button" aria-label="Clear the search" (click)="clearSearch()">
+              <app-icon name="x" [size]="16" />
+            </button>
+          }
+        </form>
+        <label class="visually-hidden" for="invoice-customer">Customer</label>
+        <select
+          id="invoice-customer"
+          class="input filter"
+          [value]="state().customerId ?? ''"
+          (change)="filterByCustomer($any($event.target).value)"
+        >
+          <option value="">All customers</option>
+          @for (customer of customers(); track customer.id) {
+            <option [value]="customer.id" [selected]="state().customerId === customer.id">{{ customer.name }}</option>
+          }
+        </select>
+        <label class="visually-hidden" for="invoice-period">Issue date</label>
+        <select id="invoice-period" class="input filter" (change)="filterByPeriod($any($event.target).value)">
+          @for (period of periods; track period.value) {
+            <option [value]="period.value" [selected]="state().period === period.value">{{ period.label }}</option>
+          }
+        </select>
+        @if (result(); as page) {
+          <p class="result-count" aria-live="polite">
+            {{ page.totalElements }} {{ page.totalElements === 1 ? 'invoice' : 'invoices' }}
+          </p>
+        }
+      </div>
+    </div>
+
+    @if (error(); as message) {
+      <div class="alert" role="alert">
+        <app-icon name="alert" [size]="18" />
+        <span>{{ message }}</span>
+        <button class="btn btn-ghost btn-sm" type="button" (click)="retry()">Retry</button>
+      </div>
+    }
+
+    @if (loading() && !result()) {
+      <div role="status" aria-label="Loading invoices">
+        @for (row of skeletonRows; track row) {
+          <div class="skeleton-row">
+            <span class="skeleton" style="width: 14%"></span>
+            <span class="skeleton" style="width: 30%"></span>
+            <span class="skeleton" style="width: 16%"></span>
+            <span class="skeleton" style="width: 12%"></span>
+          </div>
+        }
+      </div>
+    } @else if (result(); as page) {
+      @if (page.content.length === 0) {
+        @if (filtered()) {
+          <app-empty-state icon="search" heading="Nothing matches your filters" text="Try another word, status or period.">
+            <button class="btn btn-ghost" type="button" (click)="clearFilters()">Clear filters</button>
+          </app-empty-state>
+        } @else {
+          <app-empty-state
+            icon="invoice"
+            heading="No invoice yet"
+            text="Write your first invoice from your catalogue: totals and VAT are computed for you."
+          >
+            <a class="btn btn-primary" routerLink="/invoices/new"><app-icon name="plus" [size]="18" />Write an invoice</a>
+          </app-empty-state>
+        }
+      } @else {
+        <div class="data-table-wrap" [attr.aria-busy]="loading()">
+          <table class="data-table">
+            <thead>
+              <tr>
+                @for (column of columns; track column.label) {
+                  @if (column.sort; as sort) {
+                    <th scope="col" [class.num]="sort === 'TOTAL'" [attr.aria-sort]="ariaSort(sort)">
+                      <button class="sort" type="button" (click)="sortBy(sort)">
+                        {{ column.label }}<app-icon [name]="sortIcon(sort)" [size]="14" />
+                      </button>
+                    </th>
+                  } @else {
+                    <th scope="col">{{ column.label }}</th>
+                  }
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (invoice of page.content; track invoice.id) {
+                @let badge = statusBadge(invoice.status, invoice.overdue);
+                @let dueInfo = due(invoice);
+                <tr class="row" [class.is-overdue]="invoice.overdue" (click)="open(invoice, $event)">
+                  <td class="number-cell">
+                    <a [routerLink]="['/invoices', invoice.id]">{{ invoice.number ?? 'Draft' }}</a>
+                  </td>
+                  <td data-label="Customer">
+                    @if (invoice.customerName) {
+                      {{ invoice.customerName }}
+                    } @else {
+                      <span class="muted">No customer yet</span>
+                    }
+                  </td>
+                  <td data-label="Issued">
+                    @if (invoice.issueDate) {
+                      {{ formatDate(invoice.issueDate) }}
+                    } @else {
+                      <span class="muted">—</span>
+                    }
+                  </td>
+                  <td data-label="Due">
+                    @if (invoice.dueDate) {
+                      <span class="due">
+                        {{ formatDate(invoice.dueDate) }}
+                        @if (dueInfo) {
+                          <span class="relative" [class.late]="dueInfo.late">{{ dueInfo.text }}</span>
+                        }
+                      </span>
+                    } @else {
+                      <span class="muted">—</span>
+                    }
+                  </td>
+                  <td data-label="Status">
+                    <span class="status-badge" [class]="'status-badge tone-' + badge.tone">
+                      <app-icon [name]="badge.icon" [size]="13" />{{ badge.label }}
+                    </span>
+                  </td>
+                  <td class="num" data-label="Total">
+                    <span class="amount">
+                      <strong>{{ formatEuros(invoice.total) }}</strong>
+                      <span class="muted">{{ formatEuros(invoice.subtotal) }} excl. VAT</span>
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (page.totalPages > 1) {
+          <nav class="pagination" aria-label="Pagination">
+            <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasPrevious() || loading()" (click)="goTo(page.page - 1)">
+              <app-icon name="chevron-left" [size]="16" />Previous
+            </button>
+            <span>Page {{ page.page + 1 }} of {{ page.totalPages }}</span>
+            <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasNext() || loading()" (click)="goTo(page.page + 1)">
+              Next<app-icon name="chevron-right" [size]="16" />
+            </button>
+          </nav>
+        }
+      }
+    }
+  </section>
+</main>

@@ -1,0 +1,98 @@
+@let d = doc();
+<article class="paper" [class.draft]="d.number === null" [attr.aria-label]="'Invoice ' + (d.number ?? 'draft')">
+  @if (d.number === null || d.cancelled) {
+    <div class="mark-layer" aria-hidden="true">
+      <span class="watermark" [class.cancelled]="d.cancelled">{{ d.cancelled ? 'Cancelled' : 'Draft' }}</span>
+    </div>
+  }
+
+  <header class="top">
+    <div class="seller">
+      <strong>{{ d.seller }}</strong>
+      <span class="pending">Company details (SIREN, legal form, address, VAT number) coming with company settings</span>
+    </div>
+    <div class="title">
+      <h2>Invoice</h2>
+      <p class="number">{{ d.number ?? 'Number given when issued' }}</p>
+    </div>
+  </header>
+
+  <section class="meta">
+    <div class="bill-to">
+      <span class="caption">Bill to</span>
+      @if (d.customer; as customer) {
+        <strong>{{ customer.name }}</strong>
+        @for (part of address(); track $index) {
+          <span>{{ part }}</span>
+        }
+        @if (customer.siret) {
+          <span>SIREN {{ customer.siret.slice(0, 9) }} · SIRET {{ customer.siret }}</span>
+        }
+        @if (customer.vatNumber) {
+          <span>VAT {{ customer.vatNumber }}</span>
+        }
+      } @else {
+        <span class="placeholder">Choose a customer</span>
+      }
+    </div>
+    <dl class="dates">
+      <div><dt>Issue date</dt><dd>{{ formatDate(d.issueDate) }}</dd></div>
+      <div><dt>Due date</dt><dd>{{ formatDate(d.dueDate) }}</dd></div>
+      <div><dt>Terms</dt><dd>{{ terms() }}</dd></div>
+    </dl>
+  </section>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th scope="col">Description</th>
+        <th scope="col" class="num">Qty</th>
+        <th scope="col" class="num">Unit price</th>
+        <th scope="col" class="num">VAT</th>
+        <th scope="col" class="num">Total excl. VAT</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (line of d.lines; track $index) {
+        <tr>
+          <td>
+            <span class="label">{{ line.label || 'Untitled line' }}</span>
+            @if (line.details) {
+              <span class="details">{{ line.details }}</span>
+            }
+          </td>
+          <td class="num">{{ quantity(line.quantity) }} {{ units[line.unit].per }}</td>
+          <td class="num">{{ formatEuros(line.unitPrice) }}</td>
+          <td class="num">{{ formatPercent(line.vatRate) }}</td>
+          <td class="num">{{ formatEuros(line.lineTotal) }}</td>
+        </tr>
+      } @empty {
+        <tr><td class="placeholder" colspan="5">No line yet</td></tr>
+      }
+    </tbody>
+  </table>
+
+  <section class="totals">
+    <dl>
+      <div><dt>Total excl. VAT</dt><dd>{{ formatEuros(d.totals.subtotal) }}</dd></div>
+      @for (vat of d.totals.vatBreakdown; track vat.rate) {
+        <div class="vat">
+          <dt>VAT {{ formatPercent(vat.rate) }} on {{ formatEuros(vat.base) }}</dt>
+          <dd>{{ formatEuros(vat.amount) }}</dd>
+        </div>
+      }
+      <div class="grand"><dt>Total incl. VAT</dt><dd>{{ formatEuros(d.totals.total) }}</dd></div>
+    </dl>
+  </section>
+
+  <footer class="legal">
+    @if (d.notes) {
+      <p class="notes">{{ d.notes }}</p>
+    }
+    @if (nature(); as text) {
+      <p>Nature of the operations: {{ text }}.</p>
+    }
+    <p>{{ terms() }}, by {{ formatDate(d.dueDate) }}.</p>
+    <p>{{ lateMention }}</p>
+  </footer>
+</article>

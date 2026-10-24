@@ -160,6 +160,16 @@ ul { margin: 0; padding: 0; list-style: none; }
 .tag.accent { background: var(--accent-50); color: var(--accent-700); }
 .tag.neutral { background: var(--bg); color: var(--ink-700); border: 1px solid var(--line); }
 
+/* Invoice status: draft, issued, overdue, cancelled */
+.status-badge {
+  display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 999px;
+  font-size: .78rem; font-weight: 700; white-space: nowrap; border: 1px solid transparent;
+}
+.status-badge.tone-neutral { background: var(--bg); color: var(--ink-700); border-color: var(--line); }
+.status-badge.tone-brand { background: var(--brand-50); color: var(--brand-600); }
+.status-badge.tone-danger { background: var(--danger-50); color: var(--danger); border-color: rgb(217 61 66 / .2); }
+.status-badge.tone-muted { background: var(--bg); color: var(--ink-300); text-decoration: line-through; }
+
 /* Search and filters above a list */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .search-field { position: relative; flex: 1 1 260px; }

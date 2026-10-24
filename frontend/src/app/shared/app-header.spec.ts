@@ -32,8 +32,9 @@ describe('AppHeader', () => {
       ['Dashboard', '/dashboard'],
       ['Customers', '/customers'],
       ['Products', '/products'],
+      ['Invoices', '/invoices'],
     ]);
-    expect(header.querySelectorAll('nav a app-icon').length).toBe(3);
+    expect(header.querySelectorAll('nav a app-icon').length).toBe(4);
     expect(header.querySelector('.who')?.textContent).toContain('Jane Doe');
   });
 

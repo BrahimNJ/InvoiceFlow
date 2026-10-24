@@ -51,7 +51,8 @@ goes issue → branch → small commits → tests → pull request → human rev
 | Secured REST API, CORS, RFC 9457 errors | ✅ Live |
 | Customers (per user: list, search, create, edit, delete) | ✅ Live |
 | Products & services (per user: goods or service, price excl. VAT, French VAT rate, unit) | ✅ Live |
-| Invoices, VAT totals, numbering, payments | 📋 Planned |
+| Invoices: drafts, VAT per rate, gap-free numbering, readiness checks, issue and cancel, overdue tracking | 🔍 In review |
+| Payments | 📋 Planned |
 | PDF and Factur-X | 📋 Planned |
 | Dashboard (revenue, paid / pending / overdue) | 📋 Planned |
 | Role-based access | 📋 Planned |
@@ -131,6 +132,10 @@ Authentication is designed for a browser app talking to an API on another site. 
 | `GET` `POST` `PUT` `DELETE` | `/api/customers[/{id}]` | bearer | Customer CRUD, scoped to the owner (another user's id → `404`) |
 | `GET` | `/api/products?search=&type=&page=&size=` | bearer | The user's products, paginated (≤ 100), searched by name or description, `type` = `GOODS` or `SERVICE` |
 | `GET` `POST` `PUT` `DELETE` | `/api/products[/{id}]` | bearer | Product CRUD, scoped to the owner; VAT rate must be 20, 10, 5.5, 2.1 or 0 |
+| `GET` | `/api/invoices?search=&status=&customerId=&issuedFrom=&issuedTo=&sort=&direction=&page=&size=` | bearer | The user's invoices; `status` includes `OVERDUE` |
+| `GET` | `/api/invoices/summary` | bearer | Drafts, outstanding, overdue and issued this month |
+| `GET` `POST` `PUT` `DELETE` | `/api/invoices[/{id}]` | bearer | Draft CRUD (issued invoices → `409`) |
+| `POST` | `/api/invoices/{id}/issue` · `/cancel` · `/duplicate` | bearer | Lifecycle; issue → `422` with the missing mentions. See [`docs/invoicing.md`](docs/invoicing.md) |
 | `GET` | `/actuator/health` | — | Liveness, includes the database |
 | `GET` | `/actuator/info` | — | Deployed commit |
 
@@ -170,15 +175,15 @@ from the environment, fails fast when a secret is missing).
 ## Tests
 
 ```bash
-cd backend  && ./mvnw verify                                   # 147 tests
-cd frontend && npm run build && npm test -- --watch=false      # 148 tests
+cd backend  && ./mvnw verify                                   # 235 tests
+cd frontend && npm run build && npm test -- --watch=false      # 217 tests
 ```
 
 | Layer | What is covered |
 |-------|-----------------|
-| Backend unit | Services with Mockito (business rules, lockout, token rotation and reuse detection) |
+| Backend unit | Services with Mockito (business rules, lockout, token rotation and reuse detection), invoice totals, due dates and readiness |
 | Backend slice | `@WebMvcTest` controllers with the real security chain, `@DataJpaTest` repositories on the Flyway schema, real JWTs (expired, forged, wrong issuer) |
-| Backend end to end | Full authentication flow through the real stack, committed transactions |
+| Backend end to end | Full authentication flow and invoice lifecycle through the real stack, concurrent invoice numbering with committed transactions |
 | Frontend | Services, interceptor (refresh and retry), guards, validators, components and pages (Vitest + Angular TestBed) |
 
 The same commands run in CI on every push and pull request.
