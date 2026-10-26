@@ -36,7 +36,7 @@ The live roadmap with issues and pull requests is [`PROGRESS.md`](../PROGRESS.md
 5. **Deploys that verify themselves.** The deploy is pinned to the commit CI tested, then waits until production
    reports that exact commit and passes a smoke test. See [Deployment](deployment.md).
 6. **A documented, human-reviewed AI workflow.** Built with Claude Code as an orchestrated team of specialised
-   agents; every commit is reviewed by a human. See [Workflow](claude-code/best-practices.md).
+   agents; every commit is reviewed by a human. See [Agents, skills and hooks](claude-code/agents.md).
 
 ## Stack
 

@@ -35,7 +35,7 @@ const SECTIONS = [
         .map((file) => `adr/${file}`),
     ],
   },
-  { title: 'Workflow', pages: ['claude-code/best-practices.md'] },
+  { title: 'Workflow', pages: ['claude-code/agents.md', 'claude-code/best-practices.md'] },
 ];
 
 const LANGUAGES = ['java', 'typescript', 'javascript', 'json', 'yaml', 'bash', 'sql', 'html', 'css', 'properties', 'xml', 'text'];
