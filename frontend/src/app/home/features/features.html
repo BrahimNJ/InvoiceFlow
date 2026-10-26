@@ -1,19 +1,20 @@
-<section class="section" id="features" aria-labelledby="features-title">
-  <div class="container">
+<section class="section" id="product" aria-labelledby="product-title">
+  <div class="container layout">
     <div class="section-head">
-      <span class="eyebrow">Features</span>
-      <h2 id="features-title">Everything you need to bill and get paid</h2>
-      <p>From your first customer to your hundredth invoice, InvoiceFlow covers the full invoicing cycle.</p>
+      <span class="eyebrow">Product</span>
+      <h2 id="product-title">The whole invoicing cycle, one module at a time</h2>
+      <p>Each module ships end to end (database migration, API, screens and tests) before the next one starts.</p>
     </div>
 
-    <ul class="grid">
-      @for (feature of features; track feature.title) {
-        <li class="card">
-          <span class="icon"><app-icon [name]="feature.icon" [size]="22" /></span>
+    <ol class="ledger">
+      @for (feature of features; track feature.title; let i = $index) {
+        <li>
+          <span class="index mono" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span>
           <h3>{{ feature.title }}</h3>
           <p>{{ feature.text }}</p>
+          <span class="availability" [attr.data-availability]="feature.availability">{{ feature.availability }}</span>
         </li>
       }
-    </ul>
+    </ol>
   </div>
 </section>

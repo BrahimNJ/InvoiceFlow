@@ -1,33 +1,30 @@
 <section class="section ai" id="ai" aria-labelledby="ai-title">
   <div class="container grid">
     <div class="copy">
-      <span class="eyebrow">AI assistant <span class="soon">On the roadmap</span></span>
-      <h2 id="ai-title">Describe it. InvoiceFlow drafts it.</h2>
+      <span class="eyebrow">AI assistant · on the roadmap</span>
+      <h2 id="ai-title">Describe it in a sentence. <em>The rules decide.</em></h2>
       <p class="lead">
-        Write what you sold in plain words. The assistant prepares the invoice, and you stay in control:
-        the AI suggests, the business rules decide.
+        The assistant will turn plain words into a structured draft. It only proposes data: the backend validates every
+        amount, rate and mention with the same rules as a hand-made invoice before anything is saved.
       </p>
       <ul class="points">
         @for (point of points; track point) {
-          <li><app-icon name="check" [size]="18" />{{ point }}</li>
+          <li><app-icon name="check" [size]="16" />{{ point }}</li>
         }
       </ul>
     </div>
 
     <div class="demo" aria-label="Example of an invoice drafted from a sentence">
-      <div class="prompt">
-        <app-icon name="sparkles" [size]="18" />
-        <p>{{ prompt }}</p>
-      </div>
+      <p class="prompt mono"><span class="caret" aria-hidden="true">›</span>{{ prompt }}</p>
 
       <div class="draft">
-        <p class="draft-title"><span>Draft invoice</span><span class="ok">Validated</span></p>
+        <p class="draft-title"><span>Structured draft</span><span class="ok mono">validated by the API</span></p>
         <dl>
           <div><dt>Customer</dt><dd>{{ draft.customer }}</dd></div>
           <div><dt>Line</dt><dd>Development · {{ draft.quantity }} × {{ draft.unitPrice | currency: 'EUR' }}</dd></div>
-          <div><dt>Subtotal</dt><dd>{{ subtotal | currency: 'EUR' }}</dd></div>
-          <div><dt>VAT</dt><dd>{{ draft.vatRate * 100 }}%</dd></div>
-          <div class="total"><dt>Total</dt><dd>{{ total | currency: 'EUR' }}</dd></div>
+          <div><dt>Subtotal</dt><dd class="num">{{ subtotal | currency: 'EUR' }}</dd></div>
+          <div><dt>VAT</dt><dd class="num">{{ draft.vatRate * 100 }}%</dd></div>
+          <div class="total"><dt>Total</dt><dd class="num">{{ total | currency: 'EUR' }}</dd></div>
         </dl>
       </div>
     </div>

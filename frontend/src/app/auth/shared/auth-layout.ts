@@ -14,7 +14,7 @@ import { Logo } from '../../shared/logo';
       <aside class="panel">
         <a routerLink="/" class="home" aria-label="InvoiceFlow home"><app-logo /></a>
         <div class="pitch">
-          <h2>Invoicing made simple for the e-invoicing era.</h2>
+          <h2>Invoices that are right to the cent, and ready for 2027.</h2>
           <ul>
             @for (point of points; track point.text) {
               <li><app-icon [name]="point.icon" [size]="18" />{{ point.text }}</li>
@@ -56,8 +56,8 @@ import { Logo } from '../../shared/logo';
 })
 export class AuthLayout {
   protected readonly points: { icon: IconName; text: string }[] = [
-    { icon: 'file-check', text: 'Compliant invoices, ready for Factur-X' },
-    { icon: 'chart', text: 'Every payment tracked in one place' },
-    { icon: 'sparkles', text: 'An AI assistant that drafts invoices for you' },
+    { icon: 'file-check', text: 'Mandatory mentions checked before an invoice is issued' },
+    { icon: 'invoice', text: 'Gap-free numbering and VAT computed per rate' },
+    { icon: 'shield', text: 'Your customers and invoices visible to you only' },
   ];
 }

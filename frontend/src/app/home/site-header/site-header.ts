@@ -14,9 +14,9 @@ import { Logo } from '../../shared/logo';
 export class SiteHeader {
   protected readonly isAuthenticated = inject(AuthService).isAuthenticated;
   protected readonly links = [
-    { href: '#features', label: 'Features' },
-    { href: '#reform', label: 'E-invoicing reform' },
+    { href: '#product', label: 'Product' },
+    { href: '#reform', label: 'The reform' },
+    { href: '#engineering', label: 'Engineering' },
     { href: '#ai', label: 'AI assistant' },
-    { href: '#how-it-works', label: 'How it works' },
   ];
 }
