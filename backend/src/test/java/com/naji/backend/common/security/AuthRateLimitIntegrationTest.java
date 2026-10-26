@@ -10,6 +10,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.net.URI;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -30,10 +32,15 @@ class AuthRateLimitIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private MockHttpServletRequestBuilder login() {
-        return post("/api/auth/login")
+    /** Each test uses its own client address: the buckets live as long as the shared Spring context. */
+    private MockHttpServletRequestBuilder login(String ip) {
+        return login(ip, "/api/auth/login");
+    }
+
+    private MockHttpServletRequestBuilder login(String ip, String path) {
+        return post(URI.create(path))
                 .with(request -> {
-                    request.setRemoteAddr("192.0.2.10");
+                    request.setRemoteAddr(ip);
                     return request;
                 })
                 .header(HttpHeaders.ORIGIN, "http://localhost:4200")
@@ -43,10 +50,10 @@ class AuthRateLimitIntegrationTest {
 
     @Test
     void answers429AsAProblemDetailOnceTheClientExceedsTheLimit() throws Exception {
-        mockMvc.perform(login()).andExpect(status().isUnauthorized());
-        mockMvc.perform(login()).andExpect(status().isUnauthorized());
+        mockMvc.perform(login("192.0.2.10")).andExpect(status().isUnauthorized());
+        mockMvc.perform(login("192.0.2.10")).andExpect(status().isUnauthorized());
 
-        mockMvc.perform(login())
+        mockMvc.perform(login("192.0.2.10"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(429))
@@ -54,5 +61,14 @@ class AuthRateLimitIntegrationTest {
                 .andExpect(header().exists(HttpHeaders.RETRY_AFTER))
                 // The browser can read the error: CORS headers are set before the limit is checked
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:4200"));
+    }
+
+    /** Regression: the router decodes the path, so the limit must too (found by the reviewer agent). */
+    @Test
+    void anEncodedPathReachingTheLoginHandlerIsCountedToo() throws Exception {
+        mockMvc.perform(login("192.0.2.20", "/api/auth/%6Cogin")).andExpect(status().isUnauthorized());
+        mockMvc.perform(login("192.0.2.20", "/api/%61uth/login")).andExpect(status().isUnauthorized());
+
+        mockMvc.perform(login("192.0.2.20")).andExpect(status().isTooManyRequests());
     }
 }

@@ -67,6 +67,38 @@ class AuthRateLimitFilterTest {
     }
 
     @Test
+    void countsPercentEncodedPathsLikeTheRouterDoes() throws Exception {
+        send("POST", "/api/auth/login", "203.0.113.7");
+        send("POST", "/api/auth/%6Cogin", "203.0.113.7");
+
+        assertThat(send("POST", "/api/%61uth/login", "203.0.113.7").getHeader("X-Passed")).isEqualTo("false");
+    }
+
+    @Test
+    void groupsIpv6ClientsByTheirSlash64() throws Exception {
+        send("POST", "/api/auth/login", "2001:db8:1:2::a");
+        send("POST", "/api/auth/login", "2001:db8:1:2:ffff::b");
+
+        assertThat(send("POST", "/api/auth/login", "2001:db8:1:2::c").getHeader("X-Passed")).isEqualTo("false");
+        assertThat(send("POST", "/api/auth/login", "2001:db8:1:3::a").getHeader("X-Passed")).isEqualTo("true");
+    }
+
+    @Test
+    void clientKeyKeepsIpv4AndReducesIpv6ToItsPrefix() {
+        assertThat(AuthRateLimitFilter.clientKey("203.0.113.7")).isEqualTo("203.0.113.7");
+        assertThat(AuthRateLimitFilter.clientKey("2001:db8:1:2:3:4:5:6")).isEqualTo("2001:db8:1:2:0:0:0:0/64");
+        assertThat(AuthRateLimitFilter.clientKey(null)).isEqualTo("null");
+    }
+
+    @Test
+    void stillAnswers429WhenNoExceptionHandlerResolvesTheError() throws Exception {
+        send("POST", "/api/auth/login", "203.0.113.7");
+        send("POST", "/api/auth/login", "203.0.113.7");
+
+        assertThat(send("POST", "/api/auth/login", "203.0.113.7").getStatus()).isEqualTo(429);
+    }
+
+    @Test
     void leavesOtherEndpointsAndMethodsAlone() throws Exception {
         for (int i = 0; i < 5; i++) {
             assertThat(send("POST", "/api/auth/logout", "203.0.113.7").getHeader("X-Passed")).isEqualTo("true");

@@ -36,6 +36,7 @@ class ModularityTest {
         int start = doc.indexOf(START);
         int end = doc.indexOf(END);
         assertThat(start).as("docs/architecture.md must contain the generated module block").isNotNegative();
+        assertThat(end).as("the module block must end with " + END).isGreaterThan(start);
 
         String documented = doc.substring(doc.indexOf('\n', start) + 1, end).strip();
 
