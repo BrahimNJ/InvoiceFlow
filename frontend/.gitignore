@@ -45,3 +45,6 @@ Thumbs.db
 
 # Vercel CLI local link (vercel link / vercel pull)
 .vercel
+
+# Documentation pages generated from ../docs by scripts/build-docs.mjs
+/public/docs/
