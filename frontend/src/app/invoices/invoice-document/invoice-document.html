@@ -9,7 +9,11 @@
   <header class="top">
     <div class="seller">
       <strong>{{ d.seller }}</strong>
-      <span class="pending">Company details (SIREN, legal form, address, VAT number) coming with company settings</span>
+      @if (d.sellerDetails) {
+        <span class="seller-details">{{ d.sellerDetails }}</span>
+      } @else {
+        <span class="pending">Company details (SIREN, legal form, address, VAT number) coming with company settings</span>
+      }
     </div>
     <div class="title">
       <h2>Invoice</h2>

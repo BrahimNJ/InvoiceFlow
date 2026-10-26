@@ -34,13 +34,13 @@ const LEVELS = { empty: 0, weak: 1, fair: 2, good: 3, strong: 4 } as const;
     .meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: .3rem; }
     .meter span { height: 4px; border-radius: 999px; background: var(--line); transition: background-color .2s ease; }
     [data-strength='weak'] .on { background: var(--danger); }
-    [data-strength='fair'] .on { background: #f5a524; }
+    [data-strength='fair'] .on { background: var(--warning); }
     [data-strength='good'] .on { background: var(--brand); }
     [data-strength='strong'] .on { background: var(--accent); }
     .label { font-size: .8rem; color: var(--ink-500); }
     .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: .25rem .75rem; }
     .rules li { display: flex; align-items: center; gap: .35rem; font-size: .8rem; color: var(--ink-500); }
-    .rules li.met { color: #0d8a66; }
+    .rules li.met { color: var(--accent-700); }
   `,
 })
 export class PasswordStrength {

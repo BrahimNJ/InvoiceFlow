@@ -8,7 +8,7 @@
           font-size: .85rem; font-weight: 750; letter-spacing: .02em; background: var(--brand-50); color: var(--brand); }
 .avatar[data-tone='accent'] { background: var(--accent-50); color: var(--accent-700); }
 .avatar[data-tone='warm'] { background: var(--warning-50); color: var(--warning); }
-.avatar[data-tone='violet'] { background: #f3edff; color: #7c4dff; }
+.avatar[data-tone='violet'] { background: color-mix(in srgb, var(--highlight) 22%, var(--surface)); color: color-mix(in srgb, var(--warning) 70%, var(--ink-900)); }
 .customer-text { display: grid; gap: .1rem; min-width: 0; }
 .name { font-weight: 650; color: var(--ink-900); transition: color .15s ease; }
 .name:hover { color: var(--brand); }

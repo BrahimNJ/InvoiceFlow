@@ -52,13 +52,13 @@ import { ConfirmService } from './confirm.service';
     }
   `,
   styles: `
-    .backdrop { position: fixed; inset: 0; z-index: 90; background: rgb(10 19 48 / .45);
+    .backdrop { position: fixed; inset: 0; z-index: 90; background: var(--overlay);
                 backdrop-filter: blur(2px); animation: fade-in .2s ease both; }
     .dialog { position: fixed; z-index: 91; left: 50%; top: 50%; width: min(440px, calc(100% - 32px));
               transform: translate(-50%, -50%); padding: 1.75rem; border-radius: var(--radius-lg);
               background: var(--surface); box-shadow: var(--shadow-lg); animation: pop .25s var(--ease-out) both; }
     @keyframes pop { from { opacity: 0; transform: translate(-50%, -46%) scale(.96); } }
-    .icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 1rem; border-radius: 14px;
+    .icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 1rem; border-radius: var(--radius);
             background: var(--brand-50); color: var(--brand); }
     .icon.danger { background: var(--danger-50); color: var(--danger); }
     h2 { font-size: 1.2rem; font-weight: 700; }

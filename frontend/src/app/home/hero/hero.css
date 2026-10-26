@@ -1,68 +1,53 @@
 .hero {
   position: relative; overflow: hidden;
-  padding-block: clamp(3rem, 8vw, 6rem) clamp(4rem, 9vw, 7rem);
-  background:
-    radial-gradient(60rem 30rem at 85% -10%, rgb(79 107 255 / .16), transparent 60%),
-    radial-gradient(40rem 24rem at -10% 110%, rgb(20 184 138 / .12), transparent 60%);
+  padding-block: clamp(3rem, 7vw, 5.5rem) clamp(4rem, 8vw, 6.5rem);
+  border-bottom: 1px solid var(--line);
+}
+/* Faint ledger ruling behind the page, fading out towards the bottom */
+.hero::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px);
+  background-size: 100% 2rem;
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / .55), transparent 75%);
+  opacity: .6;
 }
 
-.grid { display: grid; gap: clamp(3rem, 6vw, 4rem); align-items: center; }
-@media (min-width: 980px) { .grid { grid-template-columns: 1.05fr .95fr; } }
+.grid { position: relative; display: grid; gap: clamp(3rem, 6vw, 4.5rem); align-items: center; }
+@media (min-width: 1000px) { .grid { grid-template-columns: 1.1fr .9fr; } }
 
-.badge {
-  display: inline-flex; align-items: center; gap: .55rem; padding: .35rem .85rem;
-  border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
-  font-size: .85rem; font-weight: 500; color: var(--ink-700); box-shadow: var(--shadow-sm);
-}
-.dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-50); }
-
-h1 { margin-top: 1.4rem; font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 800; letter-spacing: -.035em; }
-.highlight {
-  background: linear-gradient(100deg, var(--brand), var(--accent));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-  white-space: nowrap;
+h1 { font-size: clamp(2.9rem, 7.2vw, 5.4rem); line-height: .98; letter-spacing: -.02em; text-wrap: balance; }
+h1 em {
+  font-style: italic; white-space: nowrap;
+  background: linear-gradient(transparent 64%, color-mix(in srgb, var(--highlight) 60%, transparent) 64%, color-mix(in srgb, var(--highlight) 60%, transparent) 92%, transparent 92%);
 }
 
-.lead { margin-top: 1.4rem; max-width: 34rem; font-size: clamp(1.05rem, 2vw, 1.2rem); color: var(--ink-500); }
+.lead { margin-top: 1.6rem; max-width: 36rem; font-size: clamp(1.05rem, 1.8vw, 1.15rem); color: var(--ink-700); }
 
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
+@media (max-width: 479px) { .actions .btn { flex: 1 1 100%; } }
 
-.highlights { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; margin-top: 2rem; font-size: .9rem; color: var(--ink-700); }
-.highlights li { display: inline-flex; align-items: center; gap: .4rem; }
-.highlights app-icon { color: var(--accent); }
-
-.visual { position: relative; max-width: 460px; width: 100%; margin-inline: auto; padding: 1.5rem .5rem; }
-
-.invoice {
-  padding: 1.6rem; border: 1px solid var(--line); border-radius: var(--radius-lg);
-  background: var(--surface); box-shadow: var(--shadow-lg); font-size: .9rem;
-  transform: rotate(-1.5deg); animation: float 7s ease-in-out infinite;
+.specs {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 2.5rem 0 0;
+  border-top: 1px solid var(--ink-900);
 }
-.invoice-head { display: flex; justify-content: space-between; align-items: flex-start; }
-.muted { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-500); }
-.number { font-size: 1.15rem; font-weight: 700; }
-.status { padding: .25rem .7rem; border-radius: 999px; background: var(--accent-50); color: #0d8a66; font-size: .78rem; font-weight: 700; }
+@media (min-width: 640px) { .specs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.specs div { padding: .75rem .9rem .75rem 0; border-bottom: 1px solid var(--line); }
+@media (min-width: 640px) { .specs div + div { padding-left: .9rem; border-left: 1px solid var(--line); } }
+.specs dt { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-500); }
+.specs dd { margin: .2rem 0 0; font-size: .92rem; font-weight: 500; }
 
-.parties { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-block: 1.4rem; padding-block: 1rem; border-block: 1px dashed var(--line); }
-.parties p:last-child { font-weight: 600; }
-
-.lines li { display: flex; justify-content: space-between; gap: 1rem; padding-block: .55rem; }
-.lines span { display: flex; flex-direction: column; }
-.lines small { color: var(--ink-500); }
-
-.totals { margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--line); }
-.totals div { display: flex; justify-content: space-between; padding-block: .2rem; color: var(--ink-500); }
-.totals dd { margin: 0; color: var(--ink-900); font-weight: 600; }
-.totals .grand { margin-top: .4rem; font-size: 1.1rem; color: var(--ink-900); font-weight: 700; }
-.totals .grand dd { color: var(--brand); }
-
-.chip {
-  position: absolute; display: inline-flex; align-items: center; gap: .5rem;
-  padding: .6rem .9rem; border-radius: 12px; background: var(--surface);
-  box-shadow: var(--shadow-lg); font-size: .82rem; font-weight: 600;
+.visual { margin: 0; max-width: 460px; width: 100%; justify-self: center; }
+/* A second sheet peeks out behind the invoice, like a stack of paper on a desk */
+.sheet { position: relative; transform: rotate(-1.2deg); }
+.sheet::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--surface); transform: rotate(3deg) translate(10px, 6px);
 }
-.chip-top { top: 0; right: -.5rem; color: var(--brand); }
-.chip-bottom { bottom: 0; left: -.5rem; animation: float 7s ease-in-out -3.5s infinite; }
-.plus { color: #0d8a66; font-weight: 800; }
+.sheet app-invoice-document { filter: drop-shadow(0 24px 32px rgb(26 24 20 / .12)); }
+figcaption { margin-top: 1.5rem; font-size: .8rem; color: var(--ink-500); text-align: center; }
+figcaption .mono { color: var(--ink-700); }
 
-@keyframes float { 50% { translate: 0 -8px; } }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet { animation: settle .9s var(--ease-out) both; }
+  @keyframes settle { from { opacity: 0; transform: rotate(2deg) translateY(16px); } }
+}

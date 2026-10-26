@@ -14,5 +14,6 @@ import { Logo } from '../../shared/logo';
 })
 export class SiteFooter {
   protected readonly repositoryUrl = 'https://github.com/BrahimNJ/InvoiceFlow';
+  protected readonly authorUrl = 'https://github.com/BrahimNJ';
   protected readonly year = new Date().getFullYear();
 }

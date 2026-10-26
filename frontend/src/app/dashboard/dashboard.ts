@@ -67,7 +67,7 @@ import { Icon, IconName } from '../shared/icon/icon';
     .next a:hover { text-decoration: underline; }
     .badge { margin-left: auto; padding: .15rem .55rem; border-radius: 999px; background: var(--brand-50);
             color: var(--brand); font-size: .75rem; font-weight: 700; }
-    .badge.open { background: var(--accent-50); color: #0b7a5a; }
+    .badge.open { background: var(--accent-50); color: var(--accent-700); }
   `,
 })
 export class Dashboard {

@@ -4,11 +4,12 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { Icon, IconName } from './icon/icon';
 import { Logo } from './logo';
+import { ThemeToggle } from './theme-toggle';
 
 /** Top bar of the signed-in pages: navigation between the business screens, current user, sign out. */
 @Component({
   selector: 'app-header',
-  imports: [Icon, Logo, RouterLink, RouterLinkActive],
+  imports: [Icon, Logo, RouterLink, RouterLinkActive, ThemeToggle],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="topbar">
@@ -23,6 +24,7 @@ import { Logo } from './logo';
         </nav>
         <div class="account">
           <span class="who">{{ user()?.firstName }} {{ user()?.lastName }}</span>
+          <app-theme-toggle />
           <button class="btn btn-ghost btn-sm" type="button" (click)="signOut()" [disabled]="signingOut()">
             <app-icon name="log-out" [size]="16" />Sign out
           </button>
@@ -35,7 +37,7 @@ import { Logo } from './logo';
            gap: .5rem 1rem; min-height: var(--header-height); padding-block: .6rem; }
     /* Stays visible while scrolling long lists */
     :host { position: sticky; top: 0; z-index: 50; display: block; }
-    .topbar { border-bottom: 1px solid var(--line); background: rgb(255 255 255 / .9); backdrop-filter: blur(10px); }
+    .topbar { border-bottom: 1px solid var(--line); background: var(--header-bg); backdrop-filter: blur(10px); }
     /* Phones: the navigation gets its own row under the logo and the account, and scrolls sideways if needed */
     nav { order: 1; display: flex; gap: .25rem; width: 100%; overflow-x: auto; scrollbar-width: none; }
     @media (min-width: 640px) {
@@ -43,7 +45,7 @@ import { Logo } from './logo';
       nav { order: 0; width: auto; margin-right: auto; }
     }
     nav a { display: inline-flex; align-items: center; gap: .45rem; flex-shrink: 0; padding: .45rem .75rem;
-            border-radius: 10px; font-weight: 600; font-size: .925rem; color: var(--ink-500);
+            border-radius: var(--radius); font-weight: 600; font-size: .925rem; color: var(--ink-500);
             transition: color .15s ease, background-color .2s ease; }
     nav a:hover { color: var(--ink-900); background: var(--bg); }
     nav a.active { background: var(--brand-50); color: var(--brand); }

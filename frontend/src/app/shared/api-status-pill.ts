@@ -16,11 +16,11 @@ const LABELS = {
   styles: `
     :host { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem .75rem;
             border-radius: 999px; font-size: .8rem; font-weight: 500;
-            background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .14); }
-    .dot { width: .5rem; height: .5rem; border-radius: 50%; background: #f5b83d; }
+            background: color-mix(in srgb, var(--on-night) 8%, transparent); border: 1px solid var(--on-night-line); }
+    .dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--highlight); }
     :host(.checking) .dot { animation: pulse 1.4s ease-in-out infinite; }
-    :host(.up) .dot { background: #22c993; box-shadow: 0 0 0 3px rgb(34 201 147 / .25); }
-    :host(.down) .dot { background: #f2555a; }
+    :host(.up) .dot { background: var(--accent); }
+    :host(.down) .dot { background: color-mix(in srgb, var(--danger) 60%, var(--on-night)); }
     @keyframes pulse { 50% { opacity: .3; } }
   `,
 })

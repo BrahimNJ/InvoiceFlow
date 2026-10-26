@@ -1,0 +1,33 @@
+<section class="section" id="engineering" aria-labelledby="engineering-title">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Engineering</span>
+      <h2 id="engineering-title">Built like production software</h2>
+      <p>The parts that matter most do not show on a screenshot. Each claim below links to the code that backs it.</p>
+    </div>
+
+    <ol class="practices">
+      @for (practice of practices; track practice.title; let i = $index) {
+        <li>
+          <span class="index mono" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span>
+          <h3>{{ practice.title }}</h3>
+          <p>{{ practice.text }}</p>
+          <a class="source mono" [href]="source + practice.path" target="_blank" rel="noopener">
+            {{ practice.path.split('/').pop() }} <app-icon name="arrow-right" [size]="14" />
+          </a>
+        </li>
+      }
+    </ol>
+
+    <aside class="workflow">
+      <p>
+        <strong>How it is built.</strong> Every feature goes issue → branch → small reviewed commits → pull request → CI →
+        verified deploy. Development uses Claude Code as an orchestrated team of specialised agents, and every
+        commit is reviewed by a human before it is pushed.
+      </p>
+      <a class="btn btn-ghost btn-sm" [href]="source + 'docs/claude-code/agents.md'" target="_blank" rel="noopener">
+        Read the workflow <app-icon name="arrow-right" [size]="16" />
+      </a>
+    </aside>
+  </div>
+</section>

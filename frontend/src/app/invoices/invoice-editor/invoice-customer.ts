@@ -90,11 +90,11 @@ export function billedCustomer(customer: Customer): BilledCustomer {
   `,
   styles: `
     :host { display: block; }
-    .card { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem; padding: 1rem; border-radius: 14px;
+    .card { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem; padding: 1rem; border-radius: var(--radius-lg);
             background: var(--bg); border: 1px solid var(--line); }
-    .avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; font-weight: 750;
-              font-size: 1.1rem; text-transform: uppercase; color: #fff;
-              background: linear-gradient(135deg, var(--brand), var(--accent)); }
+    .avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius); font-weight: 750;
+              font-size: 1.1rem; text-transform: uppercase; color: var(--on-brand);
+              background: var(--brand); }
     .text { display: grid; gap: .1rem; flex: 1 1 200px; min-width: 0; font-size: .925rem; }
     .text strong { font-size: 1rem; }
     .muted { color: var(--ink-500); }

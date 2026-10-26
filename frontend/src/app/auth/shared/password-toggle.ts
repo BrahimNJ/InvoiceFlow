@@ -22,7 +22,7 @@ import { Icon } from '../../shared/icon/icon';
     :host { position: absolute; inset-block: 0; right: .35rem; display: flex; align-items: center; }
     button { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 8px;
              background: transparent; color: var(--ink-500); cursor: pointer; }
-    button:hover { color: var(--ink-900); background: rgb(15 23 42 / .05); }
+    button:hover { color: var(--ink-900); background: var(--hover-tint); }
   `,
 })
 export class PasswordToggle {

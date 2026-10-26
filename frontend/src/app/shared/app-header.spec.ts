@@ -43,7 +43,7 @@ describe('AppHeader', () => {
     const fixture = TestBed.createComponent(AppHeader);
     await fixture.whenStable();
 
-    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.account button')!.click();
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.account button.btn')!.click();
     http.expectOne(AUTH_ENDPOINTS.logout).flush(null, { status: 204, statusText: 'No Content' });
 
     expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);

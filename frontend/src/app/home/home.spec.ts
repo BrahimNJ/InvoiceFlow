@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { authResponse } from '../core/auth/auth.fixtures';
 import { AUTH_ENDPOINTS, AuthService } from '../core/auth/auth.service';
+import { formatEuros } from '../shared/format/money';
 import { Home } from './home';
 
 describe('Home', () => {
@@ -31,17 +32,21 @@ describe('Home', () => {
   it('renders the hero headline and every section', async () => {
     const page = await render();
 
-    expect(page.querySelector('h1')?.textContent).toContain('e-invoicing era');
-    for (const id of ['features', 'reform', 'ai', 'how-it-works', 'get-started']) {
+    expect(page.querySelector('h1')?.textContent).toContain('right to the cent');
+    for (const id of ['product', 'reform', 'engineering', 'ai', 'get-started']) {
       expect(page.querySelector(`#${id}`)).toBeTruthy();
     }
-    expect(page.querySelectorAll('#features .card').length).toBe(6);
+    expect(page.querySelectorAll('#product .ledger li').length).toBe(6);
+    expect(page.querySelectorAll('#engineering .practices li').length).toBe(6);
   });
 
-  it('computes the sample invoice totals with 20% VAT', async () => {
+  it('renders the sample invoice with the app document component and exact totals', async () => {
     const page = await render();
 
-    expect(page.querySelector('.hero .totals .grand')?.textContent).toContain('€1,800.00');
+    // 3 × 450 + 150 at 20 %, 2 × 16 at 5.5 %: 1,532.00 excl. VAT + 300.00 + 1.76 VAT
+    const invoice = page.querySelector('.hero app-invoice-document');
+    expect(invoice?.textContent).toContain('F-2026-0042');
+    expect(invoice?.textContent).toContain(formatEuros(1833.76));
     expect(page.querySelector('.ai .total')?.textContent).toContain('€1,620.00');
   });
 

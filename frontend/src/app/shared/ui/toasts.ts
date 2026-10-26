@@ -26,15 +26,15 @@ import { ToastService } from './toast.service';
              justify-items: end; pointer-events: none; }
     @media (min-width: 560px) { .stack { left: auto; width: 380px; right: 24px; bottom: 24px; } }
     .toast { display: flex; align-items: flex-start; gap: .7rem; width: 100%; padding: .85rem .9rem .85rem 1rem;
-             border-radius: var(--radius); background: var(--night); color: #fff; box-shadow: var(--shadow-lg);
+             border-radius: var(--radius); background: var(--night); color: var(--on-night); box-shadow: var(--shadow-lg);
              pointer-events: auto; animation: slide-in .35s var(--ease-out) both; }
     @keyframes slide-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
-    .toast > app-icon { margin-top: .1rem; color: #3ddcaa; }
-    .toast.error > app-icon { color: #ff8a8e; }
+    .toast > app-icon { margin-top: .1rem; color: color-mix(in srgb, var(--accent) 60%, var(--on-night)); }
+    .toast.error > app-icon { color: color-mix(in srgb, var(--danger) 45%, var(--on-night)); }
     p { flex: 1; font-size: .925rem; font-weight: 500; }
-    .close { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 8px;
-             background: transparent; color: rgb(255 255 255 / .7); cursor: pointer; }
-    .close:hover { background: rgb(255 255 255 / .1); color: #fff; }
+    .close { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: var(--radius);
+             background: transparent; color: var(--on-night-muted); cursor: pointer; }
+    .close:hover { background: var(--on-night-line); color: var(--on-night); }
   `,
 })
 export class Toasts {
