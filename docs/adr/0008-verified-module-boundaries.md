@@ -34,4 +34,5 @@ dependency cycle, and the architecture diagram in the documentation could silent
   the shared kernel and the named interface resolved them without moving code. No cycle was found.
 - A new module that imports another module's internals, or a cycle such as `customer → invoice → customer`, now fails
   CI with the offending types listed.
-- The architecture diagram in the docs is guaranteed to describe the real dependencies.
+- The architecture diagram in the docs shows the dependencies Spring Modulith detects between modules, and the build
+  fails when it differs. It lists edges only: a module with no dependency in either direction would not appear.

@@ -1,8 +1,8 @@
 # Quality and testing
 
 Tests are part of every feature, never a follow-up: a module is not merged until its service, controller,
-repository and ownership tests pass in CI. At the time of writing the suites hold **247 backend tests** and
-**232 frontend tests**, and the backend tests cover **97.8 % of lines and 91.9 % of branches** (JaCoCo).
+repository and ownership tests pass in CI. At the time of writing the suites hold **252 backend tests** and
+**232 frontend tests**, and the backend tests cover **97.5 % of lines and 91.7 % of branches** (JaCoCo).
 
 ## Test pyramid
 

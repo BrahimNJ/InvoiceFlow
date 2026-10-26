@@ -158,7 +158,7 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
-                    <!-- A floor just under today's figures (97.8 % lines, 91.9 % branches): coverage may not regress -->
+                    <!-- A floor a few points under the current figures (docs/testing.md): coverage may not regress -->
                     <execution>
                         <id>check</id>
                         <phase>verify</phase>
