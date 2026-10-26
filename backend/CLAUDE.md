@@ -16,7 +16,8 @@ Reference implementations: `customer` (simple CRUD), `product`, `invoice` (lifec
 - Errors go through `GlobalExceptionHandler` (RFC 9457 `ProblemDetail`): `ResourceNotFoundException` (404),
   `ConflictException` (409), `UnprocessableException` (422).
 - Money is `BigDecimal`, never `double`; VAT rates validated by `@FrenchVatRate`.
-- Time comes from the injected `Clock` (`ClockConfig`), never `LocalDate.now()` without it.
+- Business dates and times in services (issue date, due date, overdue) come from the injected `Clock` (`ClockConfig`).
+  Entity audit timestamps (`@PrePersist` / `@PreUpdate` with `Instant.now()`) are fine as they are.
 - Schema changes only through a new Flyway migration `V<n>__<description>.sql`; never edit an applied one.
 - Services: `@Transactional(readOnly = true)` on the class, `@Transactional` on writes.
 

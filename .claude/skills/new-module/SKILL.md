@@ -4,10 +4,12 @@ description: Scaffold a new backend business module (and optionally its frontend
 argument-hint: <module-name> [issue-number]
 ---
 
-Create the InvoiceFlow module `$ARGUMENTS` end to end, following `backend/CLAUDE.md` and `frontend/CLAUDE.md`.
+Arguments: `$ARGUMENTS` (first word: module name, singular, lower case; second word, optional: issue number).
+
+Create that InvoiceFlow module end to end, following `backend/CLAUDE.md` and `frontend/CLAUDE.md`.
 
 1. **Check the ground**: an issue exists and the current branch is `<issue>-feat/<name>`; otherwise stop and say so.
-   Ask the `explorer` agent for the files of the `product` module (backend and frontend) as a path list; do not read them all in the main session.
+   Ask the `explorer` agent for the files of the `customer` and `product` modules (backend and frontend) as a path list; do not read them all in the main session.
 2. **Plan**: list the fields, validation rules, owner scoping and endpoints; ask the user only if a business rule is ambiguous.
 3. **Backend, one commit per layer**, tests green at each step:
    1. Flyway migration `V<next>__create_<name>_table.sql` + entity + repository + `@DataJpaTest`.
