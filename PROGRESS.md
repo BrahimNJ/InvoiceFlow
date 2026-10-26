@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ Review lot 6 of the **Showcase** (#33, branch `33-chore/claude-workflow`), then lot 1: visual identity ("paper and ink"). After #33: payments (3.5) or company details (5.1).
+➡️ **Showcase** (#33): review lot 2 (in-app docs), then lot 3 (backend tooling: Spring Modulith, OpenAPI reference, rate limiting, coverage). After #33: payments (3.5) or company details (5.1).
 
 ---
 
@@ -36,7 +36,7 @@
 | 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; cross-origin calls verified in production on 2026-10-18 |
 | 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
 | 0.13 | Multi-agent Claude Code workflow: subagents, scoped `CLAUDE.md`, skills, hook scripts, Playwright MCP | ✅ Done | #33 / #34 | Branch `33-chore/claude-workflow`. Hook scripts covered by `node --test .claude/hooks/*.test.mjs` (26 cases); activation in `.claude/settings.json` left to the maintainer |
-| 0.14 | Showcase: visual identity, in-app docs, ADRs, backend tooling, E2E/a11y/Lighthouse, supply-chain security | 📋 Planned | #33 | One PR per lot |
+| 0.14 | Showcase: visual identity, in-app docs, ADRs, backend tooling, E2E/a11y/Lighthouse, supply-chain security | 🚧 In progress | #33 | One PR per lot |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
 | 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | ✅ Done | #25 / #26 | Run for #24 failed after 38 s although production served the commit. *Deploy backend* green on the merge commit `f6bebad` |
 | 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | ✅ Done | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
