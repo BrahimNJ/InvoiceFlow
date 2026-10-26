@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ Review and merge **Invoices** (#31, PR #32, branch `31-feat/invoices`). Then: payments (3.5) or company details (5.1).
+➡️ Review lot 6 of the **Showcase** (#33, branch `33-chore/claude-workflow`), then lot 1: visual identity ("paper and ink"). After #33: payments (3.5) or company details (5.1).
 
 ---
 
@@ -35,6 +35,8 @@
 | 0.8.1 | Fix frontend deploy: run Vercel CLI from repo root (Root Directory `frontend`) | ✅ Done | #15 / #16 | Reproduced locally; validated on `main` by the merge of this fix |
 | 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; cross-origin calls verified in production on 2026-10-18 |
 | 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
+| 0.13 | Multi-agent Claude Code workflow: subagents, scoped `CLAUDE.md`, skills, hook scripts, Playwright MCP | 🚧 In progress | #33 | Branch `33-chore/claude-workflow`. Hook scripts covered by `node --test .claude/hooks/*.test.mjs` (26 cases); activation in `.claude/settings.json` left to the maintainer |
+| 0.14 | Showcase: visual identity, in-app docs, ADRs, backend tooling, E2E/a11y/Lighthouse, supply-chain security | 📋 Planned | #33 | One PR per lot |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
 | 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | ✅ Done | #25 / #26 | Run for #24 failed after 38 s although production served the commit. *Deploy backend* green on the merge commit `f6bebad` |
 | 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | ✅ Done | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
@@ -60,12 +62,12 @@
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 3.1 | Invoice and invoice line entities | 🔍 In review | #31 / #32 | Flyway V6; customer details copied onto the invoice, frozen once issued |
-| 3.2 | Subtotal / VAT / total calculation | 🔍 In review | #31 / #32 | Half up per line, VAT once per rate; same rules in the frontend preview |
-| 3.3 | Invoice numbering and status lifecycle | 🔍 In review | #31 / #32 | Draft → Issued → Cancelled, overdue derived; `F-<year>-<0001>` gap-free, tested concurrently. Paid comes with 3.5 |
-| 3.4 | Invoice CRUD API | 🔍 In review | #31 / #32 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
+| 3.1 | Invoice and invoice line entities | ✅ Done | #31 / #32 | Flyway V6; customer details copied onto the invoice, frozen once issued |
+| 3.2 | Subtotal / VAT / total calculation | ✅ Done | #31 / #32 | Half up per line, VAT once per rate; same rules in the frontend preview |
+| 3.3 | Invoice numbering and status lifecycle | ✅ Done | #31 / #32 | Draft → Issued → Cancelled, overdue derived; `F-<year>-<0001>` gap-free, tested concurrently. Paid comes with 3.5 |
+| 3.4 | Invoice CRUD API | ✅ Done | #31 / #32 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
 | 3.5 | Payment tracking | 📋 Planned | — | |
-| 3.6 | Invoices UI | 🔍 In review | #31 / #32 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Not checked in a real browser yet (tests and build only) |
+| 3.6 | Invoices UI | ✅ Done | #31 / #32 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Real-browser check planned in #33 (Playwright) |
 
 ## Phase 4 — Documents
 
@@ -101,7 +103,7 @@
 
 | Date | Change |
 |------|--------|
-| 2026-10-26 | Showcase lot 1 (visual identity) on `33-feat/visual-identity` (#33): 222 frontend tests pass. |
+| 2026-10-26 | Invoices merged (#32). Showcase issue #33 opened; lot 6 (multi-agent workflow, see `docs/claude-code/agents.md`) on `33-chore/claude-workflow`. |
 | 2026-10-24 | Invoices implemented on `31-feat/invoices` (#31): 235 backend and 217 frontend tests pass. Business rules and screens: `docs/invoicing.md`. |
 | 2026-10-24 | Products (#29) and customers restyle (#30) merged. Invoices started on `31-feat/invoices` (#31). |
 | 2026-10-21 | Customers screens restyled with the shared UI kit on `28-feat/customer-ui-restyle` (#28), stacked on #27: 148 frontend tests pass. |

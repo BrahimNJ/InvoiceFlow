@@ -118,21 +118,22 @@ accepting code without reading the diff, asking the agent to push before reviewi
 
 ---
 
-## 7. Multi-agent roadmap (future)
+## 7. Multi-agent workflow
 
-The project currently uses **one agent per session**. Multi-agent workflows will be introduced only when
-the single-agent workflow is stable and the cost/benefit is clear.
+The project works with an orchestrating main session and specialized subagents, project skills, hooks and
+MCP servers. Details, rationale and the token strategy: [`agents.md`](agents.md).
 
-| Stage | Setup | Use case |
-|-------|-------|----------|
-| 1. Single agent (current) | One session, one feature | All development |
-| 2. Specialized subagents | `.claude/agents/*.md` (e.g. `reviewer`, `test-writer`) with restricted tools | Independent review of a branch, test generation, read-only codebase exploration |
-| 3. Parallel agents | Separate git worktrees (one branch each) | Independent features in parallel (e.g. Product backend + Customer frontend) |
-| 4. Automation | Hooks, scheduled agents, CI-triggered agents | Lint/test on save, nightly dependency checks, automated PR review |
-| 5. Programmatic agents | Claude Agent SDK | AI features of InvoiceFlow itself (natural-language invoice creation) |
+| Stage | Setup | Status |
+|-------|-------|--------|
+| 1. Single agent | One session, one feature | Used for phases 0 to 3 |
+| 2. Specialized subagents | `.claude/agents/*.md`: explorer, backend-dev, frontend-dev, reviewer, ui-auditor | In place |
+| 3. Parallel agents | One git worktree and one branch per agent | Used since #33 (lot 6 fixed in a worktree while lot 1 progressed) |
+| 4. Automation | Skills (`.claude/skills/`) and CI in place; hook scripts tested, activated by the maintainer in `.claude/settings.json` | Partly in place |
+| 5. Programmatic agents | Claude Agent SDK | Planned for the AI features (phase 7) |
 
-Rules that will apply to multi-agent work:
+Rules for multi-agent work:
 - Each agent has one clear responsibility and the minimum tools it needs (e.g. a reviewer is read-only).
+- Only the main session changes git state: agents report, the orchestrator commits.
 - Parallel agents never share a working tree: one worktree and one branch per agent.
 - Agent outputs are reviewed like human contributions; the human remains the merge gate.
 - Spawning agents costs tokens: use them only when the work is truly independent or needs an isolated context.
