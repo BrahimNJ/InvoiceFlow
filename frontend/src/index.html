@@ -7,6 +7,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="InvoiceFlow: create compliant invoices, track payments and get ready for mandatory e-invoicing in France, with an AI assistant.">
   <meta name="theme-color" content="#f5f1e8">
+  <script>
+    // Apply the theme before the first paint (no flash of the wrong theme). Same key as ThemeService.
+    try {
+      var t = localStorage.getItem('invoiceflow.theme');
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>

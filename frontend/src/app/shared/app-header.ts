@@ -4,11 +4,12 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { Icon, IconName } from './icon/icon';
 import { Logo } from './logo';
+import { ThemeToggle } from './theme-toggle';
 
 /** Top bar of the signed-in pages: navigation between the business screens, current user, sign out. */
 @Component({
   selector: 'app-header',
-  imports: [Icon, Logo, RouterLink, RouterLinkActive],
+  imports: [Icon, Logo, RouterLink, RouterLinkActive, ThemeToggle],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="topbar">
@@ -23,6 +24,7 @@ import { Logo } from './logo';
         </nav>
         <div class="account">
           <span class="who">{{ user()?.firstName }} {{ user()?.lastName }}</span>
+          <app-theme-toggle />
           <button class="btn btn-ghost btn-sm" type="button" (click)="signOut()" [disabled]="signingOut()">
             <app-icon name="log-out" [size]="16" />Sign out
           </button>

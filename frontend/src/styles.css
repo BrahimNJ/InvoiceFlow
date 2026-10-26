@@ -58,6 +58,47 @@
   scroll-padding-top: var(--header-height);
 }
 
+/* Ink theme: the same roles, redefined. Set on <html> by index.html before the first paint, then by ThemeService. */
+:root[data-theme='dark'] {
+  --ink-900: #ece7dc;
+  --ink-700: #c9c2b4;
+  --ink-500: #a29b8e;
+  --ink-300: #6f6a60;
+  --line: #2e2a24;
+  --line-strong: #443f37;
+  --bg: #141310;
+  --surface: #1b1915;
+  --surface-2: #211e19;
+  --brand: #6dbb94;
+  --brand-600: #8acfac;
+  --brand-50: #1c2b24;
+  --on-brand: #0f1411;
+  --accent: #62c08e;
+  --accent-50: #19291f;
+  --accent-700: #93d8b1;
+  --highlight: #e8b93a;
+  --danger: #f2826f;
+  --danger-50: #2d1915;
+  --warning: #e4a54a;
+  --warning-50: #2a2112;
+
+  --night: #0c0b09;
+  --night-2: #1b1915;
+  --on-night: #ece7dc;
+  --on-night-muted: #a29b8e;
+  --on-night-line: rgb(236 231 220 / .12);
+
+  --overlay: rgb(0 0 0 / .6);
+  --header-bg: rgb(20 19 16 / .85);
+  --hover-tint: rgb(236 231 220 / .06);
+
+  --shadow-sm: 0 1px 0 rgb(0 0 0 / .3);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / .4), 0 10px 24px -14px rgb(0 0 0 / .6);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / .4), 0 28px 56px -24px rgb(0 0 0 / .8);
+
+  color-scheme: dark;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body { margin: 0; line-height: 1.6; background: var(--bg); }
@@ -69,6 +110,8 @@ p { margin: 0; }
 a { color: inherit; text-decoration: none; }
 ul { margin: 0; padding: 0; list-style: none; }
 ::selection { background: var(--highlight); color: #1a1814; }
+/* Theme switches cross-fade instead of flashing */
+body { transition: background-color .25s ease, color .25s ease; }
 
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 4px; }
 

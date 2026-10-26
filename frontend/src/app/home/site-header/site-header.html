@@ -11,6 +11,7 @@
     </nav>
 
     <div class="actions">
+      <app-theme-toggle />
       @if (isAuthenticated()) {
         <a class="btn btn-primary btn-sm" routerLink="/dashboard">Open dashboard</a>
       } @else {

@@ -3,10 +3,11 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { Logo } from '../../shared/logo';
+import { ThemeToggle } from '../../shared/theme-toggle';
 
 @Component({
   selector: 'app-site-header',
-  imports: [Logo, RouterLink],
+  imports: [Logo, RouterLink, ThemeToggle],
   templateUrl: './site-header.html',
   styleUrl: './site-header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
