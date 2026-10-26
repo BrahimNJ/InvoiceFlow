@@ -39,6 +39,7 @@
 | 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | ✅ Done | #25 / #26 | Run for #24 failed after 38 s although production served the commit. *Deploy backend* green on the merge commit `f6bebad` |
 | 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | ✅ Done | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
 | 0.15 | Showcase lot 1: paper-and-ink identity, self-hosted fonts, landing rewrite, dark theme, view transitions | 🚧 In progress | #33 | Branch `33-feat/visual-identity`. Landing and sign-in checked in Chrome (1280 / 390 px, light and dark); signed-in screens not checked in a browser yet (needs the API) |
+| 0.16 | Showcase lot 2: in-app docs at `/docs` (build-time Markdown with marked + Shiki, lazy Mermaid), overview, architecture, security model, testing, 7 ADRs | 🚧 In progress | #33 | Branch `33-feat/in-app-docs`, stacked on lot 1. Checked in Chrome (1280 / 390 px, light and dark). Prerendering deferred: `@angular/ssr` needs the Angular packages aligned on one patch first |
 
 ## Phase 1 — Customers
 
@@ -101,6 +102,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-26 | Showcase lot 2 (in-app docs, ADRs) on `33-feat/in-app-docs` (#33): 232 frontend tests pass. |
 | 2026-10-26 | Showcase lot 1 (visual identity) on `33-feat/visual-identity` (#33): 222 frontend tests pass. |
 | 2026-10-24 | Invoices implemented on `31-feat/invoices` (#31): 235 backend and 217 frontend tests pass. Business rules and screens: `docs/invoicing.md`. |
 | 2026-10-24 | Products (#29) and customers restyle (#30) merged. Invoices started on `31-feat/invoices` (#31). |
