@@ -25,13 +25,17 @@ stays coherent and every commit is reviewable.
 | Agent | Model | Tools | Use it for | Why this model |
 |-------|-------|-------|------------|----------------|
 | `explorer` | Haiku | Read, Grep, Glob | Locating code and conventions across many files | Search is cheap work; returns paths, not file dumps |
-| `backend-dev` | Sonnet | Read, Edit, Write, Bash | A bounded backend layer or endpoint, with tests | Strong coding at a moderate cost |
-| `frontend-dev` | Sonnet | Read, Edit, Write, Bash | A bounded Angular screen or service, with specs | Same |
-| `reviewer` | Opus | Read, Grep, Glob, Bash (read-only use) | Independent review of the diff before commit / PR | Finding subtle bugs is where the strongest model pays off |
-| `ui-auditor` | Sonnet | Playwright MCP, Read, Bash | Real-browser checks: phone/desktop screenshots, console, keyboard, accessibility | Unit tests cannot see a broken layout |
+| `backend-dev` | Sonnet | Read, Grep, Glob, Edit, Write, Bash | A bounded backend layer or endpoint, with tests | Strong coding at a moderate cost |
+| `frontend-dev` | Sonnet | Read, Grep, Glob, Edit, Write, Bash | A bounded Angular screen or service, with specs | Same |
+| `reviewer` | Opus | Read, Grep, Glob, Bash | Independent review of the diff before commit / PR | Finding subtle bugs is where the strongest model pays off |
+| `ui-auditor` | Sonnet | Read, Grep, Glob, Bash, Playwright browser tools | Real-browser checks: phone/desktop screenshots, console, keyboard, accessibility | Unit tests cannot see a broken layout |
 
 Definitions live in [`.claude/agents/`](../../.claude/agents/). Each one states its scope, its forbidden actions
 (no git, no out-of-scope files) and the exact shape of its final report.
+
+Be precise about what is enforced: tool lists are enforced by Claude Code, but agents that have Bash *could* run
+git; "never commit" and "read-only use of Bash" are instructions in the agent prompt. The `guard-commit` hook still
+applies to them, and every change is reviewed before it is committed.
 
 ### When to delegate, when not to
 
@@ -66,7 +70,12 @@ Scripts live in [`.claude/hooks/`](../../.claude/hooks/), written in Node so the
 | `guard-commit.mjs` | `PreToolUse` on Bash | Blocks `git add` / `git commit` of `.env*`, keys, IDE metadata, personal Claude settings, and blanket `git add -A` |
 | `format-frontend.mjs` | `PostToolUse` on Edit/Write | Formats the edited frontend file with the project's Prettier |
 
-They are registered in `.claude/settings.json` (team-wide, versioned):
+`guard-commit` does not pattern-match the command text: it asks git which paths each `git add` would stage
+(`git add --dry-run`) and checks those, plus the index when a commit runs. Directories, globs, quoted paths and
+`git -C` are therefore resolved exactly as git resolves them, and commit messages never trigger it.
+Its behaviour is covered by tests against a throwaway repository: `node --test .claude/hooks/*.test.mjs`.
+
+To activate them, the maintainer adds this block to `.claude/settings.json` (team-wide, versioned):
 
 ```json
 "hooks": {
@@ -88,9 +97,12 @@ The agent is not allowed to register hooks itself: changing its own guard rails 
 Independent lots run in separate git worktrees, one branch each, so two agents never edit the same working tree:
 
 ```bash
-git worktree add ../InvoiceFlow-backend 33-feat/backend-tooling
-git worktree add ../InvoiceFlow-frontend 33-feat/visual-identity
+git worktree add ../InvoiceFlow-lot6 33-chore/claude-workflow
 ```
+
+First real use: while `frontend-dev` restyled the signed-in screens on `33-feat/visual-identity` in the main working
+tree, the orchestrator fixed the reviewer's findings on this branch in `../InvoiceFlow-lot6`, with no branch switching
+and no risk of mixing the two changes.
 
 Each worktree gets its own Claude Code session (or an agent started with `isolation: worktree`). Integration happens
 through pull requests, exactly as with human contributors.

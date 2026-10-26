@@ -127,8 +127,8 @@ MCP servers. Details, rationale and the token strategy: [`agents.md`](agents.md)
 |-------|-------|--------|
 | 1. Single agent | One session, one feature | Used for phases 0 to 3 |
 | 2. Specialized subagents | `.claude/agents/*.md`: explorer, backend-dev, frontend-dev, reviewer, ui-auditor | In place |
-| 3. Parallel agents | One git worktree and one branch per agent | In place for independent lots |
-| 4. Automation | Hooks (`.claude/hooks/`), skills (`.claude/skills/`), CI | In place |
+| 3. Parallel agents | One git worktree and one branch per agent | Used since #33 (lot 6 fixed in a worktree while lot 1 progressed) |
+| 4. Automation | Skills (`.claude/skills/`) and CI in place; hook scripts tested, activated by the maintainer in `.claude/settings.json` | Partly in place |
 | 5. Programmatic agents | Claude Agent SDK | Planned for the AI features (phase 7) |
 
 Rules for multi-agent work:

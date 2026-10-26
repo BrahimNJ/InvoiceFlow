@@ -35,7 +35,7 @@
 | 0.8.1 | Fix frontend deploy: run Vercel CLI from repo root (Root Directory `frontend`) | ✅ Done | #15 / #16 | Reproduced locally; validated on `main` by the merge of this fix |
 | 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; cross-origin calls verified in production on 2026-10-18 |
 | 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
-| 0.13 | Multi-agent Claude Code workflow: subagents, scoped `CLAUDE.md`, skills, hook scripts, Playwright MCP | 🚧 In progress | #33 | Branch `33-chore/claude-workflow`. Hooks written and tested, registration in `.claude/settings.json` left to the maintainer |
+| 0.13 | Multi-agent Claude Code workflow: subagents, scoped `CLAUDE.md`, skills, hook scripts, Playwright MCP | 🚧 In progress | #33 | Branch `33-chore/claude-workflow`. Hook scripts covered by `node --test .claude/hooks/*.test.mjs` (26 cases); activation in `.claude/settings.json` left to the maintainer |
 | 0.14 | Showcase: visual identity, in-app docs, ADRs, backend tooling, E2E/a11y/Lighthouse, supply-chain security | 📋 Planned | #33 | One PR per lot |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
 | 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | ✅ Done | #25 / #26 | Run for #24 failed after 38 s although production served the commit. *Deploy backend* green on the merge commit `f6bebad` |
