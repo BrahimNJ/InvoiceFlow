@@ -8,7 +8,8 @@
 
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; height: var(--header-height); }
 
-.actions { display: flex; gap: .5rem; }
+.actions { display: flex; align-items: center; gap: .5rem; }
+.actions .btn { white-space: nowrap; }
 
 nav { display: none; }
 nav ul { display: flex; gap: .25rem; }
@@ -17,6 +18,22 @@ nav a {
   font-size: .9rem; font-weight: 500; color: var(--ink-700);
   transition: color .15s ease, background-color .15s ease;
 }
-nav a:hover { color: var(--ink-900); background: var(--hover-tint); }
+nav a:hover, .docs-link:hover { color: var(--ink-900); background: var(--hover-tint); }
+nav a.active, .docs-link.active { color: var(--brand); }
 
 @media (min-width: 900px) { nav { display: block; } }
+
+/* Docs stays reachable on phones, where the section links are hidden */
+.docs-link { padding: .4rem .6rem; border-radius: var(--radius); font-size: .9rem; font-weight: 500; color: var(--ink-700); }
+@media (min-width: 900px) { .docs-link { display: none; } }
+/* Narrow screens keep the essentials: Docs and the main call to action (sign-in is one tap away from it) */
+@media (max-width: 559px) {
+  .bar { gap: .75rem; }
+  .actions { gap: .25rem; }
+  .actions .btn-ghost { display: none; }
+}
+@media (max-width: 419px) {
+  .actions app-theme-toggle { display: none; }
+  .actions .btn { padding-inline: .8rem; }
+  .docs-link { padding-inline: .45rem; }
+}

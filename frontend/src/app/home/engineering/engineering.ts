@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { Icon } from '../../shared/icon/icon';
 
@@ -14,7 +15,7 @@ interface Practice {
 /** The parts a screenshot cannot show, each linked to the code that implements it. */
 @Component({
   selector: 'app-engineering',
-  imports: [Icon],
+  imports: [Icon, RouterLink],
   templateUrl: './engineering.html',
   styleUrl: './engineering.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

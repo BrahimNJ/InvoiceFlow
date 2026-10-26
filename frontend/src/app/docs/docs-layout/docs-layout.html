@@ -1,0 +1,36 @@
+<app-site-header />
+
+<div class="container layout">
+  <aside class="sidebar">
+    <details class="browse" #browse [open]="wide">
+      <summary>Documentation</summary>
+      <nav aria-label="Documentation">
+        @if (sections(); as sections) {
+          @for (section of sections; track section.title) {
+            <p class="nav-section">{{ section.title }}</p>
+            <ul>
+              @for (page of section.pages; track page.slug) {
+                <li>
+                  <a [routerLink]="['/docs', page.slug]" routerLinkActive="active" ariaCurrentWhenActive="page"
+                     (click)="browse.open = wide">
+                    {{ page.title }}
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        } @else if (sections() === null) {
+          <p class="error" role="alert">The documentation index could not be loaded.</p>
+        } @else {
+          @for (row of [1, 2, 3, 4, 5]; track row) {
+            <span class="skeleton"></span>
+          }
+        }
+      </nav>
+    </details>
+  </aside>
+
+  <main id="main" class="content">
+    <router-outlet />
+  </main>
+</div>

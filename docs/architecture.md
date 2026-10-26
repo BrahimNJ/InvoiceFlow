@@ -1,0 +1,91 @@
+# Architecture
+
+InvoiceFlow is a **modular monolith**: one Spring Boot application split into business modules, and one Angular
+single-page application whose feature folders mirror those modules. Why not microservices:
+[ADR 0001](adr/0001-modular-monolith.md).
+
+## Backend modules
+
+```text
+com.naji.backend
+├── common/      config (CORS, clock), security (JWT, filter chain), exception (ProblemDetail), validation, web
+├── user/        accounts
+├── auth/        register, login, refresh, logout; access and refresh tokens
+├── customer/    customer book, scoped to the owner        (reference module)
+├── product/     catalogue: goods / services, price, VAT rate
+└── invoice/     drafts, lines, totals, numbering, readiness, lifecycle
+```
+
+Each module owns its entity, repository, service, controller, mapper and `dto/` records. Rules every module follows:
+
+| Rule | Why |
+|------|-----|
+| Controllers never expose JPA entities: request / response records + mapper | The API contract does not change when the schema does; no lazy-loading surprises in JSON |
+| Every query takes the owner id | Tenant isolation cannot be forgotten in one endpoint ([Security](security.md)) |
+| Business rules live in services and dedicated classes (`InvoiceCalculator`, `InvoiceReadiness`, `InvoiceNumberGenerator`) | Unit-testable without Spring or a database |
+| Errors are exceptions mapped once by `GlobalExceptionHandler` to RFC 9457 problem details | One error format for the whole API ([ADR 0005](adr/0005-problem-details.md)) |
+| Time comes from an injected `Clock` | Due dates and overdue status are testable on fixed dates |
+
+## Request lifecycle
+
+```mermaid
+sequenceDiagram
+    participant UI as Angular
+    participant SEC as Security filter chain
+    participant C as Controller
+    participant S as Service
+    participant DB as PostgreSQL
+
+    UI->>SEC: POST /api/invoices/42/issue (Bearer JWT)
+    SEC->>SEC: verify signature, issuer, expiry
+    SEC->>C: authenticated principal (user id)
+    C->>S: issue(ownerId, 42)
+    S->>DB: load invoice where id = 42 and owner = me
+    S->>S: readiness checks (mandatory mentions)
+    S->>DB: lock counter row, next number, save
+    S-->>C: InvoiceResponse
+    C-->>UI: 200 JSON, or 404 / 409 / 422 problem+json
+```
+
+## Data model
+
+```mermaid
+erDiagram
+    users ||--o{ refresh_tokens : "has sessions"
+    users ||--o{ customers : owns
+    users ||--o{ products : owns
+    users ||--o{ invoices : owns
+    users ||--o{ invoice_number_sequences : "numbers per year"
+    customers |o--o{ invoices : "billed (details copied)"
+    invoices ||--|{ invoice_lines : contains
+    products |o--o{ invoice_lines : "source (values copied)"
+```
+
+- Every business table carries `owner_id` with `ON DELETE CASCADE` to its user.
+- An invoice **copies** the customer's details and each line copies the product's label, price and VAT rate: an
+  issued invoice must never change when the customer or the catalogue is edited later (`ON DELETE SET NULL` on the
+  links).
+- `invoices (owner_id, number)` is unique; `invoice_number_sequences` holds one counter per owner and fiscal year.
+- Six Flyway migrations (`V1` to `V6`) build the schema; the application never alters it at runtime
+  (`ddl-auto=validate`).
+
+## Frontend
+
+```text
+frontend/src/app
+├── core/        auth (service, interceptor, guards), http (problem details, pages), theme
+├── shared/      UI kit: page header, empty state, help tips, confirm dialog, toasts, icons, money formatting
+├── home/        public landing page
+├── docs/        this documentation
+├── customers/ products/ invoices/   one folder per business feature, one sub-folder per screen
+└── auth/        sign-in and sign-up pages
+```
+
+| Choice | Why |
+|--------|-----|
+| Standalone components, `OnPush`, signals | Explicit data flow, change detection only where state changes |
+| Lazy routes per screen | Visitors download only the page they open |
+| Access token in a signal (memory), refresh through an interceptor | Nothing readable by injected scripts survives a reload ([Authentication](authentication.md)) |
+| Problem details mapped to form fields | Server validation messages land next to the right input |
+| Design tokens in CSS custom properties, derived with `color-mix()` | One identity, a dark theme by redefining tokens ([ADR 0006](adr/0006-visual-identity-and-self-hosted-fonts.md)) |
+| Documentation rendered at build time | No Markdown or highlighting library shipped to the browser ([ADR 0007](adr/0007-docs-rendered-at-build-time.md)) |
