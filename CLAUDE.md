@@ -2,35 +2,31 @@
 
 Fullstack invoicing platform for the French e-invoicing reform. Modular monolith.
 Read `PROGRESS.md` first to know the current state and the next task.
-Full workflow guide: `docs/claude-code/best-practices.md`.
+Full workflow guide: `docs/claude-code/best-practices.md`. Agents, skills and hooks: `docs/claude-code/agents.md`.
+
+Stack-specific rules load on demand from `backend/CLAUDE.md` and `frontend/CLAUDE.md`.
 
 ## Stack
-- Backend: Java 21 (CI) / source level 17, Spring Boot 4, Spring Data JPA, Bean Validation, Lombok, Maven wrapper. Package root `com.naji.backend`.
+- Backend: Java 21 (CI) / source level 17, Spring Boot 4, Spring Data JPA, Flyway, PostgreSQL (H2 in tests).
 - Frontend: Angular 21, TypeScript 5.9, Vitest, npm.
-- DB: PostgreSQL (planned), H2 for tests only.
-- CI: GitHub Actions (`.github/workflows/backend-ci.yml`, `frontend-ci.yml`).
+- CI/CD: GitHub Actions; frontend on Vercel, backend on Render, database on Neon.
 
 ## Commands
 - Backend tests: `cd backend && ./mvnw test` (CI runs `./mvnw --batch-mode verify`)
 - Frontend build/tests: `cd frontend && npm run build && npm test -- --watch=false`
 
-## Backend structure (one package per business module)
-```
-com.naji.backend.<module>/        entity, repository, service, controller, mapper
-com.naji.backend.<module>/dto/    request/response records with validation
-com.naji.backend.common/          cross-cutting code (exceptions, handler, config)
-```
-Reference implementation: `customer` module. New modules follow the same layout:
-- Never expose JPA entities from controllers; use DTO records + mapper.
-- Errors go through `GlobalExceptionHandler` (RFC 9457 `ProblemDetail`); throw `ResourceNotFoundException` for missing ids.
-- Every module ships with a Mockito service test and a `@WebMvcTest` controller test.
+## Working with agents
+- The main session orchestrates: it plans, delegates bounded tasks, integrates and commits.
+- Delegate wide searches to `explorer` (cheap, read-only); never re-read in the main session what an agent summarized.
+- Run `reviewer` on the staged diff before each non-trivial commit.
+- Spawn agents only for independent or context-heavy work; small edits stay in the main session.
 
 ## Git workflow
 - One GitHub issue per feature, created before any code.
 - Branch: `<issue-number>-<type>/<short-name>` (e.g. `3-feat/customer-crud`), from an up-to-date `main`.
 - Conventional commits: `<type>(<scope>): <summary>` + `Refs #<issue>` in the body. Types: feat, fix, test, docs, build, ci, chore, refactor.
 - One commit per coherent piece of code (one layer/concern). Code must compile and tests pass at each commit.
-- PR description in English, detailed, with `Closes #<issue>`.
+- PR description in English, detailed, with `Closes #<issue>` (or `Refs #<issue>` for an intermediate lot).
 
 ## Rules (non-negotiable)
 1. **Never push, merge, open a PR or close an issue unless the user explicitly asks in the current request.** The user reviews every commit.
