@@ -2,7 +2,7 @@
 // Never blocks: a formatting failure is reported but the edit stands.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 
 const FORMATTED = /\.(ts|html|css|scss|json)$/;
 
@@ -12,8 +12,9 @@ const root = process.env.CLAUDE_PROJECT_DIR ?? input.cwd ?? process.cwd();
 const frontend = join(root, 'frontend');
 const prettier = join(frontend, 'node_modules', 'prettier', 'bin', 'prettier.cjs');
 
-const inFrontend = file && !relative(frontend, resolve(file)).startsWith('..');
-if (!inFrontend || !FORMATTED.test(file) || file.includes('node_modules') || !existsSync(prettier)) {
+const rel = file ? relative(frontend, resolve(file)) : '';
+const inFrontend = rel !== '' && !rel.startsWith('..') && !isAbsolute(rel); // other drive on Windows: absolute
+if (!inFrontend || !FORMATTED.test(file) || /node_modules|package-lock\.json$/.test(file) || !existsSync(prettier)) {
   process.exit(0);
 }
 
