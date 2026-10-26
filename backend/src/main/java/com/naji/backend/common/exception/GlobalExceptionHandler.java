@@ -47,6 +47,12 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /** Rate limit reached; the filter that throws it has already set {@code Retry-After}. */
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ProblemDetail handleTooManyRequests(TooManyRequestsException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
     /** Account temporarily locked after too many failed sign-in attempts. */
     @ExceptionHandler(LockedException.class)
     public ProblemDetail handleLocked(LockedException ex) {

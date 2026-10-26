@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -30,7 +31,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
  * (Spring OAuth2 resource server support, Nimbus), except the public endpoints below.
  */
 @Configuration
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, RateLimitProperties.class})
 public class SecurityConfig {
 
     /** Claim holding the user roles, e.g. {@code ["USER"]}. */
@@ -47,7 +48,12 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
+            RateLimitProperties rateLimit,
             @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) throws Exception {
+        // Created here rather than as a bean: a Filter bean would also be registered by Spring Boot outside security
+        if (rateLimit.enabled()) {
+            http.addFilterBefore(new AuthRateLimitFilter(rateLimit, exceptionResolver), BearerTokenAuthenticationFilter.class);
+        }
         // 401 and 403 go through GlobalExceptionHandler, like every other API error (RFC 9457 ProblemDetail)
         AuthenticationEntryPoint entryPoint = (request, response, ex) ->
                 exceptionResolver.resolveException(request, response, null, ex);
