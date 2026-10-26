@@ -22,7 +22,8 @@
       <p class="heading">Project</p>
       <ul>
         <li><a [href]="repositoryUrl" target="_blank" rel="noopener">Source code</a></li>
-        <li><a [href]="repositoryUrl + '/tree/main/docs'" target="_blank" rel="noopener">Documentation</a></li>
+        <li><a routerLink="/docs">Documentation</a></li>
+        <li><a routerLink="/docs/adr">Architecture decisions</a></li>
         <li><a [href]="repositoryUrl + '/blob/main/PROGRESS.md'" target="_blank" rel="noopener">Roadmap</a></li>
       </ul>
     </nav>
@@ -30,9 +31,10 @@
     <nav aria-label="Product">
       <p class="heading">Product</p>
       <ul>
-        <li><a href="#product">Modules</a></li>
-        <li><a href="#reform">The reform</a></li>
-        <li><a href="#engineering">Engineering</a></li>
+        <li><a routerLink="/" fragment="product">Modules</a></li>
+        <li><a routerLink="/" fragment="reform">The reform</a></li>
+        <li><a routerLink="/" fragment="engineering">Engineering</a></li>
+        <li><a routerLink="/docs/security">Security model</a></li>
       </ul>
     </nav>
   </div>

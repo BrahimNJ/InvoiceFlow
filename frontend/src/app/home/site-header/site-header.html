@@ -1,16 +1,18 @@
 <header class="header">
   <div class="container bar">
-    <a href="#top" aria-label="InvoiceFlow, back to top"><app-logo /></a>
+    <a routerLink="/" aria-label="InvoiceFlow home"><app-logo /></a>
 
     <nav aria-label="Main">
       <ul>
-        @for (link of links; track link.href) {
-          <li><a [href]="link.href">{{ link.label }}</a></li>
+        @for (link of links; track link.fragment) {
+          <li><a routerLink="/" [fragment]="link.fragment">{{ link.label }}</a></li>
         }
+        <li><a routerLink="/docs" routerLinkActive="active">Docs</a></li>
       </ul>
     </nav>
 
     <div class="actions">
+      <a class="docs-link" routerLink="/docs" routerLinkActive="active">Docs</a>
       <app-theme-toggle />
       @if (isAuthenticated()) {
         <a class="btn btn-primary btn-sm" routerLink="/dashboard">Open dashboard</a>

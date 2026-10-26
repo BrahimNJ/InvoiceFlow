@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { Logo } from '../../shared/logo';
 import { ThemeToggle } from '../../shared/theme-toggle';
 
+/** Public header (landing page and docs): section links go through the router so they work from any page. */
 @Component({
   selector: 'app-site-header',
-  imports: [Logo, RouterLink, ThemeToggle],
+  imports: [Logo, RouterLink, RouterLinkActive, ThemeToggle],
   templateUrl: './site-header.html',
   styleUrl: './site-header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -15,9 +16,9 @@ import { ThemeToggle } from '../../shared/theme-toggle';
 export class SiteHeader {
   protected readonly isAuthenticated = inject(AuthService).isAuthenticated;
   protected readonly links = [
-    { href: '#product', label: 'Product' },
-    { href: '#reform', label: 'The reform' },
-    { href: '#engineering', label: 'Engineering' },
-    { href: '#ai', label: 'AI assistant' },
+    { fragment: 'product', label: 'Product' },
+    { fragment: 'reform', label: 'The reform' },
+    { fragment: 'engineering', label: 'Engineering' },
+    { fragment: 'ai', label: 'AI assistant' },
   ];
 }

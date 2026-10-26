@@ -1,0 +1,50 @@
+@if (ready(); as ready) {
+  <div class="doc">
+    <article class="prose">
+      <p class="eyebrow">{{ section() }}</p>
+      <div [innerHTML]="ready.html"></div>
+
+      <footer class="doc-footer">
+        <a class="source" [href]="ready.page.source" target="_blank" rel="noopener">
+          <app-icon name="github" [size]="16" /> Edit this page on GitHub
+        </a>
+        <nav class="pager" aria-label="Previous and next pages">
+          @if (previous(); as page) {
+            <a class="prev" [routerLink]="['/docs', page.slug]">
+              <span class="label">Previous</span><span class="title">{{ page.title }}</span>
+            </a>
+          }
+          @if (next(); as page) {
+            <a class="next" [routerLink]="['/docs', page.slug]">
+              <span class="label">Next</span><span class="title">{{ page.title }}</span>
+            </a>
+          }
+        </nav>
+      </footer>
+    </article>
+
+    @if (ready.page.toc.length > 1) {
+      <aside class="toc" aria-label="On this page">
+        <p class="toc-title">On this page</p>
+        <ul>
+          @for (heading of ready.page.toc; track heading.id) {
+            <li [class.nested]="heading.depth > 2"><a [href]="'#' + heading.id">{{ heading.text }}</a></li>
+          }
+        </ul>
+      </aside>
+    }
+  </div>
+} @else if (state().status === 'missing') {
+  <div class="missing" role="alert">
+    <h1>Page not found</h1>
+    <p>This documentation page does not exist or could not be loaded.</p>
+    <a class="btn btn-ghost" routerLink="/docs/overview">Back to the overview</a>
+  </div>
+} @else {
+  <div class="loading" aria-busy="true" aria-label="Loading the page">
+    <span class="skeleton title"></span>
+    @for (row of [1, 2, 3, 4, 5, 6]; track row) {
+      <span class="skeleton"></span>
+    }
+  </div>
+}

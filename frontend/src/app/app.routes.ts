@@ -10,6 +10,15 @@ export const routes: Routes = [
     loadComponent: () => import('./home/home').then((m) => m.Home),
   },
   {
+    path: 'docs',
+    title: 'Docs · InvoiceFlow',
+    loadComponent: () => import('./docs/docs-layout/docs-layout').then((m) => m.DocsLayout),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'overview' },
+      { path: ':slug', loadComponent: () => import('./docs/doc-page/doc-page').then((m) => m.DocPage) },
+    ],
+  },
+  {
     path: 'login',
     title: 'Sign in · InvoiceFlow',
     canActivate: [guestGuard],

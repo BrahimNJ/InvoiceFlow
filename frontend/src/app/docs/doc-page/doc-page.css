@@ -1,0 +1,97 @@
+/* Not encapsulated (the body is injected HTML): every rule is scoped under app-doc-page. */
+app-doc-page { display: block; }
+
+app-doc-page .doc { display: grid; gap: 2.5rem; }
+@media (min-width: 1240px) { app-doc-page .doc { grid-template-columns: minmax(0, 1fr) 13rem; gap: 3.5rem; } }
+
+/* ---- Prose ---- */
+app-doc-page .prose { min-width: 0; max-width: 46rem; color: var(--ink-700); font-size: 1rem; line-height: 1.7; }
+app-doc-page .prose .eyebrow { margin-bottom: .75rem; }
+app-doc-page .prose h1 { margin-bottom: 1.25rem; font-size: clamp(2.4rem, 5vw, 3.4rem); color: var(--ink-900); }
+app-doc-page .prose h2 { margin: 2.75rem 0 1rem; padding-top: 1.25rem; border-top: 1px solid var(--line);
+                         font-size: clamp(1.6rem, 3vw, 2rem); color: var(--ink-900); }
+app-doc-page .prose h3 { margin: 2rem 0 .75rem; font-size: 1.15rem; font-weight: 600; color: var(--ink-900); }
+app-doc-page .prose :is(h2, h3) { position: relative; scroll-margin-top: calc(var(--header-height) + 1rem); }
+app-doc-page .prose .anchor { position: absolute; left: -1.1em; color: var(--ink-300); opacity: 0; text-decoration: none;
+                              font-family: var(--font-mono); font-size: .8em; transition: opacity .15s ease; }
+app-doc-page .prose :is(h2, h3):hover .anchor { opacity: 1; }
+app-doc-page .prose p, app-doc-page .prose ul, app-doc-page .prose ol { margin: 0 0 1rem; }
+app-doc-page .prose ul { padding-left: 1.25rem; list-style: disc; }
+app-doc-page .prose ol { padding-left: 1.4rem; }
+app-doc-page .prose li { margin-block: .3rem; }
+app-doc-page .prose li::marker { color: var(--ink-300); }
+app-doc-page .prose strong { color: var(--ink-900); font-weight: 600; }
+app-doc-page .prose a { color: var(--brand); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--brand) 35%, transparent);
+                        text-underline-offset: 3px; transition: text-decoration-color .15s ease; }
+app-doc-page .prose a:hover { text-decoration-color: currentColor; }
+app-doc-page .prose blockquote { margin: 1.5rem 0; padding: .25rem 0 .25rem 1.25rem; border-left: 3px solid var(--highlight);
+                                 color: var(--ink-500); font-style: italic; }
+app-doc-page .prose hr { margin: 2.5rem 0; border: 0; border-top: 1px solid var(--line); }
+
+app-doc-page .prose :not(pre) > code {
+  padding: .1em .35em; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2);
+  font-family: var(--font-mono); font-size: .86em; color: var(--ink-900); overflow-wrap: anywhere;
+}
+
+/* Tables: ruled like a ledger, scrolling inside their own box on phones */
+app-doc-page .prose .table-wrap { margin: 1.25rem 0 1.5rem; overflow-x: auto; border-top: 1px solid var(--ink-900); }
+app-doc-page .prose table { width: 100%; border-collapse: collapse; font-size: .9rem; line-height: 1.5; }
+app-doc-page .prose th { padding: .6rem .75rem .6rem 0; text-align: left; vertical-align: bottom; white-space: nowrap;
+                         font-family: var(--font-mono); font-size: .7rem; font-weight: 500; letter-spacing: .06em;
+                         text-transform: uppercase; color: var(--ink-500); border-bottom: 1px solid var(--line); }
+app-doc-page .prose td { padding: .65rem .75rem .65rem 0; vertical-align: top; border-bottom: 1px solid var(--line); }
+app-doc-page .prose td:first-child { color: var(--ink-900); font-weight: 500; }
+app-doc-page .prose :is(td, th) + :is(td, th) { padding-left: .75rem; }
+
+/* Code highlighted at build time by Shiki: both themes are CSS variables, [data-theme] picks one */
+app-doc-page .prose pre.shiki {
+  margin: 1.25rem 0 1.5rem; padding: 1rem 1.15rem; overflow-x: auto; border: 1px solid var(--line);
+  border-radius: var(--radius-lg); background: var(--surface-2) !important; font-family: var(--font-mono);
+  font-size: .84rem; line-height: 1.6; tab-size: 2;
+}
+app-doc-page .prose pre.shiki, app-doc-page .prose pre.shiki span { color: var(--shiki-light); }
+:root[data-theme='dark'] app-doc-page .prose pre.shiki,
+:root[data-theme='dark'] app-doc-page .prose pre.shiki span { color: var(--shiki-dark); }
+
+/* Mermaid: the source stays hidden until the diagram replaces it */
+app-doc-page .prose pre.mermaid {
+  margin: 1.5rem 0; padding: 1.25rem; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); color: transparent; text-align: center; min-height: 6rem;
+}
+app-doc-page .prose pre.mermaid[data-processed] { color: inherit; }
+app-doc-page .prose pre.mermaid svg { max-width: 100%; height: auto; }
+
+/* ---- Footer and pager ---- */
+app-doc-page .doc-footer { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+app-doc-page .doc-footer a { text-decoration: none; }
+app-doc-page .doc-footer .source { display: inline-flex; align-items: center; gap: .45rem; font-size: .88rem; color: var(--ink-500); }
+app-doc-page .doc-footer .source:hover { color: var(--ink-900); }
+app-doc-page .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+app-doc-page .pager a { display: grid; gap: .15rem; padding: .9rem 1rem; border: 1px solid var(--line); border-radius: var(--radius-lg);
+                        background: var(--surface); color: var(--ink-900); transition: border-color .15s ease; }
+app-doc-page .pager a:hover { border-color: var(--brand); }
+app-doc-page .pager .next { grid-column: 2; text-align: right; }
+app-doc-page .pager .label { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-500); }
+app-doc-page .pager .title { font-weight: 500; }
+
+/* ---- On this page ---- */
+app-doc-page .toc { display: none; }
+@media (min-width: 1240px) {
+  app-doc-page .toc { display: block; position: sticky; top: calc(var(--header-height) + 2rem); align-self: start;
+                      max-height: calc(100vh - var(--header-height) - 4rem); overflow-y: auto; }
+}
+app-doc-page .toc-title { margin-bottom: .6rem; font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em;
+                          text-transform: uppercase; color: var(--ink-500); }
+app-doc-page .toc ul { display: grid; gap: .3rem; border-left: 1px solid var(--line); }
+app-doc-page .toc a { display: block; padding-left: .8rem; font-size: .84rem; line-height: 1.4; color: var(--ink-500); }
+app-doc-page .toc a:hover { color: var(--brand); }
+app-doc-page .toc .nested a { padding-left: 1.6rem; font-size: .8rem; }
+
+/* ---- States ---- */
+app-doc-page .loading { display: grid; gap: .9rem; max-width: 46rem; }
+app-doc-page .loading .title { height: 2.6rem; width: 55%; margin-bottom: 1rem; }
+app-doc-page .missing { display: grid; gap: 1rem; justify-items: start; max-width: 36rem; padding-block: 2rem; }
+app-doc-page .missing h1 { font-size: 2.4rem; }
+app-doc-page .missing p { color: var(--ink-500); }
+/* Identifiers in tables stay whole; the table scrolls on narrow screens instead */
+app-doc-page .prose td code { white-space: nowrap; overflow-wrap: normal; }
