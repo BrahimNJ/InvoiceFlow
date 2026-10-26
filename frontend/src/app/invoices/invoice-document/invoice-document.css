@@ -7,12 +7,13 @@
 .mark-layer { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
 .watermark { position: absolute; white-space: nowrap; top: 42%; left: 50%; transform: translate(-50%, -50%) rotate(-24deg);
              font-size: 7em; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
-             color: rgb(79 107 255 / .07); pointer-events: none; }
+             color: rgb(31 82 64 / .07); pointer-events: none; }
 .watermark.cancelled { color: rgb(217 61 66 / .1); }
 .top { display: flex; justify-content: space-between; gap: 2em; }
 .seller { display: grid; gap: .3em; max-width: 50%; }
 .seller strong { font-size: 1.35em; }
 .pending { color: var(--warning); font-size: .85em; }
+.seller-details { color: #475569; font-size: .85em; white-space: pre-line; }
 .title { text-align: right; }
 .title h2 { font-size: 2.3em; font-weight: 800; letter-spacing: -.02em; color: var(--brand); }
 .number { font-weight: 700; font-variant-numeric: tabular-nums; }

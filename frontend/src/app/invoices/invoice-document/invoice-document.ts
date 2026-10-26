@@ -32,6 +32,8 @@ export interface InvoiceDocument {
   dueDate: string;
   paymentTerms: PaymentTerms;
   seller: string;
+  /** Legal identity of the seller (SIREN, address, VAT number); until company settings exist, a notice is shown. */
+  sellerDetails?: string | null;
   customer: BilledCustomer | null;
   lines: DocumentLine[];
   totals: Totals;
