@@ -6,10 +6,10 @@
 .type-option { position: relative; display: flex; align-items: flex-start; gap: .85rem; padding: 1rem;
                border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--surface); cursor: pointer;
                transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease, transform .2s ease; }
-.type-option:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+.type-option:hover { border-color: var(--line-strong); }
 .type-option:has(input:focus-visible) { outline: 3px solid var(--brand); outline-offset: 3px; }
-.type-option.selected { border-color: var(--brand); background: #fafbff; box-shadow: 0 0 0 4px rgb(79 107 255 / .12); }
-.type-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px;
+.type-option.selected { border-color: var(--brand); background: var(--surface-2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 12%, transparent); }
+.type-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--radius);
              background: var(--bg); color: var(--ink-500); transition: background-color .2s ease, color .2s ease; }
 .selected .type-icon { background: var(--brand-50); color: var(--brand); }
 .type-text { display: grid; gap: .15rem; padding-right: 1.5rem; }

@@ -31,11 +31,11 @@ let nextId = 0;
   `,
   styles: `
     :host { display: block; }
-    .help { border: 1px solid #dfe5ff; border-radius: var(--radius); background: linear-gradient(135deg, #f5f7ff, #f2fbf8); }
+    .help { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); }
     .toggle { display: flex; align-items: center; gap: .75rem; width: 100%; padding: .8rem 1rem; border: 0;
               background: transparent; font: inherit; text-align: left; color: var(--ink-900); cursor: pointer; }
-    .bulb { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px;
-            background: #fff; color: var(--warning); box-shadow: var(--shadow-sm); }
+    .bulb { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius);
+            background: var(--surface); color: var(--warning); box-shadow: var(--shadow-sm); }
     .title { flex: 1; font-weight: 700; }
     .action { font-size: .85rem; font-weight: 600; color: var(--brand); }
     .chevron { color: var(--brand); transition: transform .25s var(--ease-out); }

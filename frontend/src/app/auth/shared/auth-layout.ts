@@ -37,16 +37,14 @@ import { Logo } from '../../shared/logo';
     @media (min-width: 960px) { .layout { grid-template-columns: minmax(380px, 5fr) 7fr; } }
 
     .panel { display: none; flex-direction: column; justify-content: space-between; gap: 3rem;
-             padding: 2.5rem; color: #fff;
-             background: radial-gradient(40rem 30rem at 0% 0%, rgb(79 107 255 / .45), transparent 60%),
-                         radial-gradient(30rem 24rem at 100% 100%, rgb(20 184 138 / .3), transparent 60%),
-                         var(--night); }
+             padding: 2.5rem; color: var(--on-night);
+             background: var(--night); }
     @media (min-width: 960px) { .panel { display: flex; } }
     .pitch h2 { font-size: clamp(1.8rem, 2.6vw, 2.4rem); font-weight: 750; max-width: 22rem; }
     .pitch ul { display: grid; gap: .9rem; margin-top: 2rem; }
-    .pitch li { display: flex; align-items: center; gap: .7rem; color: rgb(255 255 255 / .82); }
+    .pitch li { display: flex; align-items: center; gap: .7rem; color: color-mix(in srgb, var(--on-night) 82%, transparent); }
     .pitch app-icon { color: var(--accent); }
-    .note { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: rgb(255 255 255 / .6); }
+    .note { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--on-night-muted); }
 
     .content { display: flex; flex-direction: column; align-items: center; justify-content: center;
                gap: 2rem; padding: 2rem 16px; }

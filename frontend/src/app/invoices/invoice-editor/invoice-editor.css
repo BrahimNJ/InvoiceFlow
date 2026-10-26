@@ -2,7 +2,7 @@
 
 /* Action bar under the app header: title, save state and actions stay in reach while scrolling */
 .bar { position: sticky; top: var(--header-height); z-index: 40; border-bottom: 1px solid var(--line);
-       background: rgb(247 249 252 / .92); backdrop-filter: blur(8px); }
+       background: var(--header-bg); backdrop-filter: blur(8px); }
 .bar-inner { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; min-height: 60px; padding-block: .5rem; }
 .back { display: inline-flex; align-items: center; gap: .25rem; font-size: .875rem; font-weight: 600; color: var(--ink-500); }
 .back:hover { color: var(--brand); }
@@ -21,12 +21,12 @@
 .main { display: grid; gap: 1rem; min-width: 0; }
 .block { padding: clamp(1rem, 3vw, 1.4rem); }
 .block h2 { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; font-size: 1rem; font-weight: 700; }
-.step { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; font-size: .8rem;
+.step { display: grid; place-items: center; width: 26px; height: 26px; border-radius: var(--radius); font-size: .8rem;
         background: var(--brand-50); color: var(--brand); }
 .optional { font-size: .8rem; font-weight: 500; color: var(--ink-300); }
 
 .terms { display: flex; flex-wrap: wrap; gap: .4rem; }
-.term { display: inline-flex; align-items: center; padding: .45rem .8rem; border: 1px solid var(--line); border-radius: 10px;
+.term { display: inline-flex; align-items: center; padding: .45rem .8rem; border: 1px solid var(--line); border-radius: var(--radius);
         background: var(--surface); font-size: .875rem; font-weight: 600; color: var(--ink-700); cursor: pointer;
         transition: border-color .15s ease, background-color .15s ease, color .15s ease; }
 .term:hover { border-color: var(--line-strong); }
@@ -38,7 +38,7 @@
 /* Hidden on desktop, where the side panel is in sight */
 .mobile-bar { position: fixed; z-index: 45; left: 0; right: 0; bottom: 0; display: flex; align-items: center;
               justify-content: space-between; gap: 1rem; padding: .7rem 16px calc(.7rem + env(safe-area-inset-bottom));
-              border-top: 1px solid var(--line); background: rgb(255 255 255 / .96); backdrop-filter: blur(8px); }
+              border-top: 1px solid var(--line); background: var(--header-bg); backdrop-filter: blur(8px); }
 .mobile-total { display: grid; line-height: 1.2; }
 .mobile-total small { font-size: .75rem; color: var(--ink-500); }
 .mobile-total strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }

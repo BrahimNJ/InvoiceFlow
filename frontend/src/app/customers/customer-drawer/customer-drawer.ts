@@ -72,7 +72,7 @@ const MESSAGES: Record<string, string> = {
     </aside>
   `,
   styles: `
-    .backdrop { position: fixed; inset: 0; z-index: 90; background: rgb(10 19 48 / .4); animation: fade-in .2s ease both; }
+    .backdrop { position: fixed; inset: 0; z-index: 90; background: var(--overlay); animation: fade-in .2s ease both; }
     .drawer { position: fixed; z-index: 91; top: 0; right: 0; bottom: 0; width: min(440px, 100%); overflow-y: auto;
               padding: 1.5rem; background: var(--surface); box-shadow: var(--shadow-lg); animation: slide .3s var(--ease-out) both; }
     @keyframes slide { from { transform: translateX(40px); opacity: 0; } }

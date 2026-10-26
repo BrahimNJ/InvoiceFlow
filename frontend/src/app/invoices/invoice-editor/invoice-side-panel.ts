@@ -82,9 +82,9 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
   `,
   styles: `
     :host { display: grid; gap: .75rem; }
-    .tabs { display: flex; gap: .25rem; padding: .25rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    .tabs { display: flex; gap: .25rem; padding: .25rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
     .tabs button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 36px;
-                   border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: .875rem; font-weight: 600;
+                   border: 0; border-radius: var(--radius); background: transparent; font: inherit; font-size: .875rem; font-weight: 600;
                    color: var(--ink-500); cursor: pointer; }
     .tabs button[aria-selected='true'] { background: var(--brand-50); color: var(--brand); }
     .body { padding: 1.2rem; display: grid; gap: 1rem; }
@@ -93,7 +93,7 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
     .totals dd { margin: 0; font-weight: 600; }
     .vat { color: var(--ink-500); font-size: .9rem; }
     .vat span { font-size: .8rem; color: var(--ink-300); }
-    .grand { margin-top: .3rem; padding: .75rem .9rem; border-radius: 12px; background: var(--night); color: #fff;
+    .grand { margin-top: .3rem; padding: .75rem .9rem; border-radius: var(--radius); background: var(--night); color: var(--on-night);
              font-size: 1.15rem; font-weight: 750; }
     .nature { display: flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--ink-500); }
     .readiness { padding-top: 1rem; border-top: 1px solid var(--line); }
@@ -101,7 +101,7 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
     .score { color: var(--warning); font-variant-numeric: tabular-nums; }
     .score.done { color: var(--accent-700); }
     .meter { height: 6px; margin: .5rem 0 .9rem; border-radius: 99px; background: var(--line); overflow: hidden; }
-    .meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand), var(--accent));
+    .meter span { display: block; height: 100%; border-radius: inherit; background: var(--brand);
                   transition: width .3s var(--ease-out); }
     ul { display: grid; gap: .6rem; }
     li { display: flex; gap: .55rem; font-size: .875rem; }
