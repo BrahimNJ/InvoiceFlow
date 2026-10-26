@@ -13,13 +13,15 @@ application: what could go wrong, what stops it, and where in the code. Authenti
 | Replayed refresh token | Rotation on every use; presenting a revoked token revokes every session of the account (RFC 9700) | `RefreshTokenService` |
 | CSRF on cookie endpoints | `X-Requested-With` required on refresh / logout (cross-site forms cannot send it; scripts trigger a CORS preflight only allowed origins pass). Business endpoints use the bearer header, never cookies | `AuthController`, `CorsConfig` |
 | Forged JWT | HS256 only, signature, issuer and expiry verified by Spring's resource server; secret ≥ 32 bytes checked at startup | `SecurityConfig`, `JwtProperties` |
-| Password guessing | 5 failures lock the account for 15 minutes (`429`); same answer and timing for unknown emails (no enumeration) | `AuthService` |
+| Password guessing on one account | 5 failures lock the account for 15 minutes (`429`); same answer and timing for unknown emails (no enumeration) | `AuthService` |
+| One client trying many accounts, flooding sign-up or refresh | Token bucket per client IP on login, register and refresh (10 a minute by default), `429` with `Retry-After`; the client IP comes from `X-Forwarded-For` only when the request arrives through a trusted private-network proxy, so a client cannot choose it | `AuthRateLimitFilter`, `application-prod.properties` |
 | Database leak | BCrypt password hashes, refresh tokens stored as SHA-256 hashes | `SecurityConfig`, `RefreshTokenService` |
 | Invalid or hostile input | Bean Validation on every request record, custom validators (French VAT rates, strong passwords), parameterised queries through JPA / `JdbcTemplate` | `dto/`, `common/validation` |
 | Tampered amounts | The server recomputes every total from lines; client totals are never trusted | `InvoiceCalculator` |
 | An issued invoice altered afterwards | Issued invoices are immutable: customer and line values are copied, edits are refused (`409`) | `InvoiceService` |
 | Information leaks in errors | RFC 9457 problem details with business messages only; no stack traces or SQL in responses | `GlobalExceptionHandler` |
 | Secrets in the repository or logs | `.env` git-ignored, secrets in GitHub / Render / Vercel settings; `toString()` of tokens and passwords hides them; a Claude Code hook blocks staging secrets | `.gitignore`, DTOs, `.claude/hooks/guard-commit.mjs` |
+| Undocumented or drifting API surface | The OpenAPI description is generated from the controllers and served publicly (contract only, never data); Scalar loads its script from the API itself, not a CDN | `OpenApiConfig`, `/scalar` |
 | Clickjacking, MIME sniffing, caching of API responses | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Cache-Control: no-store` from Spring Security | `SecurityConfig` |
 
 ## Trusted HTML in this documentation
@@ -33,7 +35,7 @@ no user input ever reaches this path. See [ADR 0007](adr/0007-docs-rendered-at-b
 
 | Gap | Plan |
 |-----|------|
-| Lockout is per account, not per IP | Rate limiting on the auth endpoints (Bucket4j), issue #33 lot 3 |
+| Client IP behind the hosting proxy not yet checked in production | Confirm after deploy that Render's proxy is in Tomcat's trusted ranges; if not, every client shares one bucket (stricter, never weaker) and the trusted proxies must be configured |
 | No Content-Security-Policy or HSTS on the frontend host yet | Security headers in `vercel.json`, issue #33 lot 5 |
 | No automated dependency and code scanning | Dependabot and CodeQL, issue #33 lot 5 |
 | Refresh cookie is third-party in production (different domains) | Serve the API under the frontend domain, then `SameSite=Strict` ([Authentication](authentication.md)) |

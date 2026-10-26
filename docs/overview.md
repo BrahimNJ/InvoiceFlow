@@ -33,20 +33,30 @@ The live roadmap with issues and pull requests is [`PROGRESS.md`](../PROGRESS.md
    every use and reuse detection (RFC 9700). See [Authentication](authentication.md).
 4. **Tenant isolation by default.** Every query is scoped to its owner; another account's data answers `404`, so
    identifiers reveal nothing. See [Security](security.md).
-5. **Deploys that verify themselves.** The deploy is pinned to the commit CI tested, then waits until production
+5. **Architecture that is checked, not claimed.** Spring Modulith fails the build if a module reaches into another
+   module's internals, and the architecture diagram is generated from the code. See
+   [ADR 0008](adr/0008-verified-module-boundaries.md).
+6. **Deploys that verify themselves.** The deploy is pinned to the commit CI tested, then waits until production
    reports that exact commit and passes a smoke test. See [Deployment](deployment.md).
-6. **A documented, human-reviewed AI workflow.** Built with Claude Code as an orchestrated team of specialised
+7. **A documented, human-reviewed AI workflow.** Built with Claude Code as an orchestrated team of specialised
    agents; every commit is reviewed by a human. See [Agents, skills and hooks](claude-code/agents.md).
 
 ## Stack
 
 | Layer | Technology | Why |
 |-------|------------|-----|
-| Backend | Java 21, Spring Boot 4, Spring Data JPA, Bean Validation, Spring Security (OAuth2 resource server) | Mature, explicit, strongly typed business rules; first-class security |
+| Backend | Java 21, Spring Boot 4, Spring Data JPA, Bean Validation, Spring Security (OAuth2 resource server), Spring Modulith, springdoc OpenAPI, Bucket4j | Mature, explicit, strongly typed business rules; first-class security |
 | Database | PostgreSQL 17 (Neon), Flyway migrations; H2 in tests | Relational integrity for financial data; versioned schema |
 | Frontend | Angular 21 (standalone components, signals, zoneless), TypeScript 5.9, Vitest | Structured app with strict typing; fast unit tests |
 | Docs | Markdown in the repository, rendered at build time with marked + Shiki, Mermaid diagrams | One source of truth for GitHub and the site |
 | CI/CD | GitHub Actions; Vercel (frontend), Render with Docker (backend) | Every merge is built, tested, deployed and verified |
+
+## API reference
+
+The REST API is described by an OpenAPI document generated from the controllers and browsable with Scalar:
+[interactive reference](https://invoiceflow-backend-84wn.onrender.com/scalar) ·
+[OpenAPI JSON](https://invoiceflow-backend-84wn.onrender.com/v3/api-docs). The free hosting sleeps when idle, so
+the first load can take up to a minute.
 
 ## Architecture at a glance
 
