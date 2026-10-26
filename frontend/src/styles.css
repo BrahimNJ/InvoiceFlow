@@ -334,7 +334,14 @@ select.input {
   .form-footer > * { flex: 1 1 100%; max-width: none; }
 }
 
+/* Route changes (withViewTransitions): a short cross-fade with a slight rise, the header stays put */
+::view-transition-old(root) { animation: .18s ease both vt-out; }
+::view-transition-new(root) { animation: .28s var(--ease-out) both vt-in; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(6px); } }
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   :root { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
