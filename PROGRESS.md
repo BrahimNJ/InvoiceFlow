@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ **Showcase** (#33): review lot 2 (in-app docs), then lot 3 (backend tooling: Spring Modulith, OpenAPI reference, rate limiting, coverage). After #33: payments (3.5) or company details (5.1).
+➡️ **Showcase** (#33): review lot 3 (backend tooling, branch `33-feat/backend-tooling`), then lot 4 (Playwright E2E, axe-core accessibility, Lighthouse budget). After #33: payments (3.5) or company details (5.1).
 
 ---
 
@@ -41,7 +41,8 @@
 | 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | ✅ Done | #25 / #26 | Run for #24 failed after 38 s although production served the commit. *Deploy backend* green on the merge commit `f6bebad` |
 | 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | ✅ Done | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
 | 0.15 | Showcase lot 1: paper-and-ink identity, self-hosted fonts, landing rewrite, dark theme, view transitions | ✅ Done | #33 / #35 | Branch `33-feat/visual-identity`. Landing and sign-in checked in Chrome (1280 / 390 px, light and dark); signed-in screens not checked in a browser yet (needs the API) |
-| 0.16 | Showcase lot 2: in-app docs at `/docs` (build-time Markdown with marked + Shiki, lazy Mermaid), overview, architecture, security model, testing, 7 ADRs | 🚧 In progress | #33 | Branch `33-feat/in-app-docs`, stacked on lot 1. Checked in Chrome (1280 / 390 px, light and dark). Prerendering deferred: `@angular/ssr` needs the Angular packages aligned on one patch first |
+| 0.16 | Showcase lot 2: in-app docs at `/docs` (build-time Markdown with marked + Shiki, lazy Mermaid), overview, architecture, security model, testing, 7 ADRs | ✅ Done | #33 / #36 | Branch `33-feat/in-app-docs`, stacked on lot 1. Checked in Chrome (1280 / 390 px, light and dark). Prerendering deferred: `@angular/ssr` needs the Angular packages aligned on one patch first |
+| 0.17 | Showcase lot 3: Spring Modulith (verified boundaries, generated diagram), OpenAPI + Scalar reference, per-IP rate limiting (Bucket4j), JaCoCo coverage floor | 🚧 In progress | #33 | Branch `33-feat/backend-tooling`, stacked on lot 2. 252 backend tests, 97.5 % lines / 91.7 % branches. To check after deploy: client IP behind Render's proxy |
 
 ## Phase 1 — Customers
 
@@ -104,6 +105,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-26 | Showcase lot 3 (backend tooling) on `33-feat/backend-tooling` (#33): 252 backend tests pass, coverage 97.5 % of lines. |
 | 2026-10-26 | Showcase lot 2 (in-app docs, ADRs) on `33-feat/in-app-docs` (#33): 232 frontend tests pass. |
 | 2026-10-26 | Showcase lot 1 (visual identity) on `33-feat/visual-identity` (#33): 222 frontend tests pass. |
 | 2026-10-26 | Invoices merged (#32). Showcase issue #33 opened; lot 6 (multi-agent workflow, see `docs/claude-code/agents.md`) on `33-chore/claude-workflow`. |

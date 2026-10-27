@@ -32,3 +32,23 @@ jobs:
 
       - name: Build and test
         run: ./mvnw --batch-mode verify
+      # JaCoCo (pom.xml) has already failed the build if coverage fell under its floor; publish the figures
+      - name: Coverage summary
+        if: always()
+        run: |
+          csv=target/site/jacoco/jacoco.csv
+          [ -f "$csv" ] || exit 0
+          awk -F, 'NR > 1 { im += $4; ic += $5; bm += $6; bc += $7; lm += $8; lc += $9 }
+            END {
+              printf "### Backend coverage (JaCoCo)\n\n| Counter | Covered |\n|---------|---------|\n"
+              printf "| Lines | %.1f %% |\n| Branches | %.1f %% |\n| Instructions | %.1f %% |\n",
+                100 * lc / (lc + lm), 100 * bc / (bc + bm), 100 * ic / (ic + im)
+            }' "$csv" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/target/site/jacoco/
+          if-no-files-found: ignore

@@ -38,10 +38,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @Import({SecurityConfig.class, AuthConfig.class, RefreshTokenCookies.class, ClockConfig.class})
-// Production cookie settings (frontend and API on different sites)
+// Production cookie settings (frontend and API on different sites); the per-IP limit has its own tests
 @TestPropertySource(properties = {
         "app.security.refresh-cookie.secure=true",
-        "app.security.refresh-cookie.same-site=None"
+        "app.security.refresh-cookie.same-site=None",
+        "app.rate-limit.auth.enabled=false"
 })
 class AuthControllerTest {
 

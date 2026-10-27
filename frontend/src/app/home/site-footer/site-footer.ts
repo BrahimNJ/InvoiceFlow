@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { environment } from '../../../environments/environment';
 import { ApiStatusPill } from '../../shared/api-status-pill';
 import { Icon } from '../../shared/icon/icon';
 import { Logo } from '../../shared/logo';
@@ -15,5 +16,6 @@ import { Logo } from '../../shared/logo';
 export class SiteFooter {
   protected readonly repositoryUrl = 'https://github.com/BrahimNJ/InvoiceFlow';
   protected readonly authorUrl = 'https://github.com/BrahimNJ';
+  protected readonly apiReferenceUrl = `${environment.apiUrl}/scalar`;
   protected readonly year = new Date().getFullYear();
 }

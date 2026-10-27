@@ -4,6 +4,7 @@ import com.naji.backend.auth.dto.AuthResponse;
 import com.naji.backend.auth.dto.LoginRequest;
 import com.naji.backend.auth.dto.RegisterRequest;
 import com.naji.backend.user.dto.UserResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +25,10 @@ import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
 
+/**
+ * Sign-up, sign-in and session endpoints. The four POST endpoints are public (an empty {@code @SecurityRequirements}
+ * tells the OpenAPI description so): refresh and logout authenticate with the HttpOnly refresh cookie instead.
+ */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -40,16 +45,19 @@ public class AuthController {
     private final Clock clock;
 
     @PostMapping("/register")
+    @SecurityRequirements
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return respond(HttpStatus.CREATED, authService.register(request));
     }
 
     @PostMapping("/login")
+    @SecurityRequirements
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return respond(HttpStatus.OK, authService.login(request));
     }
 
     @PostMapping("/refresh")
+    @SecurityRequirements
     public ResponseEntity<AuthResponse> refresh(
             @CookieValue(name = RefreshTokenCookies.NAME, required = false) String refreshToken,
             @RequestHeader(name = CSRF_HEADER, required = false) String csrfHeader) {
@@ -58,6 +66,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @SecurityRequirements
     public ResponseEntity<Void> logout(
             @CookieValue(name = RefreshTokenCookies.NAME, required = false) String refreshToken,
             @RequestHeader(name = CSRF_HEADER, required = false) String csrfHeader) {
