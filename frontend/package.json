@@ -9,7 +9,10 @@
     "prebuild": "npm run docs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "prebuild:e2e": "npm run docs",
+    "build:e2e": "ng build --configuration production,e2e",
+    "e2e": "playwright test"
   },
   "private": true,
   "packageManager": "npm@11.8.0",
@@ -31,6 +34,8 @@
     "@angular/build": "^21.2.6",
     "@angular/cli": "^21.2.6",
     "@angular/compiler-cli": "^21.2.0",
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
     "github-slugger": "2.0.0",
     "jsdom": "^28.0.0",
     "marked": "18.1.0",

@@ -82,8 +82,8 @@ app-doc-page .toc { display: none; }
 }
 app-doc-page .toc-title { margin-bottom: .6rem; font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em;
                           text-transform: uppercase; color: var(--ink-500); }
-app-doc-page .toc ul { display: grid; gap: .3rem; border-left: 1px solid var(--line); }
-app-doc-page .toc a { display: block; padding-left: .8rem; font-size: .84rem; line-height: 1.4; color: var(--ink-500); }
+app-doc-page .toc ul { display: grid; border-left: 1px solid var(--line); }
+app-doc-page .toc a { display: block; padding: .2rem 0 .2rem .8rem; font-size: .84rem; line-height: 1.4; color: var(--ink-500); }
 app-doc-page .toc a:hover { color: var(--brand); }
 app-doc-page .toc .nested a { padding-left: 1.6rem; font-size: .8rem; }
 

@@ -100,7 +100,8 @@ function render(path) {
       code({ text, lang }) {
         if (lang === 'mermaid') {
           hasDiagram = true;
-          return `<pre class="mermaid">${escapeHtml(text)}</pre>\n`;
+          // Focusable: a wide diagram scrolls horizontally on phones
+          return `<pre class="mermaid" tabindex="0">${escapeHtml(text)}</pre>\n`;
         }
         const language = LANGUAGES.includes(lang) ? lang : 'text';
         // Dual themes as CSS variables: the page picks light or dark with [data-theme], no re-highlighting.
@@ -118,9 +119,9 @@ function render(path) {
       },
     },
     hooks: {
-      // Wide tables scroll inside their own box instead of widening the page on phones.
+      // Wide tables scroll inside their own box instead of widening the page on phones; focusable for keyboard scrolling.
       postprocess: (html) =>
-        html.replaceAll('<table>', '<div class="table-wrap"><table>').replaceAll('</table>', '</table></div>'),
+        html.replaceAll('<table>', '<div class="table-wrap" tabindex="0"><table>').replaceAll('</table>', '</table></div>'),
     },
   });
 
