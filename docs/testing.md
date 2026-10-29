@@ -34,7 +34,8 @@ branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches
   code is excluded so the figure only counts hand-written code. The frontend has the same floor (and 90 % of
   functions), set in the `test` target of `angular.json`.
 - **PostgreSQL, not only H2.** The unit and slice tests run on H2 for speed; the end-to-end suite runs on
-  PostgreSQL 17. It caught a query H2 accepted and PostgreSQL rejected (#39), now guarded by the journey.
+  PostgreSQL 17. Replaying the journey on PostgreSQL for the README screenshots exposed a query H2 accepted and
+  PostgreSQL rejected (#39); the end-to-end journey now guards it.
 - **The real stack end to end.** The browser tests drive the production build against the Spring Boot jar and
   PostgreSQL, not mocked HTTP: CORS, the refresh cookie, Flyway and numbering are all in the loop. Each test signs
   up its own user, so tests share no data and run in parallel.

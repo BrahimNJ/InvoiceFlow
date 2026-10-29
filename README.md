@@ -105,9 +105,10 @@ Every figure below is produced by CI on each push, and most of them **fail the b
 | Module boundaries (Spring Modulith) | no access to another module's internals, no cycle | `ModularityTest` |
 | API contract (OpenAPI) | every secured endpoint documented, public ones marked | `ApiDocumentationIntegrationTest` |
 
-The end-to-end suite earns its keep: on its first runs it found low-contrast text and keyboard-unreachable regions,
-and the journey on a real PostgreSQL exposed a query that H2 accepted but PostgreSQL rejected, fixed in
-[#39](https://github.com/BrahimNJ/InvoiceFlow/issues/39). How each layer is tested and why the tests can be trusted:
+Running the real stack pays off: on its first runs axe-core found low-contrast text and keyboard-unreachable
+regions, and replaying the journey on PostgreSQL to take the README screenshots exposed a query that H2 accepted
+but PostgreSQL rejected, fixed in [#39](https://github.com/BrahimNJ/InvoiceFlow/issues/39) and now guarded by the
+end-to-end suite. How each layer is tested and why the tests can be trusted:
 [`docs/testing.md`](docs/testing.md).
 
 ## Architecture
