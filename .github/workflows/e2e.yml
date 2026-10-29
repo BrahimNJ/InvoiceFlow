@@ -1,0 +1,114 @@
+name: E2E
+
+# The real stack in one job: PostgreSQL service, the Spring Boot jar (dev profile, whose defaults match the
+# service), the production frontend build pointed at it. Then Playwright with axe-core on the main journey
+# and the Lighthouse budget on the public pages. See docs/testing.md.
+on:
+  push:
+    branches:
+      - main
+      # Issue branches: <issue-number>-<type>/<short-name>
+      - "[0-9]*-*/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: E2E, accessibility and Lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: invoiceflow
+          POSTGRES_USER: invoiceflow
+          POSTGRES_PASSWORD: invoiceflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U invoiceflow -d invoiceflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Unit tests already run in Backend CI
+      - name: Package backend
+        working-directory: backend
+        run: ./mvnw --batch-mode --quiet -DskipTests package
+
+      - name: Start backend
+        working-directory: backend
+        run: |
+          nohup java -jar target/backend-*.jar > "$RUNNER_TEMP/backend.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            curl --silent --fail http://localhost:8080/actuator/health > /dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::The backend did not become healthy within 2 minutes"
+          cat "$RUNNER_TEMP/backend.log"
+          exit 1
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend for E2E
+        working-directory: frontend
+        run: npm run build:e2e
+
+      # Google Chrome is preinstalled on the runner: Playwright uses it (channel "chrome"), no browser download
+      - name: Run end-to-end tests
+        working-directory: frontend
+        run: npx playwright test
+
+      - name: Check the Lighthouse budget
+        working-directory: frontend
+        run: npx --yes @lhci/cli@0.15.1 autorun
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          if-no-files-found: ignore
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: frontend/.lighthouseci/
+          # .lighthouseci is a dot folder, skipped by default
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+      - name: Backend log
+        if: failure()
+        run: cat "$RUNNER_TEMP/backend.log"
