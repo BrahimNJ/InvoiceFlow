@@ -33,7 +33,7 @@
 .num { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .label { display: block; font-weight: 600; }
 .details { display: block; color: var(--ink-500); font-size: .9em; }
-.placeholder { color: var(--ink-300); font-style: italic; }
+.placeholder { color: var(--ink-500); font-style: italic; }
 .totals { display: flex; justify-content: flex-end; }
 .totals dl { display: grid; gap: .35em; width: 55%; margin: 0; }
 .totals div { display: flex; justify-content: space-between; gap: 1em; font-variant-numeric: tabular-nums; }

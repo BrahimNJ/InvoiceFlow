@@ -92,7 +92,7 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
     .totals div { display: flex; justify-content: space-between; gap: 1rem; font-variant-numeric: tabular-nums; }
     .totals dd { margin: 0; font-weight: 600; }
     .vat { color: var(--ink-500); font-size: .9rem; }
-    .vat span { font-size: .8rem; color: var(--ink-300); }
+    .vat span { font-size: .8rem; }
     .grand { margin-top: .3rem; padding: .75rem .9rem; border-radius: var(--radius); background: var(--night); color: var(--on-night);
              font-size: 1.15rem; font-weight: 750; }
     .nature { display: flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--ink-500); }
@@ -112,7 +112,6 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
     .missing app-icon { color: var(--danger); }
     .warn app-icon, .pending app-icon { color: var(--warning); }
     .ok strong { font-weight: 500; color: var(--ink-700); }
-    .pending { opacity: .8; }
   `,
 })
 export class InvoiceSidePanel {

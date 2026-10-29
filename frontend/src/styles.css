@@ -239,7 +239,7 @@ body { transition: background-color .25s ease, color .25s ease; }
 .status-badge.tone-neutral { background: var(--bg); color: var(--ink-700); border-color: var(--line); }
 .status-badge.tone-brand { background: var(--brand-50); color: var(--brand-600); }
 .status-badge.tone-danger { background: var(--danger-50); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 20%, transparent); }
-.status-badge.tone-muted { background: var(--bg); color: var(--ink-300); text-decoration: line-through; }
+.status-badge.tone-muted { background: var(--bg); color: var(--ink-500); text-decoration: line-through; }
 
 /* Search and filters above a list */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }

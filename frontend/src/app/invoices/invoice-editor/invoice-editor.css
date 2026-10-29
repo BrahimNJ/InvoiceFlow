@@ -23,7 +23,7 @@
 .block h2 { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; font-size: 1rem; font-weight: 700; }
 .step { display: grid; place-items: center; width: 26px; height: 26px; border-radius: var(--radius); font-size: .8rem;
         background: var(--brand-50); color: var(--brand); }
-.optional { font-size: .8rem; font-weight: 500; color: var(--ink-300); }
+.optional { font-size: .8rem; font-weight: 500; color: var(--ink-500); }
 
 .terms { display: flex; flex-wrap: wrap; gap: .4rem; }
 .term { display: inline-flex; align-items: center; padding: .45rem .8rem; border: 1px solid var(--line); border-radius: var(--radius);
