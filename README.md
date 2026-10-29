@@ -77,7 +77,9 @@ goes issue → branch → small commits → tests → pull request → human rev
 | Secured REST API, CORS, RFC 9457 errors | ✅ Live |
 | Customers (per user: list, search, create, edit, delete) | ✅ Live |
 | Products & services (per user: goods or service, price excl. VAT, French VAT rate, unit) | ✅ Live |
-| Invoices: drafts, VAT per rate, gap-free numbering, readiness checks, issue and cancel, overdue tracking | 🔍 In review |
+| Invoices: drafts, VAT per rate, gap-free numbering, readiness checks, issue and cancel, overdue tracking | ✅ Live |
+| In-app documentation (`/docs`): architecture, security model, testing, ADRs | ✅ Live |
+| API reference (OpenAPI + Scalar), per-IP rate limiting on authentication | ✅ Live |
 | Payments | 📋 Planned |
 | PDF and Factur-X | 📋 Planned |
 | Dashboard (revenue, paid / pending / overdue) | 📋 Planned |
@@ -126,21 +128,28 @@ backend/src/main/java/com/naji/backend/
 ├── user/          accounts: entity, repository, mapper
 ├── auth/          register, login, refresh, logout; access and refresh tokens
 ├── customer/      reference CRUD module: entity, repository, service, controller, DTOs, mapper
-└── product/       catalogue of goods and services, same layout as customer
+├── product/       catalogue of goods and services, same layout as customer
+└── invoice/       drafts, lines, totals, gap-free numbering, readiness checks, lifecycle, summary
 
 frontend/src/app/
 ├── core/          auth service, HTTP interceptor, guards, API status, error mapping
 ├── auth/          sign-in and sign-up pages, password rules, shared form components
 ├── customers/     customers list and form
 ├── products/      products catalogue and form
+├── invoices/      invoice list with key figures, editor workspace with live preview, detail page
+├── docs/          in-app documentation rendered from the docs/ folder at build time
 ├── dashboard/     first signed-in page
 ├── home/          landing page sections
 └── shared/        logo, icons, forms, money formatting, UI kit (page header, help tip, empty state,
-                   confirmation dialog, toasts)
+                   confirmation dialog, toasts, autocomplete)
+
+frontend/e2e/      Playwright journey, axe-core checks, README screenshots
 ```
 
 Each backend module follows the same layout (entity → repository → service → controller, DTO records and a mapper,
-never exposing entities). The schema is owned by **Flyway** migrations; Hibernate only validates it.
+never exposing entities), and **Spring Modulith** fails the build if a module reaches into another's internals.
+The schema is owned by **Flyway** migrations; Hibernate only validates it. Details:
+[`docs/architecture.md`](docs/architecture.md).
 
 ## Tech stack
 
