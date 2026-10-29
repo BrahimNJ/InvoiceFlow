@@ -60,7 +60,8 @@ async function signUp(page: Page): Promise<void> {
   await page.getByLabel('Password', { exact: true }).fill('Correct-horse-42!');
   await page.getByLabel('Confirm password').fill('Correct-horse-42!');
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  // Often the first request to a freshly started API (cold JIT and pool, BCrypt): allow more than 5 s
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 }
 
 async function createCustomer(page: Page, name: string): Promise<void> {
