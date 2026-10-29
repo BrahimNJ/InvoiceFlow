@@ -13,7 +13,8 @@
     "test:coverage": "ng test --configuration coverage",
     "prebuild:e2e": "npm run docs",
     "build:e2e": "ng build --configuration production,e2e",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts"
   },
   "private": true,
   "packageManager": "npm@11.8.0",
