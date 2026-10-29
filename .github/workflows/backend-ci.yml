@@ -10,6 +10,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     name: Build and test backend
@@ -52,3 +55,57 @@ jobs:
           name: backend-coverage
           path: backend/target/site/jacoco/
           if-no-files-found: ignore
+
+      # Inputs of the README badges, published by the job below (main only)
+      - name: Badge data
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p badges
+          passed=$(node -e '
+            const { readdirSync, readFileSync } = require("node:fs");
+            const dir = "target/surefire-reports";
+            let passed = 0;
+            for (const file of readdirSync(dir).filter((name) => /^TEST-.*\.xml$/.test(name))) {
+              const suite = /<testsuite\b[^>]*>/.exec(readFileSync(`${dir}/${file}`, "utf8"))[0];
+              const n = Object.fromEntries([...suite.matchAll(/ (\w+)="(\d+)"/g)].map(([, k, v]) => [k, Number(v)]));
+              passed += n.tests - (n.failures ?? 0) - (n.errors ?? 0) - (n.skipped ?? 0);
+            }
+            console.log(passed);
+          ')
+          lines=$(awk -F, 'NR > 1 { lm += $8; lc += $9 } END { printf "%.2f%%", 100 * lc / (lc + lm) }' \
+            target/site/jacoco/jacoco.csv)
+          node ../.github/scripts/badge.mjs badges/backend-tests.json "backend tests" "$passed passed"
+          node ../.github/scripts/badge.mjs badges/backend-coverage.json "backend coverage" "$lines"
+
+      - name: Upload badge data
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: badges-backend
+          path: backend/badges/
+
+  # Separate job so that the only code running with write access is the publish script, not the build
+  publish-badges:
+    name: Publish backend badges
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Download badge data
+        uses: actions/download-artifact@v4
+        with:
+          name: badges-backend
+          path: badges
+
+      - name: Publish to the badges branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/publish-badges.sh badges/*.json
