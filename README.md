@@ -156,9 +156,10 @@ The schema is owned by **Flyway** migrations; Hibernate only validates it. Detai
 | Layer | Technologies |
 |-------|--------------|
 | Frontend | Angular 21 (standalone components, signals, zoneless), TypeScript 5.9, RxJS, typed reactive forms, plain CSS design tokens, Vitest |
-| Backend | Java 21, Spring Boot 4.1, Spring Security 7 (OAuth2 resource server, Nimbus JOSE), Spring Data JPA, Bean Validation, Lombok |
+| Backend | Java 21, Spring Boot 4.1, Spring Security 7 (OAuth2 resource server, Nimbus JOSE), Spring Data JPA, Bean Validation, Lombok, Spring Modulith, springdoc-openapi + Scalar, Bucket4j |
 | Data | PostgreSQL 17 (Neon in production, Docker locally), Flyway, H2 in PostgreSQL mode for tests |
-| Delivery | GitHub Actions (CI, deploy, post-deploy verification), Docker, Render, Vercel |
+| Quality | JUnit 5, Mockito, AssertJ, JaCoCo; Vitest with v8 coverage; Playwright, axe-core, Lighthouse CI |
+| Delivery | GitHub Actions (CI, end-to-end, deploy, post-deploy verification), Docker, Render, Vercel |
 | AI tooling | Claude Code (development workflow); LLM API planned for the in-app assistant |
 
 ## Security
