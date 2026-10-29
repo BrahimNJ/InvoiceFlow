@@ -19,15 +19,18 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
      * ({@code !} escapes {@code %}, {@code _} and itself; {@code %} matches every invoice). Every other filter is
      * ignored when {@code null}: {@code status}, {@code dueBefore} (due date strictly before, for overdue invoices),
      * {@code customerId}, and the issue date range {@code issuedFrom} to {@code issuedTo} (inclusive).
+     * <p>
+     * Optional dates are cast in the {@code is null} test: pgjdbc binds a null {@code LocalDate} untyped and
+     * PostgreSQL rejects {@code ? is null} (#39). H2 accepts both forms, so only the end-to-end tests catch this.
      */
     @Query("""
             select i from Invoice i
             where i.ownerId = :ownerId
               and (:status is null or i.status = :status)
-              and (:dueBefore is null or i.dueDate < :dueBefore)
+              and (cast(:dueBefore as LocalDate) is null or i.dueDate < :dueBefore)
               and (:customerId is null or i.customerId = :customerId)
-              and (:issuedFrom is null or i.issueDate >= :issuedFrom)
-              and (:issuedTo is null or i.issueDate <= :issuedTo)
+              and (cast(:issuedFrom as LocalDate) is null or i.issueDate >= :issuedFrom)
+              and (cast(:issuedTo as LocalDate) is null or i.issueDate <= :issuedTo)
               and (lower(coalesce(i.number, '')) like :pattern escape '!'
                    or lower(coalesce(i.customer.name, '')) like :pattern escape '!')
             """)
@@ -45,14 +48,15 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     /**
      * Count and total including VAT of the owner's invoices in a status, optionally due strictly before
-     * {@code dueBefore} and issued on or after {@code issuedFrom} ({@code null}: no limit).
+     * {@code dueBefore} and issued on or after {@code issuedFrom} ({@code null}: no limit). Dates are cast for
+     * PostgreSQL, see {@link #search}.
      */
     @Query("""
             select new com.naji.backend.invoice.dto.InvoiceTotals(count(i), sum(i.total)) from Invoice i
             where i.ownerId = :ownerId
               and i.status = :status
-              and (:dueBefore is null or i.dueDate < :dueBefore)
-              and (:issuedFrom is null or i.issueDate >= :issuedFrom)
+              and (cast(:dueBefore as LocalDate) is null or i.dueDate < :dueBefore)
+              and (cast(:issuedFrom as LocalDate) is null or i.issueDate >= :issuedFrom)
             """)
     InvoiceTotals totals(
             @Param("ownerId") Long ownerId,
