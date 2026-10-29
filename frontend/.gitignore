@@ -48,3 +48,9 @@ Thumbs.db
 
 # Documentation pages generated from ../docs by scripts/build-docs.mjs
 /public/docs/
+
+# End-to-end and Lighthouse output
+/test-results
+/playwright-report
+/blob-report
+/.lighthouseci
