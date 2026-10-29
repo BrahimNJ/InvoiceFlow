@@ -86,6 +86,27 @@ goes issue → branch → small commits → tests → pull request → human rev
 
 Detailed tasks, issues and pull requests: [`PROGRESS.md`](PROGRESS.md).
 
+## Quality in numbers
+
+Every figure below is produced by CI on each push, and most of them **fail the build** when they regress.
+
+| Check | Result | Gate |
+|-------|--------|------|
+| Backend tests (JUnit 5, Spring slices, integration) | **252** passing | `./mvnw verify` |
+| Backend coverage (JaCoCo, Lombok excluded) | **97.5 %** lines · **91.7 %** branches | fails under 95 % / 85 % |
+| Frontend tests (Vitest, Angular TestBed) | **233** passing | `npm run test:coverage` |
+| Frontend coverage (v8) | **96.5 %** lines · **90.4 %** branches | fails under 95 % / 85 % |
+| End-to-end (Playwright, desktop and phone) | **20** passing on the production build, real API and PostgreSQL 17 | `e2e.yml` |
+| Accessibility (axe-core, WCAG 2.1 AA) | **0** violations on every screen of the journey and on the public pages, light and dark | any violation fails |
+| Lighthouse, desktop (`/`, `/docs/overview`, `/login`) | performance **93–100** · accessibility **100** · best practices **100** · SEO **100** | budget in `lighthouserc.json` |
+| Module boundaries (Spring Modulith) | no access to another module's internals, no cycle | `ModularityTest` |
+| API contract (OpenAPI) | every secured endpoint documented, public ones marked | `ApiDocumentationIntegrationTest` |
+
+The end-to-end suite earns its keep: on its first runs it found low-contrast text and keyboard-unreachable regions,
+and the journey on a real PostgreSQL exposed a query that H2 accepted but PostgreSQL rejected, fixed in
+[#39](https://github.com/BrahimNJ/InvoiceFlow/issues/39). How each layer is tested and why the tests can be trusted:
+[`docs/testing.md`](docs/testing.md).
+
 ## Architecture
 
 A **modular monolith**: one Spring Boot application split into business modules, one Angular single-page app.
