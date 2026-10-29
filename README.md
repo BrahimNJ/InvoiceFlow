@@ -174,6 +174,9 @@ Authentication is designed for a browser app talking to an API on another site. 
   use**, with **reuse detection** that revokes every session (RFC 9700).
 - CSRF defense on cookie endpoints, strict CORS allow-list, BCrypt passwords with a shared password policy,
   account lockout after 5 failures, no account enumeration (same message, same timing), safe redirects.
+- **Per-client rate limit** on sign-in, sign-up and refresh (Bucket4j, 10 requests a minute, IPv6 keyed by /64):
+  `429` problem detail with `Retry-After`, so one client cannot spray passwords across many accounts.
+- Threat model, controls and open items: [`docs/security.md`](docs/security.md).
 - Every endpoint requires authentication except sign-up/sign-in, health and deployed-version info.
   Errors follow RFC 9457 `ProblemDetail`.
 
