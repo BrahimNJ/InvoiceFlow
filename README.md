@@ -8,6 +8,15 @@
 [![Frontend CI](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/frontend-ci.yml/badge.svg?branch=main)](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/frontend-ci.yml)
 [![Deploy backend](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/deploy-backend.yml/badge.svg)](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/deploy-backend.yml)
 [![Deploy frontend](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/deploy-frontend.yml)
+[![E2E](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/e2e.yml/badge.svg?branch=main)](https://github.com/BrahimNJ/InvoiceFlow/actions/workflows/e2e.yml)
+
+<!-- Published by CI on every push to main (branch `badges`), no third-party service: see docs/testing.md -->
+[![Backend tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrahimNJ%2FInvoiceFlow%2Fbadges%2Fbackend-tests.json)](docs/testing.md)
+[![Backend coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrahimNJ%2FInvoiceFlow%2Fbadges%2Fbackend-coverage.json)](docs/testing.md)
+[![Frontend tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrahimNJ%2FInvoiceFlow%2Fbadges%2Ffrontend-tests.json)](docs/testing.md)
+[![Frontend coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrahimNJ%2FInvoiceFlow%2Fbadges%2Ffrontend-coverage.json)](docs/testing.md)
+[![E2E tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrahimNJ%2FInvoiceFlow%2Fbadges%2Fe2e-tests.json)](docs/testing.md)
+[![Lighthouse](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrahimNJ%2FInvoiceFlow%2Fbadges%2Flighthouse.json)](docs/testing.md)
 
 ![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
