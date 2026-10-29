@@ -89,6 +89,10 @@ jobs:
     runs-on: ubuntu-latest
     # Badges are cosmetic: a failed publication must not turn the run red, which would skip the deploy
     continue-on-error: true
+    # One publication per workflow at a time, in push order, so an older run cannot publish last
+    concurrency:
+      group: badges-${{ github.workflow }}
+      cancel-in-progress: false
     permissions:
       contents: write
 
@@ -97,6 +101,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github/scripts
+          persist-credentials: false
 
       - name: Download badge data
         uses: actions/download-artifact@v4
