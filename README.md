@@ -25,9 +25,10 @@
 ![Built with Claude Code](https://img.shields.io/badge/built%20with-Claude%20Code-D97757)
 
 [**Live app**](https://invoice-flow-seven-omega.vercel.app) ·
+[In-app docs](https://invoice-flow-seven-omega.vercel.app/docs) ·
+[API reference](https://invoiceflow-backend-84wn.onrender.com/scalar) ·
 [API health](https://invoiceflow-backend-84wn.onrender.com/actuator/health) ·
-[Roadmap](PROGRESS.md) ·
-[Docs](docs/)
+[Roadmap](PROGRESS.md)
 
 </div>
 
@@ -286,10 +287,18 @@ The full workflow and its rationale: [`docs/claude-code/best-practices.md`](docs
 
 ## Documentation
 
+The same Markdown files are rendered in the app at [`/docs`](https://invoice-flow-seven-omega.vercel.app/docs).
+
 | Document | Content |
 |----------|---------|
+| [`docs/overview.md`](docs/overview.md) | What the product does today and the engineering worth a look |
+| [`docs/invoicing.md`](docs/invoicing.md) | Business rules: totals, VAT, numbering, mandatory mentions, lifecycle |
+| [`docs/architecture.md`](docs/architecture.md) | Modules (verified by Spring Modulith), request lifecycle, data model |
+| [`docs/security.md`](docs/security.md) | Threat model, controls, open items |
 | [`docs/authentication.md`](docs/authentication.md) | Tokens, flows, security decisions, configuration |
+| [`docs/testing.md`](docs/testing.md) | Test pyramid, coverage, end-to-end, accessibility, Lighthouse, CI |
 | [`docs/deployment.md`](docs/deployment.md) | CI/CD pipeline, secrets, verification, troubleshooting |
+| [`docs/adr/`](docs/adr/) | Architecture decision records (MADR) |
 | [`docs/claude-code/best-practices.md`](docs/claude-code/best-practices.md) | AI-assisted development workflow |
 | [`PROGRESS.md`](PROGRESS.md) | Roadmap, status, changelog |
 
