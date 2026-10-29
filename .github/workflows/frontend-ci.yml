@@ -36,5 +36,27 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Run tests
-        run: npm test -- --watch=false
+      # Fails if coverage falls under the floor set in angular.json (test target)
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          summary=coverage/frontend/coverage-summary.json
+          [ -f "$summary" ] || exit 0
+          node -e '
+            const t = require("./" + process.argv[1]).total;
+            const row = (name, key) => `| ${name} | ${t[key].pct.toFixed(1)} % |`;
+            console.log(["### Frontend coverage (Vitest, v8)", "", "| Counter | Covered |", "|---------|---------|",
+              row("Lines", "lines"), row("Branches", "branches"), row("Functions", "functions"),
+              row("Statements", "statements")].join("\n"));
+          ' "$summary" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/frontend/
+          if-no-files-found: ignore
