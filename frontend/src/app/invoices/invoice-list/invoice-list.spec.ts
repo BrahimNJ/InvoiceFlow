@@ -101,6 +101,17 @@ describe('InvoiceList', () => {
     expect(plain(rows[2].querySelector('[data-label="Customer"]')?.textContent)).toBe('No customer yet');
   });
 
+  it('says the key figures are unavailable instead of loading forever when they fail', async () => {
+    await fixture.whenStable();
+    http.expectOne(`${INVOICES_API}/summary`).flush({ detail: 'Boom' }, { status: 500, statusText: 'Server Error' });
+    http.expectOne((r) => r.url === CUSTOMERS_API).flush(pageOf([testCustomer()]));
+    await respond(listRequest());
+
+    expect(page.querySelector('.kpis .skeleton')).toBeNull();
+    expect(plain(kpi('Overdue').textContent)).toContain('Figures unavailable');
+    expect(page.querySelectorAll('tbody tr').length).toBe(1);
+  });
+
   it('filters by status from a tab or a key figure', async () => {
     await start();
 

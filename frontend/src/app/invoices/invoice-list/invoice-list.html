@@ -12,17 +12,21 @@
         type="button"
         [class]="'kpi tone-' + kpi.tone"
         [class.alert]="kpi.key === 'overdue' && (figures?.count ?? 0) > 0"
-        [attr.aria-label]="kpi.label + ': ' + (figures?.count ?? 0) + ', ' + formatEuros(figures?.total ?? 0) + '. Show them'"
         (click)="filterByStatus(kpi.status)"
       >
         <span class="kpi-head"><app-icon [name]="kpi.icon" [size]="16" />{{ kpi.label }}</span>
         @if (figures) {
           <strong class="kpi-amount">{{ formatEuros(figures.total) }}</strong>
           <span class="kpi-hint">{{ figures.count }} {{ figures.count === 1 ? 'invoice' : 'invoices' }} · {{ kpi.hint }}</span>
+        } @else if (summaryFailed()) {
+          <strong class="kpi-amount" aria-hidden="true">—</strong>
+          <span class="kpi-hint">Figures unavailable, try again later</span>
         } @else {
           <span class="skeleton" style="width: 70%; height: 1.4rem"></span>
           <span class="skeleton" style="width: 50%"></span>
         }
+        <!-- The visible text is the accessible name (WCAG 2.5.3); this only adds what a click does -->
+        <span class="visually-hidden">. Show them</span>
       </button>
     }
   </section>
