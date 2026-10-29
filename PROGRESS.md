@@ -71,6 +71,7 @@
 | 3.4 | Invoice CRUD API | ✅ Done | #31 / #32 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
 | 3.5 | Payment tracking | 📋 Planned | — | |
 | 3.6 | Invoices UI | ✅ Done | #31 / #32 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Real-browser check planned in #33 (Playwright) |
+| 3.6.1 | Fix: invoice summary and date filters failed on PostgreSQL | 🔍 In review | #39 | Untyped null `LocalDate` in `:param is null`; H2 hid it. Found by the README screenshots on PostgreSQL; now guarded by the E2E journey |
 
 ## Phase 4 — Documents
 
@@ -106,6 +107,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-29 | Fix #39 in review: invoice summary, Overdue tab and single-date filters returned 500 on PostgreSQL; 252 backend, 233 frontend and 20 E2E tests pass. |
 | 2026-10-29 | Lot 4 on `33-test/e2e-quality` (#33): 20 E2E tests and Lighthouse budget pass locally against the real API; 232 frontend tests pass. |
 | 2026-10-29 | Showcase lot 3 merged (#37), CI and deploys green on `4d76004`. Lot 4 (E2E, accessibility, Lighthouse) started on `33-test/e2e-quality` (#33). |
 | 2026-10-26 | Showcase lot 3 (backend tooling) on `33-feat/backend-tooling` (#33): 252 backend tests pass, coverage 97.5 % of lines. |
