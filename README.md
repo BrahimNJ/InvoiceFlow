@@ -283,10 +283,13 @@ InvoiceFlow is developed with **Claude Code** as a coding agent, under rules tha
 | Explicit context | [`CLAUDE.md`](CLAUDE.md) (rules, always loaded), [`PROGRESS.md`](PROGRESS.md) (state and next task) |
 | Traceability | One GitHub issue per feature, branch `<issue>-<type>/<name>`, conventional commits with `Refs #n` |
 | Small, verified steps | One commit per concern; each compiles and passes the tests; real results reported |
+| Independent review | A read-only `reviewer` subagent reviews every non-trivial diff before it is committed; its findings are fixed or listed in the pull request |
+| Proof, not claims | Every pull request reports the real test results, and a fix ships with a test shown to fail without it |
 | Human review | The agent never merges; pull requests are reviewed before merge |
 | Least privilege | [`.claude/settings.json`](.claude/settings.json) allows safe commands, asks for push/PR, denies destructive commands and secrets |
 
-The full workflow and its rationale: [`docs/claude-code/best-practices.md`](docs/claude-code/best-practices.md).
+The full workflow and its rationale: [`docs/claude-code/best-practices.md`](docs/claude-code/best-practices.md);
+subagents, skills and hooks: [`docs/claude-code/agents.md`](docs/claude-code/agents.md).
 
 ## Documentation
 
