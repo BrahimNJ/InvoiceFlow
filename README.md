@@ -232,8 +232,18 @@ from the environment, fails fast when a secret is missing).
 ## Tests
 
 ```bash
-cd backend  && ./mvnw verify                                   # 235 tests
-cd frontend && npm run build && npm test -- --watch=false      # 217 tests
+cd backend  && ./mvnw verify                 # 252 tests, modularity, coverage floor
+cd frontend && npm run test:coverage         # 233 tests, coverage floor
+```
+
+End-to-end tests, the Lighthouse budget and the README screenshots run on the real stack (PostgreSQL and the API
+started as in [Getting started](#getting-started)):
+
+```bash
+cd frontend && npm run build:e2e             # production build that calls localhost:8080
+npx playwright test                          # 20 tests with axe-core, desktop and phone
+npx --yes @lhci/cli@0.15.1 autorun           # Lighthouse budget
+npm run screenshots                          # regenerates docs/screenshots
 ```
 
 | Layer | What is covered |
@@ -242,8 +252,10 @@ cd frontend && npm run build && npm test -- --watch=false      # 217 tests
 | Backend slice | `@WebMvcTest` controllers with the real security chain, `@DataJpaTest` repositories on the Flyway schema, real JWTs (expired, forged, wrong issuer) |
 | Backend end to end | Full authentication flow and invoice lifecycle through the real stack, concurrent invoice numbering with committed transactions |
 | Frontend | Services, interceptor (refresh and retry), guards, validators, components and pages (Vitest + Angular TestBed) |
+| End to end | Sign-up to issued invoice in Chrome against the real API and PostgreSQL, key figures and filters, axe-core on every screen |
+| Performance | Lighthouse scores and transferred bytes per public page |
 
-The same commands run in CI on every push and pull request.
+The same commands run in CI on every push and pull request, and the figures feed the badges at the top of this page.
 
 ## Deployment
 
