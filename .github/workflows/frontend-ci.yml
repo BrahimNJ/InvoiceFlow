@@ -10,6 +10,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     name: Build and test frontend
@@ -60,3 +63,46 @@ jobs:
           name: frontend-coverage
           path: frontend/coverage/frontend/
           if-no-files-found: ignore
+
+      # Inputs of the README badges, published by the job below (main only)
+      - name: Badge data
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p badges
+          passed=$(node -p 'require("./coverage/vitest-results.json").numPassedTests')
+          lines=$(node -p 'require("./coverage/frontend/coverage-summary.json").total.lines.pct + "%"')
+          node ../.github/scripts/badge.mjs badges/frontend-tests.json "frontend tests" "$passed passed"
+          node ../.github/scripts/badge.mjs badges/frontend-coverage.json "frontend coverage" "$lines"
+
+      - name: Upload badge data
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: badges-frontend
+          path: frontend/badges/
+
+  # Separate job so that the only code running with write access is the publish script, not the build
+  publish-badges:
+    name: Publish frontend badges
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Download badge data
+        uses: actions/download-artifact@v4
+        with:
+          name: badges-frontend
+          path: badges
+
+      - name: Publish to the badges branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/publish-badges.sh badges/*.json

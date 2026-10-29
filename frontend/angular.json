@@ -99,6 +99,13 @@
               "branches": 85,
               "functions": 90
             }
+          },
+          "configurations": {
+            "coverage": {
+              "watch": false,
+              "coverage": true,
+              "reporters": ["default", ["json", { "outputFile": "coverage/vitest-results.json" }]]
+            }
           }
         }
       }
