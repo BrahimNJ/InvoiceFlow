@@ -151,9 +151,17 @@ export class InvoiceList {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly summary = toSignal(this.invoices.summary().pipe(catchError(() => of(null))), {
-    initialValue: null,
-  });
+  /** Set when the key figures cannot be loaded: the cards say so instead of loading forever. */
+  protected readonly summaryFailed = signal(false);
+  protected readonly summary = toSignal(
+    this.invoices.summary().pipe(
+      catchError(() => {
+        this.summaryFailed.set(true);
+        return of(null);
+      }),
+    ),
+    { initialValue: null },
+  );
   /** Options of the customer filter (the first 100, by name). */
   protected readonly customers = toSignal(
     inject(CustomerService)
