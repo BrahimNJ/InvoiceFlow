@@ -141,6 +141,8 @@ jobs:
     needs: e2e
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Badges are cosmetic: a failed publication must not turn the run red, which would skip the deploy
+    continue-on-error: true
     permissions:
       contents: write
 
