@@ -54,3 +54,4 @@ Thumbs.db
 /playwright-report
 /blob-report
 /.lighthouseci
+/playwright-results.json
