@@ -112,3 +112,59 @@ jobs:
       - name: Backend log
         if: failure()
         run: cat "$RUNNER_TEMP/backend.log"
+
+      # Inputs of the README badges, published by the job below (main only)
+      - name: Badge data
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: frontend
+        run: |
+          mkdir -p badges
+          # A test that passed on its retry counts as flaky, not expected: both passed
+          passed=$(node -p 'const { stats } = require("./playwright-results.json"); stats.expected + stats.flaky')
+          scores=$(node -p '
+            const runs = require("./.lighthouseci/reports/manifest.json").filter((run) => run.isRepresentativeRun);
+            const min = (key) => Math.round(100 * Math.min(...runs.map((run) => run.summary[key])));
+            `perf ${min("performance")} · a11y ${min("accessibility")} · bp ${min("best-practices")} · seo ${min("seo")}`
+          ')
+          node ../.github/scripts/badge.mjs badges/e2e-tests.json "e2e tests" "$passed passed"
+          node ../.github/scripts/badge.mjs badges/lighthouse.json "lighthouse" "$scores" "brightgreen"
+
+      - name: Upload badge data
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: badges-e2e
+          path: frontend/badges/
+
+  # Separate job so that the only code running with write access is the publish script, not the build
+  publish-badges:
+    name: Publish E2E and Lighthouse badges
+    needs: e2e
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Badges are cosmetic: a failed publication must not turn the run red, which would skip the deploy
+    continue-on-error: true
+    # One publication per workflow at a time, in push order, so an older run cannot publish last
+    concurrency:
+      group: badges-${{ github.workflow }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
+      - name: Download badge data
+        uses: actions/download-artifact@v4
+        with:
+          name: badges-e2e
+          path: badges
+
+      - name: Publish to the badges branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/publish-badges.sh badges/*.json
