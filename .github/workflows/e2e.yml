@@ -119,7 +119,8 @@ jobs:
         working-directory: frontend
         run: |
           mkdir -p badges
-          passed=$(node -p 'require("./playwright-results.json").stats.expected')
+          # A test that passed on its retry counts as flaky, not expected: both passed
+          passed=$(node -p 'const { stats } = require("./playwright-results.json"); stats.expected + stats.flaky')
           scores=$(node -p '
             const runs = require("./.lighthouseci/reports/manifest.json").filter((run) => run.isRepresentativeRun);
             const min = (key) => Math.round(100 * Math.min(...runs.map((run) => run.summary[key])));
