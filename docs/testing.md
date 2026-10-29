@@ -1,8 +1,9 @@
 # Quality and testing
 
 Tests are part of every feature, never a follow-up: a module is not merged until its service, controller,
-repository and ownership tests pass in CI. At the time of writing the suites hold **252 backend tests** and
-**232 frontend tests**, and the backend tests cover **97.5 % of lines and 91.7 % of branches** (JaCoCo).
+repository and ownership tests pass in CI. At the time of writing the suites hold **252 backend tests**,
+**233 frontend tests** and **20 end-to-end tests**. The backend tests cover **97.5 % of lines and 91.7 % of
+branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches** (Vitest, v8).
 
 ## Test pyramid
 
@@ -30,7 +31,10 @@ repository and ownership tests pass in CI. At the time of writing the suites hol
 - **Security in the loop.** Controller tests run with the real security configuration; integration tests use real
   signed tokens (expired, wrong issuer, wrong key).
 - **Coverage cannot regress.** JaCoCo fails the build under 95 % of lines or 85 % of branches; Lombok-generated
-  code is excluded so the figure only counts hand-written code.
+  code is excluded so the figure only counts hand-written code. The frontend has the same floor (and 90 % of
+  functions), set in the `test` target of `angular.json`.
+- **PostgreSQL, not only H2.** The unit and slice tests run on H2 for speed; the end-to-end suite runs on
+  PostgreSQL 17. It caught a query H2 accepted and PostgreSQL rejected (#39), now guarded by the journey.
 - **The real stack end to end.** The browser tests drive the production build against the Spring Boot jar and
   PostgreSQL, not mocked HTTP: CORS, the refresh cookie, Flyway and numbering are all in the loop. Each test signs
   up its own user, so tests share no data and run in parallel.
@@ -45,7 +49,7 @@ repository and ownership tests pass in CI. At the time of writing the suites hol
 | Workflow | Trigger | Steps |
 |----------|---------|-------|
 | `backend-ci.yml` | Push to `main` and issue branches, pull requests to `main` | Java 21, `./mvnw --batch-mode verify` (tests, modularity, coverage floor); coverage summary and HTML report published |
-| `frontend-ci.yml` | Push to `main` and issue branches, pull requests to `main` | Node, `npm ci`, `npm run build` (renders these docs), `npm test` |
+| `frontend-ci.yml` | Push to `main` and issue branches, pull requests to `main` | Node, `npm ci`, `npm run build` (renders these docs), `npm run test:coverage` (coverage floor); coverage summary and HTML report published |
 | `e2e.yml` | Push to `main` and issue branches, pull requests to `main` | PostgreSQL service, backend jar, `npm run build:e2e`, Playwright with axe-core, Lighthouse budget; reports published as artifacts |
 | `deploy-backend.yml` / `deploy-frontend.yml` | Merge to `main` after CI | Deploy, then verify the running version ([Deployment](deployment.md)) |
 
@@ -53,7 +57,7 @@ repository and ownership tests pass in CI. At the time of writing the suites hol
 
 ```bash
 cd backend && ./mvnw test
-cd frontend && npm run build && npm test -- --watch=false
+cd frontend && npm run build && npm run test:coverage
 node --test .claude/hooks/*.test.mjs
 ```
 
@@ -69,3 +73,16 @@ npx --yes @lhci/cli@0.15.1 autorun        # Lighthouse budget, reports in .light
 
 Lighthouse CI runs through `npx` with a pinned version instead of a dev dependency: its latest release pulls an
 old Lighthouse and Puppeteer with known advisories into the lockfile, and it only ever audits our own local pages.
+
+`npm run screenshots` replays the journey on the same stack and regenerates the README images in
+`docs/screenshots`.
+
+## Badges
+
+The README badges show the figures of the last push to `main` without any third-party service:
+
+1. Each workflow writes [shields.io endpoint](https://shields.io/badges/endpoint-badge) files: passed tests and
+   line coverage (backend, frontend), passed end-to-end tests and the lowest Lighthouse score per category.
+2. A separate job, the only one with `contents: write`, pushes them to the orphan `badges` branch with
+   `.github/scripts/publish-badges.sh`. It runs no build code, and retries when two workflows publish at once.
+3. The README reads them through `https://img.shields.io/endpoint?url=<raw file on the badges branch>`.
