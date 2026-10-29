@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ **Showcase** (#33): lot 4 (Playwright E2E, axe-core accessibility, Lighthouse budget) on `33-test/e2e-quality`. After #33: payments (3.5) or company details (5.1).
+➡️ **Showcase** (#33): review the quality-in-numbers lot (`33-docs/quality-in-numbers`), then fix the invoice editor description column (#41) and lot 5 (supply chain). After #33: payments (3.5) or company details (5.1).
 
 ---
 
@@ -43,7 +43,8 @@
 | 0.15 | Showcase lot 1: paper-and-ink identity, self-hosted fonts, landing rewrite, dark theme, view transitions | ✅ Done | #33 / #35 | Branch `33-feat/visual-identity`. Landing and sign-in checked in Chrome (1280 / 390 px, light and dark); signed-in screens not checked in a browser yet (needs the API) |
 | 0.16 | Showcase lot 2: in-app docs at `/docs` (build-time Markdown with marked + Shiki, lazy Mermaid), overview, architecture, security model, testing, 7 ADRs | ✅ Done | #33 / #36 | Branch `33-feat/in-app-docs`, stacked on lot 1. Checked in Chrome (1280 / 390 px, light and dark). Prerendering deferred: `@angular/ssr` needs the Angular packages aligned on one patch first |
 | 0.17 | Showcase lot 3: Spring Modulith (verified boundaries, generated diagram), OpenAPI + Scalar reference, per-IP rate limiting (Bucket4j), JaCoCo coverage floor | ✅ Done | #33 / #37 | Branch `33-feat/backend-tooling`, stacked on lot 2. 252 backend tests, 97.5 % lines / 91.7 % branches. To check after deploy: client IP behind Render's proxy |
-| 0.18 | Showcase lot 4: Playwright E2E, axe-core accessibility checks, Lighthouse budget | 🚧 In progress | #33 | Branch `33-test/e2e-quality`. New `e2e.yml`: real backend + PostgreSQL, 20 Playwright tests (desktop + phone), Lighthouse 100 accessibility on `/`, `/docs/overview`, `/login`. axe fixes: low-contrast text, focusable scroll regions, TOC target size; `robots.txt` added. Not yet run in GitHub Actions. Follow-ups: landing CLS (0.13), Mermaid weight on `/docs` (~790 KB script), type-check `e2e/` (needs `@types/node`) |
+| 0.18 | Showcase lot 4: Playwright E2E, axe-core accessibility checks, Lighthouse budget | ✅ Done | #33 / #38 | Branch `33-test/e2e-quality`. New `e2e.yml`: real backend + PostgreSQL, 20 Playwright tests (desktop + phone), Lighthouse 100 accessibility on `/`, `/docs/overview`, `/login`. axe fixes: low-contrast text, focusable scroll regions, TOC target size; `robots.txt` added. Green in GitHub Actions. Follow-ups: landing CLS (0.13), Mermaid weight on `/docs` (~790 KB script), type-check `e2e/` (needs `@types/node`) |
+| 0.19 | Showcase: quality in numbers: frontend coverage floor, coverage summaries in CI, test/coverage/E2E/Lighthouse badges (no third-party service), Playwright-generated README screenshots, README rewrite | 🔍 In review | #33 | Branch `33-docs/quality-in-numbers`. Frontend 233 tests, 96.5 % lines / 90.4 % branches (floor 95 / 85). Badges appear after merge (published from `main` to the `badges` branch). Follow-up: landing page still says 452 tests |
 
 ## Phase 1 — Customers
 
@@ -71,7 +72,8 @@
 | 3.4 | Invoice CRUD API | ✅ Done | #31 / #32 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
 | 3.5 | Payment tracking | 📋 Planned | — | |
 | 3.6 | Invoices UI | ✅ Done | #31 / #32 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Real-browser check planned in #33 (Playwright) |
-| 3.6.1 | Fix: invoice summary and date filters failed on PostgreSQL | 🔍 In review | #39 | Untyped null `LocalDate` in `:param is null`; H2 hid it. Found by the README screenshots on PostgreSQL; now guarded by the E2E journey |
+| 3.6.1 | Fix: invoice summary and date filters failed on PostgreSQL | ✅ Done | #39 / #40 | Untyped null `LocalDate` in `:param is null`; H2 hid it. Found by the README screenshots on PostgreSQL; now guarded by the E2E journey |
+| 3.6.2 | Fix: line description column collapses in the invoice editor on desktop widths | 📋 Planned | #41 | Seen at 1440 px; the editor screenshot waits for it |
 
 ## Phase 4 — Documents
 
@@ -107,6 +109,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-29 | Fix #39 merged (#40). Quality-in-numbers lot on `33-docs/quality-in-numbers` (#33): 252 backend, 233 frontend and 20 E2E tests pass; issue #41 opened for the editor description column. |
 | 2026-10-29 | Fix #39 in review: invoice summary, Overdue tab and single-date filters returned 500 on PostgreSQL; 252 backend, 233 frontend and 20 E2E tests pass. |
 | 2026-10-29 | Lot 4 on `33-test/e2e-quality` (#33): 20 E2E tests and Lighthouse budget pass locally against the real API; 232 frontend tests pass. |
 | 2026-10-29 | Showcase lot 3 merged (#37), CI and deploys green on `4d76004`. Lot 4 (E2E, accessibility, Lighthouse) started on `33-test/e2e-quality` (#33). |
