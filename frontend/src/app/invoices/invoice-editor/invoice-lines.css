@@ -35,18 +35,22 @@ select.input { padding-right: 2rem; background-position: right .55rem center; }
 .option-meta { font-size: .8rem; color: var(--ink-500); }
 .hint { margin-top: .5rem; }
 
-@container lines (max-width: 999px) {
+/* One row only pays off from ~1120 px: below, it leaves the description under 300 px (one row needs ~810 px of the rest) */
+@container lines (max-width: 1119px) {
   .head { display: none; }
   .cell[data-label]::before { content: attr(data-label); font-size: .75rem; font-weight: 600; color: var(--ink-500); }
-  .line { grid-template-columns: 76px 92px minmax(120px, 1fr) 86px minmax(104px, auto); padding: .8rem; }
+  /* The last track fits the five action buttons (5 × 32 px + gaps) so they never shrink */
+  .line { grid-template-columns: 76px 92px minmax(0, 1fr) 86px max-content; padding: .8rem; }
   .description { grid-column: 1 / 5; }
-  .actions { grid-column: 5; grid-row: 1; justify-content: flex-end; }
+  .actions { grid-column: 5; grid-row: 1; justify-content: flex-end; align-self: start; margin-top: 4px; }
+  .actions .icon-btn { flex: none; }
   .total { align-self: end; padding-bottom: .6rem; }
 }
 
-@container lines (max-width: 559px) {
+/* Below ~640 px the figures row and the actions no longer fit side by side: one card per line */
+@container lines (max-width: 639px) {
   .line { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .description, .actions { grid-column: 1 / -1; }
-  .actions { grid-row: auto; padding-top: .25rem; border-top: 1px solid var(--line); }
+  .actions { grid-row: auto; align-self: center; margin-top: 0; padding-top: .25rem; border-top: 1px solid var(--line); }
   .total { padding: .5rem 0; text-align: left; }
 }
