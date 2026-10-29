@@ -43,7 +43,7 @@
 | 0.15 | Showcase lot 1: paper-and-ink identity, self-hosted fonts, landing rewrite, dark theme, view transitions | ✅ Done | #33 / #35 | Branch `33-feat/visual-identity`. Landing and sign-in checked in Chrome (1280 / 390 px, light and dark); signed-in screens not checked in a browser yet (needs the API) |
 | 0.16 | Showcase lot 2: in-app docs at `/docs` (build-time Markdown with marked + Shiki, lazy Mermaid), overview, architecture, security model, testing, 7 ADRs | ✅ Done | #33 / #36 | Branch `33-feat/in-app-docs`, stacked on lot 1. Checked in Chrome (1280 / 390 px, light and dark). Prerendering deferred: `@angular/ssr` needs the Angular packages aligned on one patch first |
 | 0.17 | Showcase lot 3: Spring Modulith (verified boundaries, generated diagram), OpenAPI + Scalar reference, per-IP rate limiting (Bucket4j), JaCoCo coverage floor | ✅ Done | #33 / #37 | Branch `33-feat/backend-tooling`, stacked on lot 2. 252 backend tests, 97.5 % lines / 91.7 % branches. To check after deploy: client IP behind Render's proxy |
-| 0.18 | Showcase lot 4: Playwright E2E, axe-core accessibility checks, Lighthouse budget | 🚧 In progress | #33 | Branch `33-test/e2e-quality` |
+| 0.18 | Showcase lot 4: Playwright E2E, axe-core accessibility checks, Lighthouse budget | 🚧 In progress | #33 | Branch `33-test/e2e-quality`. New `e2e.yml`: real backend + PostgreSQL, 20 Playwright tests (desktop + phone), Lighthouse 100 accessibility on `/`, `/docs/overview`, `/login`. axe fixes: low-contrast text, focusable scroll regions, TOC target size; `robots.txt` added. Not yet run in GitHub Actions. Follow-ups: landing CLS (0.13), Mermaid weight on `/docs` (~790 KB script), type-check `e2e/` (needs `@types/node`) |
 
 ## Phase 1 — Customers
 
@@ -106,6 +106,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-10-29 | Lot 4 on `33-test/e2e-quality` (#33): 20 E2E tests and Lighthouse budget pass locally against the real API; 232 frontend tests pass. |
 | 2026-10-29 | Showcase lot 3 merged (#37), CI and deploys green on `4d76004`. Lot 4 (E2E, accessibility, Lighthouse) started on `33-test/e2e-quality` (#33). |
 | 2026-10-26 | Showcase lot 3 (backend tooling) on `33-feat/backend-tooling` (#33): 252 backend tests pass, coverage 97.5 % of lines. |
 | 2026-10-26 | Showcase lot 2 (in-app docs, ADRs) on `33-feat/in-app-docs` (#33): 232 frontend tests pass. |
