@@ -2,7 +2,7 @@
 
 Tests are part of every feature, never a follow-up: a module is not merged until its service, controller,
 repository and ownership tests pass in CI. At the time of writing the suites hold **252 backend tests**,
-**233 frontend tests** and **20 end-to-end tests**. The backend tests cover **97.5 % of lines and 91.7 % of
+**233 frontend tests** and **21 end-to-end tests**. The backend tests cover **97.5 % of lines and 91.7 % of
 branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches** (Vitest, v8).
 
 ## Test pyramid
@@ -18,7 +18,7 @@ branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches
 | Architecture | Spring Modulith on the compiled classes | Modules only use each other's public API, no dependency cycle, and the module diagram in the docs matches the code | `ModularityTest` |
 | Contract | `@SpringBootTest` on `/v3/api-docs` | The published OpenAPI description covers the secured endpoints and marks the public ones | `ApiDocumentationIntegrationTest` |
 | Tooling | `node:test` | The Claude Code commit guard blocks secrets however they are named | `.claude/hooks/guard-commit.test.mjs` |
-| End to end | Playwright on the production build, real API and PostgreSQL | A new user signs up, adds a customer and a product, then issues invoice `F-<year>-0001`; on desktop and phone viewports | `invoice-journey.e2e.ts` |
+| End to end | Playwright on the production build, real API and PostgreSQL | A new user signs up, adds a customer and a product, then issues invoice `F-<year>-0001`; on desktop and phone viewports | `invoice-journey.e2e.ts`, `invoice-editor-layout.e2e.ts` |
 | Accessibility | axe-core in every end-to-end test (WCAG 2.1 A and AA) | Every screen of the journey has no violation, and neither have the public pages in light and dark themes | `public-pages.e2e.ts`, `e2e/fixtures.ts` |
 | Performance budget | Lighthouse CI on `/`, `/docs/overview` and `/login` | Category scores (accessibility 100, performance ≥ 85, best practices and SEO ≥ 95) and transferred bytes per page | `frontend/lighthouserc.json` |
 
