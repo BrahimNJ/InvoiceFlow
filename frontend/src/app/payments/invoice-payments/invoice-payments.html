@@ -9,6 +9,7 @@
         [issueDate]="invoice().issueDate!"
         (recorded)="recorded($event)"
         (cancelled)="closeForm()"
+        (outdated)="refresh()"
       />
     } @else {
       <button class="btn btn-primary record" type="button" (click)="recording.set(true)">

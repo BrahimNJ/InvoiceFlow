@@ -106,7 +106,9 @@ describe('PaymentForm', () => {
     expect(form.querySelector('#payment-date-error')).toBeNull();
   });
 
-  it('shows the refusal of the API', async () => {
+  it('shows the refusal of the API and says the invoice is outdated', async () => {
+    let outdated = 0;
+    fixture.componentInstance.outdated.subscribe(() => outdated++);
     await submit();
     http
       .expectOne(paymentsUrl(1))
@@ -119,6 +121,7 @@ describe('PaymentForm', () => {
     expect(plain(form.querySelector('[role="alert"]')?.textContent)).toBe(
       'Invoice F-2026-0001 is already paid',
     );
+    expect(outdated).toBe(1);
   });
 
   it('can be closed without recording', async () => {

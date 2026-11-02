@@ -107,6 +107,27 @@ describe('InvoicePayments', () => {
     panel.remove();
   });
 
+  it('reloads the payments and tells the page when the invoice changed meanwhile', async () => {
+    let changed = 0;
+    fixture.componentInstance.changed.subscribe(() => changed++);
+    await open(testIssuedInvoice(), []);
+    button('Record a payment')!.click();
+    await fixture.whenStable();
+
+    const form = panel.querySelector<HTMLFormElement>('app-payment-form form')!;
+    form.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    http
+      .expectOne((r) => r.method === 'POST' && r.url === paymentsUrl(1))
+      .flush({ detail: 'Invoice F-2026-0001 is already paid' }, { status: 409, statusText: 'Conflict' });
+    await fixture.whenStable();
+    http.expectOne(paymentsUrl(1)).flush([testPayment({ amount: 1560 })]);
+    await fixture.whenStable();
+
+    expect(changed).toBe(1);
+    expect(rows().length).toBe(1);
+  });
+
   it('offers no new payment on a paid invoice', async () => {
     await open(testPaidInvoice(), [testPayment({ amount: 1560 })]);
 

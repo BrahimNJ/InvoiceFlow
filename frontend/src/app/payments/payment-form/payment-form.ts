@@ -10,6 +10,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -58,6 +59,8 @@ export class PaymentForm implements OnInit {
 
   readonly recorded = output<Payment>();
   readonly cancelled = output<void>();
+  /** The API refused the payment because the invoice changed meanwhile (409, 422): the page should reload it. */
+  readonly outdated = output<void>();
 
   /** In Paris, like the backend check: a user abroad cannot pick a day that is still the future there. */
   protected readonly today = todayInParis();
@@ -157,6 +160,9 @@ export class PaymentForm implements OnInit {
         error: (error: unknown) => {
           applyServerErrors(this.form, error);
           this.error.set(errorMessage(error));
+          if (error instanceof HttpErrorResponse && (error.status === 409 || error.status === 422)) {
+            this.outdated.emit();
+          }
         },
       });
   }

@@ -65,6 +65,12 @@ export class InvoicePayments implements OnInit {
     this.load();
   }
 
+  /** The invoice changed in another tab: reload the payments here and the invoice on the page. */
+  protected refresh(): void {
+    this.load();
+    this.changed.emit();
+  }
+
   /** Closes the form and gives the focus back to the button that opened it. */
   protected closeForm(): void {
     this.recording.set(false);
