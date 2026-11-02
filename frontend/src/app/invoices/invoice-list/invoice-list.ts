@@ -75,6 +75,7 @@ const TABS: { status: InvoiceStatusFilter | null; label: string }[] = [
   { status: 'DRAFT', label: 'Drafts' },
   { status: 'ISSUED', label: 'Issued' },
   { status: 'OVERDUE', label: 'Overdue' },
+  { status: 'PAID', label: 'Paid' },
   { status: 'CANCELLED', label: 'Cancelled' },
 ];
 

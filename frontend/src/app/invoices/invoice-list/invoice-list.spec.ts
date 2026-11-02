@@ -128,6 +128,12 @@ describe('InvoiceList', () => {
     expect(overdue.request.params.get('status')).toBe('OVERDUE');
     expect(overdue.request.params.get('page')).toBe('0');
     await respond(overdue);
+
+    button('Paid')!.click();
+    await fixture.whenStable();
+    const paid = listRequest();
+    expect(paid.request.params.get('status')).toBe('PAID');
+    await respond(paid);
   });
 
   it('filters by customer and by issue period', async () => {
