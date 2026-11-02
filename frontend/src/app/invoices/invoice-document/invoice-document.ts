@@ -37,6 +37,8 @@ export interface InvoiceDocument {
   customer: BilledCustomer | null;
   lines: DocumentLine[];
   totals: Totals;
+  /** What was already received and what is left, once a payment is in; absent otherwise. */
+  payments?: { amountPaid: number; balance: number } | null;
   operationNature: OperationNature | null;
   notes: string | null;
 }
@@ -56,6 +58,7 @@ export function documentFromInvoice(invoice: Invoice, seller: string, today: str
     customer: invoice.customer.name ? invoice.customer : null,
     lines: invoice.lines,
     totals: invoice,
+    payments: invoice.amountPaid > 0 ? { amountPaid: invoice.amountPaid, balance: invoice.balance } : null,
     operationNature: invoice.operationNature,
     notes: invoice.notes,
   };

@@ -86,6 +86,10 @@
         </div>
       }
       <div class="grand"><dt>Total incl. VAT</dt><dd>{{ formatEuros(d.totals.total) }}</dd></div>
+      @if (d.payments; as paid) {
+        <div class="paid"><dt>Already paid</dt><dd>− {{ formatEuros(paid.amountPaid) }}</dd></div>
+        <div class="balance"><dt>Balance due</dt><dd>{{ formatEuros(paid.balance) }}</dd></div>
+      }
     </dl>
   </section>
 
