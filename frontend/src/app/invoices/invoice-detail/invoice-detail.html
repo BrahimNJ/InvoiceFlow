@@ -130,6 +130,10 @@
           </dl>
         </section>
 
+        @if (inv.status === 'ISSUED' || inv.status === 'PAID') {
+          <app-invoice-payments [invoice]="inv" (changed)="reload()" />
+        }
+
         @if (inv.customer.name) {
           <section class="panel card" aria-labelledby="customer-title">
             <h2 id="customer-title">Customer</h2>

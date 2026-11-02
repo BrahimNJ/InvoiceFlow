@@ -9,6 +9,9 @@ import { addDays, todayIso } from '../invoice-calc';
 import { testInvoice, testIssuedInvoice, testPaidInvoice } from '../invoice.fixtures';
 import { Invoice } from '../invoice.models';
 import { INVOICES_API } from '../invoice.service';
+import { testPayment } from '../../payments/payment.fixtures';
+import { Payment } from '../../payments/payment.models';
+import { paymentsUrl } from '../../payments/payment.service';
 import { InvoiceDetail } from './invoice-detail';
 
 const plain = (text: string | null | undefined) => (text ?? '').replace(/[  ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -33,10 +36,15 @@ describe('InvoiceDetail', () => {
 
   afterEach(() => http.verify());
 
-  async function open(invoice: Invoice): Promise<void> {
+  /** Answers the invoice, then its payments when it has a payments panel. */
+  async function open(invoice: Invoice, payments: Payment[] = []): Promise<void> {
     await fixture.whenStable();
     http.expectOne(`${INVOICES_API}/1`).flush(invoice);
     await fixture.whenStable();
+    if (invoice.status === 'ISSUED' || invoice.status === 'PAID') {
+      http.expectOne(paymentsUrl(1)).flush(payments);
+      await fixture.whenStable();
+    }
   }
 
   const button = (label: string) =>
@@ -83,6 +91,29 @@ describe('InvoiceDetail', () => {
     expect(page.querySelector('.actions .note.warn')?.textContent).toContain('delete them before cancelling');
   });
 
+  it('shows the payments of an issued invoice and reloads it after a payment', async () => {
+    vi.spyOn(TestBed.inject(ConfirmService), 'ask').mockResolvedValue(true);
+    await open(testPaidInvoice(), [testPayment({ amount: 1560 })]);
+    expect(page.querySelector('app-invoice-payments .payments li')).toBeTruthy();
+
+    page.querySelector<HTMLButtonElement>('app-invoice-payments button[aria-label^="Delete"]')!.click();
+    await fixture.whenStable();
+    http.expectOne(`${paymentsUrl(1)}/11`).flush(null);
+    await fixture.whenStable();
+    http.expectOne(paymentsUrl(1)).flush([]);
+    http.expectOne(`${INVOICES_API}/1`).flush(testIssuedInvoice());
+    await fixture.whenStable();
+
+    expect(plain(page.querySelector('.head .status-badge')?.textContent)).toBe('Issued');
+    expect(button('Record a payment')).toBeTruthy();
+  });
+
+  it('has no payments panel for a draft', async () => {
+    await open(testInvoice());
+
+    expect(page.querySelector('app-invoice-payments')).toBeNull();
+  });
+
   it('cancels an issued invoice after a warning', async () => {
     const success = vi.spyOn(TestBed.inject(ToastService), 'success');
     await open(testIssuedInvoice());
@@ -123,8 +154,12 @@ describe('InvoiceDetail', () => {
     await fixture.whenStable();
     http.expectOne(`${INVOICES_API}/1/issue`).flush(testIssuedInvoice());
     await fixture.whenStable();
+    // Issued, it now waits for payment
+    http.expectOne(paymentsUrl(1)).flush([]);
+    await fixture.whenStable();
 
     expect(page.querySelector('h1')?.textContent).toBe('F-2026-0001');
+    expect(button('Record a payment')).toBeTruthy();
   });
 
   it('says what an incomplete draft needs before it can be issued', async () => {
