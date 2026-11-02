@@ -138,6 +138,42 @@ class InvoicePaymentsTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
+    @Test
+    void giveBack_takesThePaymentBackAndReopensAPaidInvoice() {
+        Invoice invoice = issued("1200.00");
+        invoice.setAmountPaid(new BigDecimal("1200.00"));
+        invoice.setStatus(InvoiceStatus.PAID);
+        invoice.setPaidAt(CLOCK.instant());
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
+
+        invoicePayments.giveBack(OWNER_ID, 1L, new BigDecimal("200.00"));
+
+        assertThat(invoice.getAmountPaid()).hasToString("1000.00");
+        assertThat(invoice.getBalance()).hasToString("200.00");
+        assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.ISSUED);
+        assertThat(invoice.getPaidAt()).isNull();
+        verify(invoiceRepository).saveAndFlush(invoice);
+    }
+
+    @Test
+    void giveBack_refusesMoreThanTheInvoiceReceived() {
+        Invoice invoice = issued("1200.00");
+        invoice.setAmountPaid(new BigDecimal("100.00"));
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoicePayments.giveBack(OWNER_ID, 1L, new BigDecimal("100.01")))
+                .isInstanceOf(IllegalStateException.class);
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void giveBack_throwsWhenTheInvoiceIsMissingOrSomeoneElses() {
+        when(invoiceRepository.lockByIdAndOwnerId(42L, OWNER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> invoicePayments.giveBack(OWNER_ID, 42L, BigDecimal.ONE))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
     private static Invoice issued(String total) {
         Invoice invoice = new Invoice();
         invoice.setId(1L);

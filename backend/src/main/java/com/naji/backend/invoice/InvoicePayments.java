@@ -62,6 +62,26 @@ public class InvoicePayments {
         invoiceRepository.saveAndFlush(invoice);
     }
 
+    /**
+     * Takes back {@code amount}, a payment the invoice had received and that is being deleted. A paid invoice is
+     * waiting for payment again. 404 when the invoice does not exist or belongs to someone else.
+     *
+     * @throws IllegalStateException when the invoice never received that much: the payments and the invoice disagree
+     */
+    public void giveBack(Long ownerId, Long invoiceId, BigDecimal amount) {
+        Invoice invoice = lock(ownerId, invoiceId);
+        if (amount.compareTo(invoice.getAmountPaid()) > 0) {
+            throw new IllegalStateException("Invoice %d received %s, cannot give back %s"
+                    .formatted(invoice.getId(), invoice.getAmountPaid(), amount));
+        }
+        invoice.setAmountPaid(invoice.getAmountPaid().subtract(amount));
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            invoice.setStatus(InvoiceStatus.ISSUED);
+            invoice.setPaidAt(null);
+        }
+        invoiceRepository.saveAndFlush(invoice);
+    }
+
     private Invoice lock(Long ownerId, Long invoiceId) {
         return invoiceRepository.lockByIdAndOwnerId(invoiceId, ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice", invoiceId));
