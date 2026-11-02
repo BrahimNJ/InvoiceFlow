@@ -95,11 +95,11 @@ Every figure below is produced by CI on each push, and most of them **fail the b
 
 | Check | Result | Gate |
 |-------|--------|------|
-| Backend tests (JUnit 5, Spring slices, integration) | **252** passing | `./mvnw verify` |
-| Backend coverage (JaCoCo, Lombok excluded) | **97.5 %** lines · **91.7 %** branches | fails under 95 % / 85 % |
-| Frontend tests (Vitest, Angular TestBed) | **233** passing | `npm run test:coverage` |
-| Frontend coverage (v8) | **96.5 %** lines · **90.4 %** branches | fails under 95 % / 85 % |
-| End-to-end (Playwright, desktop and phone) | **21** passing on the production build, real API and PostgreSQL 17 | `e2e.yml` |
+| Backend tests (JUnit 5, Spring slices, integration) | **293** passing | `./mvnw verify` |
+| Backend coverage (JaCoCo, Lombok excluded) | **97.8 %** lines · **92.2 %** branches | fails under 95 % / 85 % |
+| Frontend tests (Vitest, Angular TestBed) | **259** passing | `npm run test:coverage` |
+| Frontend coverage (v8) | **96.4 %** lines · **90.5 %** branches | fails under 95 % / 85 % |
+| End-to-end (Playwright, desktop and phone) | **23** passing on the production build, real API and PostgreSQL 17 | `e2e.yml` |
 | Accessibility (axe-core, WCAG 2.1 AA) | **0** violations on every screen of the journey and on the public pages, light and dark | any violation fails |
 | Lighthouse, desktop (`/`, `/docs/overview`, `/login`) | performance **93–100** · accessibility **100** · best practices **100** · SEO **100** | budget in `lighthouserc.json` |
 | Module boundaries (Spring Modulith) | no access to another module's internals, no cycle | `ModularityTest` |
@@ -237,8 +237,8 @@ from the environment, fails fast when a secret is missing).
 ## Tests
 
 ```bash
-cd backend  && ./mvnw verify                 # 252 tests, modularity, coverage floor
-cd frontend && npm run test:coverage         # 233 tests, coverage floor
+cd backend  && ./mvnw verify                 # 293 tests, modularity, coverage floor
+cd frontend && npm run test:coverage         # 259 tests, coverage floor
 ```
 
 End-to-end tests, the Lighthouse budget and the README screenshots run on the real stack (PostgreSQL and the API
@@ -246,7 +246,7 @@ started as in [Getting started](#getting-started)):
 
 ```bash
 cd frontend && npm run build:e2e             # production build that calls localhost:8080
-npx playwright test                          # 21 tests with axe-core, desktop and phone
+npx playwright test                          # 23 tests with axe-core, desktop and phone
 npx --yes @lhci/cli@0.15.1 autorun           # Lighthouse budget
 npm run screenshots                          # regenerates docs/screenshots
 ```
