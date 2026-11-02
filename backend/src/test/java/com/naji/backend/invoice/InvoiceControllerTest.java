@@ -81,6 +81,7 @@ class InvoiceControllerTest {
                 .andExpect(jsonPath("$.content[0].overdue").value(true))
                 .andExpect(jsonPath("$.content[0].dueDate").value("2026-10-20"))
                 .andExpect(jsonPath("$.content[0].total").value(780.0))
+                .andExpect(jsonPath("$.content[0].balance").value(480.0))
                 .andExpect(jsonPath("$.totalElements").value(11));
     }
 
@@ -132,6 +133,8 @@ class InvoiceControllerTest {
                 .andExpect(jsonPath("$.lines[0].quantity").value(1.5))
                 .andExpect(jsonPath("$.vatBreakdown[0].rate").value(20.0))
                 .andExpect(jsonPath("$.vatBreakdown[0].amount").value(195.0))
+                .andExpect(jsonPath("$.amountPaid").value(0))
+                .andExpect(jsonPath("$.balance").value(1170.0))
                 .andExpect(jsonPath("$.checks[0].code").value("CUSTOMER"))
                 .andExpect(jsonPath("$.operationNature").value("SERVICES"));
     }
@@ -270,7 +273,7 @@ class InvoiceControllerTest {
     private static InvoiceListItem listItem() {
         return new InvoiceListItem(1L, "F-2026-0001", InvoiceStatus.ISSUED, true, 3L, "Acme SAS",
                 LocalDate.of(2026, 9, 20), LocalDate.of(2026, 10, 20), new BigDecimal("650.00"), new BigDecimal("780.00"),
-                null, null);
+                new BigDecimal("300.00"), new BigDecimal("480.00"), null, null);
     }
 
     private static InvoiceResponse response(Long id, InvoiceStatus status) {
@@ -283,9 +286,10 @@ class InvoiceControllerTest {
                         "Web development", null, new BigDecimal("1.500"), ProductUnit.DAY,
                         new BigDecimal("650.00"), new BigDecimal("20.00"), new BigDecimal("975.00"))),
                 new BigDecimal("975.00"), new BigDecimal("195.00"), new BigDecimal("1170.00"),
+                BigDecimal.ZERO, new BigDecimal("1170.00"),
                 List.of(new InvoiceResponse.VatBreakdown(new BigDecimal("20.00"), new BigDecimal("975.00"),
                         new BigDecimal("195.00"))),
                 List.of(new InvoiceResponse.ReadinessCheck("CUSTOMER", true, true)),
-                null, null, null, null);
+                null, null, null, null, null);
     }
 }

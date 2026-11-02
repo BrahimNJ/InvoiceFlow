@@ -114,6 +114,21 @@ class InvoiceMapperTest {
     }
 
     @Test
+    void responsesCarryTheAmountPaidAndTheBalanceDue() {
+        Invoice invoice = issued();
+        invoice.setAmountPaid(new BigDecimal("560.00"));
+
+        InvoiceResponse response = mapper.toResponse(invoice, TODAY);
+        InvoiceListItem item = mapper.toListItem(invoice, TODAY);
+
+        assertThat(response.total()).hasToString("1560.00");
+        assertThat(response.amountPaid()).hasToString("560.00");
+        assertThat(response.balance()).hasToString("1000.00");
+        assertThat(item.amountPaid()).hasToString("560.00");
+        assertThat(item.balance()).hasToString("1000.00");
+    }
+
+    @Test
     void anIssuedInvoiceIsOverdueTheDayAfterItsDueDate() {
         Invoice invoice = issued();
         invoice.setDueDate(TODAY);
