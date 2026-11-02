@@ -62,6 +62,14 @@ public class InvoicePayments {
         invoiceRepository.saveAndFlush(invoice);
     }
 
+    /** 404 when the invoice does not exist or belongs to someone else; lets a reader show its payments. */
+    @Transactional(readOnly = true)
+    public void requireInvoice(Long ownerId, Long invoiceId) {
+        if (!invoiceRepository.existsByIdAndOwnerId(invoiceId, ownerId)) {
+            throw new ResourceNotFoundException("Invoice", invoiceId);
+        }
+    }
+
     /**
      * Takes back {@code amount}, a payment the invoice had received and that is being deleted. A paid invoice is
      * waiting for payment again. 404 when the invoice does not exist or belongs to someone else.

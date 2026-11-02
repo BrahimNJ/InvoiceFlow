@@ -47,6 +47,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     Optional<Invoice> findByIdAndOwnerId(Long id, Long ownerId);
 
+    boolean existsByIdAndOwnerId(Long id, Long ownerId);
+
     /**
      * Count and total including VAT of the owner's invoices in one of {@code statuses}, optionally due strictly before
      * {@code dueBefore} and issued on or after {@code issuedFrom} ({@code null}: no limit). Dates are cast for

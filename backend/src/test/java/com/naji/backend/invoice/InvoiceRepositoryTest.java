@@ -88,6 +88,8 @@ class InvoiceRepositoryTest {
 
         assertThat(customers(search(ownerId, "%", null, null, null, null, null))).containsExactly("Acme");
         assertThat(invoiceRepository.findByIdAndOwnerId(othersInvoice, ownerId)).isEmpty();
+        assertThat(invoiceRepository.existsByIdAndOwnerId(othersInvoice, ownerId)).isFalse();
+        assertThat(invoiceRepository.existsByIdAndOwnerId(othersInvoice, otherOwnerId)).isTrue();
     }
 
     @Test

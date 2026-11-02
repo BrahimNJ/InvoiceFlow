@@ -174,6 +174,17 @@ class InvoicePaymentsTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
+    @Test
+    void requireInvoice_passesForTheOwnersInvoiceOnly() {
+        when(invoiceRepository.existsByIdAndOwnerId(1L, OWNER_ID)).thenReturn(true);
+        when(invoiceRepository.existsByIdAndOwnerId(42L, OWNER_ID)).thenReturn(false);
+
+        invoicePayments.requireInvoice(OWNER_ID, 1L);
+        assertThatThrownBy(() -> invoicePayments.requireInvoice(OWNER_ID, 42L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Invoice with id 42 not found");
+    }
+
     private static Invoice issued(String total) {
         Invoice invoice = new Invoice();
         invoice.setId(1L);
