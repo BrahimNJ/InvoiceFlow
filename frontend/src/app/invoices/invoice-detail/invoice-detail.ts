@@ -92,6 +92,8 @@ export class InvoiceDetail implements OnInit {
     });
     if (invoice.status === 'CANCELLED') {
       steps.push({ label: 'Cancelled', icon: 'x', when: invoice.cancelledAt, tone: 'danger' });
+    } else if (invoice.status === 'PAID') {
+      steps.push({ label: 'Paid in full', icon: 'check-circle', when: invoice.paidAt, tone: 'done' });
     } else if (invoice.dueDate) {
       const due = dueLabel(invoice.dueDate, this.today);
       steps.push({

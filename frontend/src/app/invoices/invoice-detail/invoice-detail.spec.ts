@@ -6,7 +6,7 @@ import { Router, provideRouter } from '@angular/router';
 import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
 import { addDays, todayIso } from '../invoice-calc';
-import { testInvoice, testIssuedInvoice } from '../invoice.fixtures';
+import { testInvoice, testIssuedInvoice, testPaidInvoice } from '../invoice.fixtures';
 import { Invoice } from '../invoice.models';
 import { INVOICES_API } from '../invoice.service';
 import { InvoiceDetail } from './invoice-detail';
@@ -59,6 +59,17 @@ describe('InvoiceDetail', () => {
     expect(button('Download PDF')?.disabled).toBe(true);
     expect(button('Edit draft')).toBeUndefined();
     expect(page.querySelector('.actions .note')?.textContent).toContain('frozen by law');
+  });
+
+  it('shows a paid invoice as settled, without a way to cancel it', async () => {
+    await open(testPaidInvoice());
+
+    expect(plain(page.querySelector('.head .status-badge')?.textContent)).toBe('Paid');
+    expect(timeline().at(-1)).toContain('Paid in full');
+    expect(page.querySelector('.timeline li:last-child')?.className).toBe('done');
+    expect(button('Duplicate')).toBeTruthy();
+    expect(button('Cancel invoice')).toBeUndefined();
+    expect(page.querySelector('.actions .note')?.textContent).toContain('nothing is left to collect');
   });
 
   it('cancels an issued invoice after a warning', async () => {
