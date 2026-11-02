@@ -79,7 +79,14 @@ public class Invoice {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
 
+    /** Sum of the payments received; never above the total. Only an issued or paid invoice has payments. */
+    @Column(nullable = false, precision = 14, scale = 2)
+    private BigDecimal amountPaid = BigDecimal.ZERO;
+
     private Instant issuedAt;
+
+    /** Set when the last payment brings the balance to zero; cleared when a payment is deleted. */
+    private Instant paidAt;
 
     private Instant cancelledAt;
 
@@ -116,6 +123,11 @@ public class Invoice {
             line.setSortOrder(lines.size());
             lines.add(line);
         }
+    }
+
+    /** What the customer still owes: the total including VAT minus the payments received. */
+    public BigDecimal getBalance() {
+        return total.subtract(amountPaid);
     }
 
     public boolean isDraft() {
