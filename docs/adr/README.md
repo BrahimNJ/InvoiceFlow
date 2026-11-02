@@ -14,6 +14,7 @@ consequences. A record is never rewritten once accepted; a new record supersedes
 | [0006](0006-visual-identity-and-self-hosted-fonts.md) | "Paper and ink" design tokens, self-hosted fonts | Accepted |
 | [0007](0007-docs-rendered-at-build-time.md) | Documentation rendered from the repository at build time | Accepted |
 | [0008](0008-verified-module-boundaries.md) | Module boundaries verified by Spring Modulith, diagram generated from the code | Accepted |
+| [0009](0009-payments-module.md) | Payments in their own module, applied to the invoice in the same transaction | Accepted |
 
 ## Template
 
