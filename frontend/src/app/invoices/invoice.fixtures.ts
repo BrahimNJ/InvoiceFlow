@@ -50,6 +50,8 @@ export function testInvoice(overrides: Partial<Invoice> = {}): Invoice {
     subtotal: 1300,
     vatTotal: 260,
     total: 1560,
+    amountPaid: 0,
+    balance: 1560,
     vatBreakdown: [{ rate: 20, base: 1300, amount: 260 }],
     checks: [
       { code: 'CUSTOMER', required: true, passed: true },
@@ -58,6 +60,7 @@ export function testInvoice(overrides: Partial<Invoice> = {}): Invoice {
       { code: 'CUSTOMER_SIREN', required: false, passed: true },
     ],
     issuedAt: null,
+    paidAt: null,
     cancelledAt: null,
     createdAt: '2026-10-20T10:00:00Z',
     updatedAt: '2026-10-20T10:00:00Z',
@@ -76,6 +79,17 @@ export function testIssuedInvoice(overrides: Partial<Invoice> = {}): Invoice {
   });
 }
 
+/** {@link testIssuedInvoice} settled in full. */
+export function testPaidInvoice(overrides: Partial<Invoice> = {}): Invoice {
+  return testIssuedInvoice({
+    status: 'PAID',
+    amountPaid: 1560,
+    balance: 0,
+    paidAt: '2026-10-30T09:00:00Z',
+    ...overrides,
+  });
+}
+
 export function testListItem(overrides: Partial<InvoiceListItem> = {}): InvoiceListItem {
   return {
     id: 1,
@@ -88,6 +102,8 @@ export function testListItem(overrides: Partial<InvoiceListItem> = {}): InvoiceL
     dueDate: '2026-11-19',
     subtotal: 1300,
     total: 1560,
+    amountPaid: 0,
+    balance: 1560,
     createdAt: '2026-10-20T10:00:00Z',
     updatedAt: '2026-10-20T10:05:00Z',
     ...overrides,

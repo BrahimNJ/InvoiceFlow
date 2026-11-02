@@ -2,9 +2,9 @@
 import { ProductType, ProductUnit } from '../products/product.models';
 import { IconName } from '../shared/icon/icon';
 
-export type InvoiceStatus = 'DRAFT' | 'ISSUED' | 'CANCELLED';
-/** Status tabs of the list: `ISSUED` includes the overdue invoices, `OVERDUE` only those. */
-export type InvoiceStatusFilter = 'DRAFT' | 'ISSUED' | 'OVERDUE' | 'CANCELLED';
+export type InvoiceStatus = 'DRAFT' | 'ISSUED' | 'PAID' | 'CANCELLED';
+/** Status tabs of the list: `ISSUED` (waiting for payment) includes the overdue invoices, `OVERDUE` only those. */
+export type InvoiceStatusFilter = 'DRAFT' | 'ISSUED' | 'OVERDUE' | 'PAID' | 'CANCELLED';
 export type PaymentTerms = 'ON_RECEIPT' | 'NET_15' | 'NET_30' | 'NET_45' | 'NET_60' | 'END_OF_MONTH_45';
 export type OperationNature = 'GOODS' | 'SERVICES' | 'MIXED';
 export type InvoiceSort = 'CREATED_AT' | 'NUMBER' | 'CUSTOMER' | 'ISSUE_DATE' | 'DUE_DATE' | 'TOTAL';
@@ -69,9 +69,15 @@ export interface Invoice {
   subtotal: number;
   vatTotal: number;
   total: number;
+  /** Sum of the payments received. */
+  amountPaid: number;
+  /** Total minus the amount paid: what the customer still owes. */
+  balance: number;
   vatBreakdown: VatBreakdown[];
   checks: ReadinessCheck[];
   issuedAt: string | null;
+  /** Set when the balance reaches zero. */
+  paidAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -89,6 +95,8 @@ export interface InvoiceListItem {
   dueDate: string | null;
   subtotal: number;
   total: number;
+  amountPaid: number;
+  balance: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -158,7 +166,7 @@ export const READINESS: Record<ReadinessCode, { label: string; fix: string }> = 
   },
 };
 
-export type StatusTone = 'neutral' | 'brand' | 'danger' | 'muted';
+export type StatusTone = 'neutral' | 'brand' | 'success' | 'danger' | 'muted';
 
 /** Badge of a list row or a detail page; an issued invoice past due shows as overdue. */
 export function statusBadge(status: InvoiceStatus, overdue: boolean): { label: string; tone: StatusTone; icon: IconName } {
@@ -170,6 +178,8 @@ export function statusBadge(status: InvoiceStatus, overdue: boolean): { label: s
       return { label: 'Draft', tone: 'neutral', icon: 'pencil' };
     case 'ISSUED':
       return { label: 'Issued', tone: 'brand', icon: 'send' };
+    case 'PAID':
+      return { label: 'Paid', tone: 'success', icon: 'check-circle' };
     case 'CANCELLED':
       return { label: 'Cancelled', tone: 'muted', icon: 'x' };
   }
