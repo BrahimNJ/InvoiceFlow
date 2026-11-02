@@ -104,6 +104,17 @@ class InvoiceLifecycleIntegrationTest {
                 .andExpect(jsonPath("$.outstanding.total").value(2002.64))
                 .andExpect(jsonPath("$.issuedThisMonth.count").value(1));
 
+        // An invoice of 0 € owes nothing: paid as soon as it is issued (the V9 check accepts it)
+        int freeId = create(alice, "/api/invoices", """
+                {"customerId": %d, "paymentTerms": "NET_30", "lines": [
+                  {"type": "SERVICE", "label": "Free audit", "quantity": 1, "unit": "DAY", "unitPrice": 0, "vatRate": 20}
+                ]}
+                """.formatted(customerId));
+        perform(alice, post("/api/invoices/" + freeId + "/issue"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAID"))
+                .andExpect(jsonPath("$.balance").value(0));
+
         // Editing the customer afterwards does not change the issued invoice
         perform(alice, put("/api/customers/" + customerId).contentType(MediaType.APPLICATION_JSON).content("""
                 {"name": "Acme Renamed", "email": "billing@acme.fr"}

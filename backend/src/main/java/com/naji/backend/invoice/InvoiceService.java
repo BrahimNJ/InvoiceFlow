@@ -119,8 +119,9 @@ public class InvoiceService {
 
     /**
      * Issues a draft: it gets today's date, its due date and the next number of the year, and can no longer be
-     * changed. The customer's billing details are refreshed one last time, then frozen. Answers 422 with the failed
-     * checks when a required mention is missing.
+     * changed. The customer's billing details are refreshed one last time, then frozen. An invoice of 0 € owes
+     * nothing: it is paid as soon as it is issued, so it never counts as outstanding or overdue. Answers 422 with the
+     * failed checks when a required mention is missing.
      */
     @Transactional
     public InvoiceResponse issue(Long ownerId, Long id) {
@@ -142,6 +143,10 @@ public class InvoiceService {
         invoice.setNumber(numberGenerator.next(ownerId, today.getYear()));
         invoice.setStatus(InvoiceStatus.ISSUED);
         invoice.setIssuedAt(clock.instant());
+        if (invoice.getTotal().signum() == 0) {
+            invoice.setStatus(InvoiceStatus.PAID);
+            invoice.setPaidAt(invoice.getIssuedAt());
+        }
         return toResponse(invoiceRepository.saveAndFlush(invoice));
     }
 

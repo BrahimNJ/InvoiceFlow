@@ -315,6 +315,27 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void issue_marksAnInvoiceOfZeroEurosPaid() {
+        Invoice draft = draft(1L);
+        InvoiceMapper mapper = new InvoiceMapper();
+        mapper.copyCustomer(draft, addressed(customer()));
+        mapper.updateDraft(draft, request(3L, new InvoiceLineRequest(null, ProductType.SERVICE, "Free audit", null,
+                BigDecimal.ONE, ProductUnit.DAY, BigDecimal.ZERO, new BigDecimal("20"))));
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(addressed(customer())));
+        when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0001");
+        when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
+
+        InvoiceResponse response = invoiceService.issue(OWNER_ID, 1L);
+
+        assertThat(response.total()).isZero();
+        assertThat(response.status()).isEqualTo(InvoiceStatus.PAID);
+        assertThat(response.paidAt()).isEqualTo(CLOCK.instant());
+        assertThat(response.number()).isEqualTo("F-2026-0001");
+        assertThat(response.overdue()).isFalse();
+    }
+
+    @Test
     void issue_keepsTheCopiedDetailsWhenTheCustomerWasDeleted() {
         Invoice draft = readyDraft();
         draft.setCustomerId(null);
