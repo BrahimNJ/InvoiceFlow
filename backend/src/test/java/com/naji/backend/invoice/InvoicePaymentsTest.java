@@ -29,6 +29,7 @@ class InvoicePaymentsTest {
     private static final Long OWNER_ID = 7L;
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-11-02T10:00:00Z"), ZoneOffset.UTC);
     private static final LocalDate ISSUE_DATE = LocalDate.of(2026, 10, 20);
+    private static final LocalDate TODAY = LocalDate.of(2026, 11, 2);
 
     @Mock
     private InvoiceRepository invoiceRepository;
@@ -45,7 +46,7 @@ class InvoicePaymentsTest {
         Invoice invoice = issued("1200.00");
         when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
 
-        invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("500.00"));
+        invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("500.00"), TODAY);
 
         assertThat(invoice.getAmountPaid()).hasToString("500.00");
         assertThat(invoice.getBalance()).hasToString("700.00");
@@ -60,7 +61,7 @@ class InvoicePaymentsTest {
         invoice.setAmountPaid(new BigDecimal("500.00"));
         when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
 
-        invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("700.00"));
+        invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("700.00"), TODAY);
 
         assertThat(invoice.getBalance()).isZero();
         assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.PAID);
@@ -73,12 +74,36 @@ class InvoicePaymentsTest {
         invoice.setAmountPaid(new BigDecimal("1000.00"));
         when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
 
-        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("200.01")))
+        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("200.01"), TODAY))
                 .isInstanceOf(UnprocessableException.class)
                 .hasMessage("The payment is more than the balance due on invoice F-2026-0001")
                 .satisfies(e -> assertThat(((UnprocessableException) e).getProperties())
                         .containsEntry("balance", new BigDecimal("200.00")));
         assertThat(invoice.getAmountPaid()).hasToString("1000.00");
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void receive_acceptsTheIssueDateAndToday() {
+        Invoice invoice = issued("1200.00");
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
+
+        invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("100.00"), ISSUE_DATE);
+        invoicePayments.receive(OWNER_ID, 1L, new BigDecimal("100.00"), TODAY);
+
+        assertThat(invoice.getAmountPaid()).hasToString("200.00");
+    }
+
+    @Test
+    void receive_refusesADateBeforeTheIssueDateOrInTheFuture() {
+        Invoice invoice = issued("1200.00");
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 1L, BigDecimal.ONE, ISSUE_DATE.minusDays(1)))
+                .isInstanceOf(UnprocessableException.class)
+                .hasMessage("A payment must be dated between the issue date of invoice F-2026-0001 and today");
+        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 1L, BigDecimal.ONE, TODAY.plusDays(1)))
+                .isInstanceOf(UnprocessableException.class);
         verify(invoiceRepository, never()).saveAndFlush(any());
     }
 
@@ -93,13 +118,13 @@ class InvoicePaymentsTest {
         when(invoiceRepository.lockByIdAndOwnerId(2L, OWNER_ID)).thenReturn(Optional.of(paid));
         when(invoiceRepository.lockByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(cancelled));
 
-        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 1L, BigDecimal.ONE))
+        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 1L, BigDecimal.ONE, TODAY))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("A draft cannot be paid: issue it first");
-        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 2L, BigDecimal.ONE))
+        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 2L, BigDecimal.ONE, TODAY))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Invoice F-2026-0001 is already paid");
-        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 3L, BigDecimal.ONE))
+        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 3L, BigDecimal.ONE, TODAY))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Invoice F-2026-0001 is cancelled: it cannot be paid");
         verify(invoiceRepository, never()).saveAndFlush(any());
@@ -109,7 +134,7 @@ class InvoicePaymentsTest {
     void receive_throwsWhenTheInvoiceIsMissingOrSomeoneElses() {
         when(invoiceRepository.lockByIdAndOwnerId(42L, OWNER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 42L, BigDecimal.ONE))
+        assertThatThrownBy(() -> invoicePayments.receive(OWNER_ID, 42L, BigDecimal.ONE, TODAY))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

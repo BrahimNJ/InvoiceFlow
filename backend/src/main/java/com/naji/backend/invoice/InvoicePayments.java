@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.util.Map;
 
 /**
@@ -26,11 +27,12 @@ public class InvoicePayments {
     private final Clock clock;
 
     /**
-     * Adds {@code amount} to what the owner's invoice has received; the invoice becomes {@code PAID} when nothing is
-     * left to pay. 404 when the invoice does not exist or belongs to someone else, 409 when it is not waiting for
-     * payment, 422 when the amount is more than the balance due.
+     * Adds {@code amount}, received on {@code date}, to what the owner's invoice has received; the invoice becomes
+     * {@code PAID} when nothing is left to pay. 404 when the invoice does not exist or belongs to someone else, 409
+     * when it is not waiting for payment, 422 when the amount is more than the balance due or the date is before the
+     * issue date or after today (Paris time).
      */
-    public void receive(Long ownerId, Long invoiceId, BigDecimal amount) {
+    public void receive(Long ownerId, Long invoiceId, BigDecimal amount, LocalDate date) {
         Invoice invoice = lock(ownerId, invoiceId);
         switch (invoice.getStatus()) {
             case DRAFT -> throw new ConflictException("A draft cannot be paid: issue it first");
@@ -40,6 +42,12 @@ public class InvoicePayments {
             case ISSUED -> {
                 // Waiting for payment: go on
             }
+        }
+        LocalDate today = LocalDate.now(clock.withZone(InvoiceService.ZONE));
+        if (date.isBefore(invoice.getIssueDate()) || date.isAfter(today)) {
+            throw new UnprocessableException("A payment must be dated between the issue date of invoice %s and today"
+                    .formatted(invoice.getNumber()),
+                    Map.of("issueDate", invoice.getIssueDate()));
         }
         if (amount.compareTo(invoice.getBalance()) > 0) {
             throw new UnprocessableException(
