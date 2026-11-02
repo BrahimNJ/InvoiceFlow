@@ -374,6 +374,26 @@ class InvoiceServiceTest {
         verify(invoiceRepository, never()).saveAndFlush(any());
     }
 
+    @Test
+    void cancel_refusesAPaidOrPartlyPaidInvoice() {
+        Invoice paid = issued(1L);
+        paid.setStatus(InvoiceStatus.PAID);
+        paid.setAmountPaid(paid.getTotal());
+        Invoice partlyPaid = issued(2L);
+        partlyPaid.setAmountPaid(new BigDecimal("100.00"));
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(paid));
+        when(invoiceRepository.lockByIdAndOwnerId(2L, OWNER_ID)).thenReturn(Optional.of(partlyPaid));
+
+        assertThatThrownBy(() -> invoiceService.cancel(OWNER_ID, 1L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Invoice F-2026-0001 is paid: it cannot be cancelled");
+        assertThatThrownBy(() -> invoiceService.cancel(OWNER_ID, 2L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Invoice F-2026-0001 has payments: delete them before cancelling it");
+        assertThat(partlyPaid.getStatus()).isEqualTo(InvoiceStatus.ISSUED);
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
     private static InvoiceTotals totals(long count, String total) {
         return new InvoiceTotals(count, new BigDecimal(total).setScale(2));
     }

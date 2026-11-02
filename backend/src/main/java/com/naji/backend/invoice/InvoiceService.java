@@ -142,7 +142,8 @@ public class InvoiceService {
 
     /**
      * Cancels an issued invoice. It keeps its number, so that the sequence has no gap, and stays in the records.
-     * A draft is deleted instead.
+     * A draft is deleted instead. An invoice that received payments cannot be cancelled: its payments would point
+     * to an invoice that no longer asks for anything (delete them first, or issue a credit note once they exist).
      */
     @Transactional
     public InvoiceResponse cancel(Long ownerId, Long id) {
@@ -150,7 +151,13 @@ public class InvoiceService {
         switch (invoice.getStatus()) {
             case DRAFT -> throw new ConflictException("A draft cannot be cancelled: delete it instead");
             case CANCELLED -> throw new ConflictException("Invoice %s is already cancelled".formatted(invoice.getNumber()));
+            case PAID -> throw new ConflictException(
+                    "Invoice %s is paid: it cannot be cancelled".formatted(invoice.getNumber()));
             case ISSUED -> {
+                if (invoice.getAmountPaid().signum() > 0) {
+                    throw new ConflictException("Invoice %s has payments: delete them before cancelling it"
+                            .formatted(invoice.getNumber()));
+                }
                 invoice.setStatus(InvoiceStatus.CANCELLED);
                 invoice.setCancelledAt(clock.instant());
             }
