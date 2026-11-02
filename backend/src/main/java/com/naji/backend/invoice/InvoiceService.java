@@ -84,10 +84,11 @@ public class InvoiceService {
     public InvoiceSummaryResponse summary(Long ownerId) {
         LocalDate today = today();
         return new InvoiceSummaryResponse(
-                invoiceRepository.totals(ownerId, InvoiceStatus.DRAFT, null, null),
+                invoiceRepository.totals(ownerId, List.of(InvoiceStatus.DRAFT), null, null),
                 invoiceRepository.balances(ownerId, null),
                 invoiceRepository.balances(ownerId, today),
-                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, today.withDayOfMonth(1)));
+                invoiceRepository.totals(ownerId, List.of(InvoiceStatus.ISSUED, InvoiceStatus.PAID), null,
+                        today.withDayOfMonth(1)));
     }
 
     public InvoiceResponse findById(Long ownerId, Long id) {

@@ -146,16 +146,28 @@ class InvoiceRepositoryTest {
         save(withTotal(issued(ownerId, "Recent", "F-2026-0002", LocalDate.of(2026, 10, 2), TODAY.plusDays(20)), "300.25"));
         save(withTotal(issued(otherOwnerId, "Other", "F-2026-0001", TODAY, TODAY), "999.00"));
 
-        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.DRAFT, null, null))
+        assertThat(invoiceRepository.totals(ownerId, List.of(InvoiceStatus.DRAFT), null, null))
                 .isEqualTo(new InvoiceTotals(1L, new BigDecimal("100.00")));
-        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, null))
+        assertThat(invoiceRepository.totals(ownerId, List.of(InvoiceStatus.ISSUED), null, null))
                 .isEqualTo(new InvoiceTotals(2L, new BigDecimal("1500.75")));
-        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, TODAY, null))
+        assertThat(invoiceRepository.totals(ownerId, List.of(InvoiceStatus.ISSUED), TODAY, null))
                 .isEqualTo(new InvoiceTotals(1L, new BigDecimal("1200.50")));
-        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, LocalDate.of(2026, 10, 1)))
+        assertThat(invoiceRepository.totals(ownerId, List.of(InvoiceStatus.ISSUED), null, LocalDate.of(2026, 10, 1)))
                 .isEqualTo(new InvoiceTotals(1L, new BigDecimal("300.25")));
-        assertThat(invoiceRepository.totals(ownerId, InvoiceStatus.CANCELLED, null, null))
+        assertThat(invoiceRepository.totals(ownerId, List.of(InvoiceStatus.CANCELLED), null, null))
                 .isEqualTo(new InvoiceTotals(0L, new BigDecimal("0.00")));
+    }
+
+    @Test
+    void totals_addUpSeveralStatuses() {
+        save(withTotal(issued(ownerId, "Open", "F-2026-0001", LocalDate.of(2026, 10, 2), TODAY.plusDays(20)), "300.25"));
+        Invoice settled = withTotal(issued(ownerId, "Settled", "F-2026-0002", LocalDate.of(2026, 10, 5), TODAY), "450.00");
+        settled.setStatus(InvoiceStatus.PAID);
+        save(paid(settled, "450.00"));
+
+        assertThat(invoiceRepository.totals(ownerId, List.of(InvoiceStatus.ISSUED, InvoiceStatus.PAID), null,
+                LocalDate.of(2026, 10, 1)))
+                .isEqualTo(new InvoiceTotals(2L, new BigDecimal("750.25")));
     }
 
     @Test

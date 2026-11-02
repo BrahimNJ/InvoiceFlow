@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
@@ -47,20 +48,20 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     Optional<Invoice> findByIdAndOwnerId(Long id, Long ownerId);
 
     /**
-     * Count and total including VAT of the owner's invoices in a status, optionally due strictly before
+     * Count and total including VAT of the owner's invoices in one of {@code statuses}, optionally due strictly before
      * {@code dueBefore} and issued on or after {@code issuedFrom} ({@code null}: no limit). Dates are cast for
      * PostgreSQL, see {@link #search}.
      */
     @Query("""
             select new com.naji.backend.invoice.dto.InvoiceTotals(count(i), sum(i.total)) from Invoice i
             where i.ownerId = :ownerId
-              and i.status = :status
+              and i.status in :statuses
               and (cast(:dueBefore as LocalDate) is null or i.dueDate < :dueBefore)
               and (cast(:issuedFrom as LocalDate) is null or i.issueDate >= :issuedFrom)
             """)
     InvoiceTotals totals(
             @Param("ownerId") Long ownerId,
-            @Param("status") InvoiceStatus status,
+            @Param("statuses") Collection<InvoiceStatus> statuses,
             @Param("dueBefore") LocalDate dueBefore,
             @Param("issuedFrom") LocalDate issuedFrom);
 
