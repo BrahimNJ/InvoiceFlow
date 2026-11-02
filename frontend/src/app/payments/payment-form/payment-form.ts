@@ -4,6 +4,7 @@ import {
   DestroyRef,
   ElementRef,
   OnInit,
+  afterNextRender,
   inject,
   input,
   output,
@@ -79,6 +80,11 @@ export class PaymentForm implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   /** The rules that read the inputs are added once the inputs are set. */
+  constructor() {
+    // The form replaces the button that opened it: keep the keyboard focus in the form
+    afterNextRender(() => this.host.querySelector<HTMLInputElement>('#payment-amount')?.focus());
+  }
+
   ngOnInit(): void {
     const { amount, date } = this.form.controls;
     amount.addValidators((control: AbstractControl<string>) => this.checkAmount(control));

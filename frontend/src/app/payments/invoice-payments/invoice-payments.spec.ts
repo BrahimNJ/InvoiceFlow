@@ -81,7 +81,9 @@ describe('InvoicePayments', () => {
     expect(rows().length).toBe(1);
   });
 
-  it('closes the form without recording', async () => {
+  it('closes the form without recording and gives the focus back to its button', async () => {
+    // Focus only moves inside the document
+    document.body.appendChild(panel);
     await open(testIssuedInvoice(), []);
     button('Record a payment')!.click();
     await fixture.whenStable();
@@ -90,7 +92,19 @@ describe('InvoicePayments', () => {
     await fixture.whenStable();
 
     expect(panel.querySelector('app-payment-form')).toBeNull();
-    expect(button('Record a payment')).toBeTruthy();
+    expect(document.activeElement).toBe(button('Record a payment'));
+    panel.remove();
+  });
+
+  it('moves the focus into the form when it opens', async () => {
+    document.body.appendChild(panel);
+    await open(testIssuedInvoice(), []);
+
+    button('Record a payment')!.click();
+    await fixture.whenStable();
+
+    expect(document.activeElement?.id).toBe('payment-amount');
+    panel.remove();
   });
 
   it('offers no new payment on a paid invoice', async () => {

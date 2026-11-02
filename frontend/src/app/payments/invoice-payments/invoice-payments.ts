@@ -2,7 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  Injector,
   OnInit,
+  afterNextRender,
   computed,
   inject,
   input,
@@ -39,6 +42,8 @@ export class InvoicePayments implements OnInit {
   private readonly toasts = inject(ToastService);
   private readonly confirm = inject(ConfirmService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host: HTMLElement = inject(ElementRef).nativeElement;
+  private readonly injector = inject(Injector);
 
   readonly invoice = input.required<Invoice>();
   readonly changed = output<void>();
@@ -60,8 +65,14 @@ export class InvoicePayments implements OnInit {
     this.load();
   }
 
-  protected recorded(payment: Payment): void {
+  /** Closes the form and gives the focus back to the button that opened it. */
+  protected closeForm(): void {
     this.recording.set(false);
+    this.restoreFocus();
+  }
+
+  protected recorded(payment: Payment): void {
+    this.closeForm();
     this.toasts.success(`Payment of ${formatEuros(payment.amount)} recorded.`);
     this.load();
     this.changed.emit();
@@ -98,6 +109,21 @@ export class InvoicePayments implements OnInit {
         },
         error: (error: unknown) => this.toasts.error(errorMessage(error)),
       });
+  }
+
+  /**
+   * After the form closes, the focus goes back to "Record a payment", or to the panel heading when the invoice is
+   * now paid and the button is gone (the page reloads the invoice in the meantime).
+   */
+  private restoreFocus(): void {
+    afterNextRender(
+      () =>
+        (
+          this.host.querySelector<HTMLElement>('button.record') ??
+          this.host.querySelector<HTMLElement>('#payments-title')
+        )?.focus(),
+      { injector: this.injector },
+    );
   }
 
   protected load(): void {
