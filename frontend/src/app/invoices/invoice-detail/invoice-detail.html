@@ -58,9 +58,20 @@
               <button class="btn btn-ghost" type="button" [disabled]="busy() !== null" (click)="duplicate()">
                 <app-icon name="copy" [size]="16" />Duplicate
               </button>
-              <button class="btn btn-ghost danger" type="button" [disabled]="busy() !== null" (click)="cancel()">
+              <button
+                class="btn btn-ghost danger"
+                type="button"
+                [disabled]="busy() !== null || inv.amountPaid > 0"
+                (click)="cancel()"
+              >
                 <app-icon name="x" [size]="16" />Cancel invoice
               </button>
+              @if (inv.amountPaid > 0) {
+                <p class="note warn">
+                  <app-icon name="alert" [size]="14" />
+                  This invoice received payments: delete them before cancelling it.
+                </p>
+              }
               <p class="note">
                 <app-icon name="lock" [size]="14" />
                 Issued invoices are frozen by law. To correct one, cancel it and issue a corrected duplicate.

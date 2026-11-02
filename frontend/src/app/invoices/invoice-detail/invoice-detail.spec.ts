@@ -79,6 +79,8 @@ describe('InvoiceDetail', () => {
     expect(plain(page.querySelector('.amounts .paid dd')?.textContent)).toBe('− 560,00 €');
     expect(plain(page.querySelector('.amounts .balance dt')?.textContent)).toBe('Balance due');
     expect(plain(page.querySelector('.amounts .balance dd')?.textContent)).toBe('1 000,00 €');
+    expect(button('Cancel invoice')?.disabled).toBe(true);
+    expect(page.querySelector('.actions .note.warn')?.textContent).toContain('delete them before cancelling');
   });
 
   it('cancels an issued invoice after a warning', async () => {
