@@ -116,6 +116,17 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void search_paidListsTheSettledInvoices() {
+        when(invoiceRepository.search(eq(OWNER_ID), eq("%"), eq(InvoiceStatus.PAID), isNull(), isNull(), isNull(),
+                isNull(), any(Pageable.class))).thenReturn(Page.empty());
+
+        invoiceService.search(OWNER_ID, new InvoiceSearch(null, InvoiceStatusFilter.PAID, null, null, null, null, null), 0, 20);
+
+        verify(invoiceRepository).search(eq(OWNER_ID), eq("%"), eq(InvoiceStatus.PAID), isNull(), isNull(), isNull(),
+                isNull(), any(Pageable.class));
+    }
+
+    @Test
     void search_sortsAscendingOnAColumnAndClampsPageAndSize() {
         Pageable expected = PageRequest.of(0, InvoiceService.MAX_PAGE_SIZE,
                 Sort.by(Sort.Direction.ASC, "dueDate").and(Sort.by(Sort.Direction.ASC, "id")));

@@ -67,6 +67,7 @@ public class InvoiceService {
                         status == null ? null : switch (status) {
                             case DRAFT -> InvoiceStatus.DRAFT;
                             case ISSUED, OVERDUE -> InvoiceStatus.ISSUED;
+                            case PAID -> InvoiceStatus.PAID;
                             case CANCELLED -> InvoiceStatus.CANCELLED;
                         },
                         status == InvoiceStatusFilter.OVERDUE ? today : null,
