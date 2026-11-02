@@ -1,9 +1,9 @@
 # Quality and testing
 
 Tests are part of every feature, never a follow-up: a module is not merged until its service, controller,
-repository and ownership tests pass in CI. At the time of writing the suites hold **293 backend tests**,
-**259 frontend tests** and **23 end-to-end tests**. The backend tests cover **97.8 % of lines and 92.2 % of
-branches** (JaCoCo), the frontend tests **96.4 % of lines and 90.5 % of branches** (Vitest, v8).
+repository and ownership tests pass in CI. At the time of writing the suites hold **296 backend tests**,
+**262 frontend tests** and **23 end-to-end tests**. The backend tests cover **97.8 % of lines and 92.6 % of
+branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches** (Vitest, v8).
 
 ## Test pyramid
 
@@ -13,7 +13,7 @@ branches** (JaCoCo), the frontend tests **96.4 % of lines and 90.5 % of branches
 | Web slice | `@WebMvcTest` + Spring Security test (`jwt()`) | HTTP contract: status codes, validation errors as problem details, authentication required | `InvoiceControllerTest`, `CustomerControllerTest` |
 | Persistence slice | `@DataJpaTest` on the Flyway schema | Queries, constraints and pagination against the real migrations | `InvoiceRepositoryTest` |
 | Integration | `@SpringBootTest` | Whole flows: register → refresh → replay detection; invoice lifecycle; payments across two modules in one transaction; tenant isolation | `AuthFlowIntegrationTest`, `InvoiceLifecycleIntegrationTest`, `PaymentFlowIntegrationTest`, `*OwnershipIntegrationTest` |
-| Concurrency | Parallel threads on the real transaction boundaries | Gap-free numbering when invoices are issued at the same time | `InvoiceNumberGeneratorTest` |
+| Concurrency | Parallel threads on the real transaction boundaries | Gap-free numbering when invoices are issued at the same time; payments that cannot both fit in a balance, a payment deleted twice | `InvoiceNumberGeneratorTest`, `PaymentConcurrencyTest` |
 | Frontend unit | Vitest, Angular `TestBed`, `HttpTestingController` | Services, interceptor (refresh-and-retry, no loops), guards, validators, money arithmetic, components | `auth.interceptor.spec.ts`, `invoice-calc.spec.ts` |
 | Architecture | Spring Modulith on the compiled classes | Modules only use each other's public API, no dependency cycle, and the module diagram in the docs matches the code | `ModularityTest` |
 | Contract | `@SpringBootTest` on `/v3/api-docs` | The published OpenAPI description covers the secured endpoints and marks the public ones | `ApiDocumentationIntegrationTest` |

@@ -95,10 +95,10 @@ Every figure below is produced by CI on each push, and most of them **fail the b
 
 | Check | Result | Gate |
 |-------|--------|------|
-| Backend tests (JUnit 5, Spring slices, integration) | **293** passing | `./mvnw verify` |
-| Backend coverage (JaCoCo, Lombok excluded) | **97.8 %** lines · **92.2 %** branches | fails under 95 % / 85 % |
-| Frontend tests (Vitest, Angular TestBed) | **259** passing | `npm run test:coverage` |
-| Frontend coverage (v8) | **96.4 %** lines · **90.5 %** branches | fails under 95 % / 85 % |
+| Backend tests (JUnit 5, Spring slices, integration) | **296** passing | `./mvnw verify` |
+| Backend coverage (JaCoCo, Lombok excluded) | **97.8 %** lines · **92.6 %** branches | fails under 95 % / 85 % |
+| Frontend tests (Vitest, Angular TestBed) | **262** passing | `npm run test:coverage` |
+| Frontend coverage (v8) | **96.5 %** lines · **90.4 %** branches | fails under 95 % / 85 % |
 | End-to-end (Playwright, desktop and phone) | **23** passing on the production build, real API and PostgreSQL 17 | `e2e.yml` |
 | Accessibility (axe-core, WCAG 2.1 AA) | **0** violations on every screen of the journey and on the public pages, light and dark | any violation fails |
 | Lighthouse, desktop (`/`, `/docs/overview`, `/login`) | performance **93–100** · accessibility **100** · best practices **100** · SEO **100** | budget in `lighthouserc.json` |
@@ -237,8 +237,8 @@ from the environment, fails fast when a secret is missing).
 ## Tests
 
 ```bash
-cd backend  && ./mvnw verify                 # 293 tests, modularity, coverage floor
-cd frontend && npm run test:coverage         # 259 tests, coverage floor
+cd backend  && ./mvnw verify                 # 296 tests, modularity, coverage floor
+cd frontend && npm run test:coverage         # 262 tests, coverage floor
 ```
 
 End-to-end tests, the Lighthouse budget and the README screenshots run on the real stack (PostgreSQL and the API

@@ -93,7 +93,7 @@ erDiagram
   issued invoice must never change when the customer or the catalogue is edited later (`ON DELETE SET NULL` on the
   links).
 - `invoices (owner_id, number)` is unique; `invoice_number_sequences` holds one counter per owner and fiscal year.
-- Eight Flyway migrations (`V1` to `V8`) build the schema; the application never alters it at runtime
+- Nine Flyway migrations (`V1` to `V9`) build the schema; the application never alters it at runtime
   (`ddl-auto=validate`).
 
 ## Frontend
