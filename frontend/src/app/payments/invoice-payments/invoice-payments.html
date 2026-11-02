@@ -1,6 +1,22 @@
 <section class="panel card" aria-labelledby="payments-title">
   <h2 id="payments-title">Payments</h2>
 
+  @if (canRecord()) {
+    @if (recording()) {
+      <app-payment-form
+        [invoiceId]="invoice().id"
+        [balance]="invoice().balance"
+        [issueDate]="invoice().issueDate!"
+        (recorded)="recorded($event)"
+        (cancelled)="recording.set(false)"
+      />
+    } @else {
+      <button class="btn btn-primary record" type="button" (click)="recording.set(true)">
+        <app-icon name="euro" [size]="16" />Record a payment
+      </button>
+    }
+  }
+
   @if (loading()) {
     <p class="status-line" role="status"><span class="spinner dark" aria-hidden="true"></span>Loading payments…</p>
   } @else if (loadError(); as message) {

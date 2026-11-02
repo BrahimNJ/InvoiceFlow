@@ -2,8 +2,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { testIssuedInvoice } from '../../invoices/invoice.fixtures';
+import { testIssuedInvoice, testPaidInvoice } from '../../invoices/invoice.fixtures';
 import { Invoice } from '../../invoices/invoice.models';
+import { ToastService } from '../../shared/ui/toast.service';
 import { testPayment } from '../payment.fixtures';
 import { Payment } from '../payment.models';
 import { paymentsUrl } from '../payment.service';
@@ -33,6 +34,10 @@ describe('InvoicePayments', () => {
     await fixture.whenStable();
   }
 
+  const button = (label: string) =>
+    [...panel.querySelectorAll<HTMLButtonElement>('button')].find(
+      (b) => plain(b.textContent) === label,
+    );
   const rows = () => [...panel.querySelectorAll('.payments li')].map((li) => plain(li.textContent));
 
   it('lists the payments received, oldest first as the API sends them', async () => {
@@ -45,6 +50,50 @@ describe('InvoicePayments', () => {
       '560,00 € 28/10/2026 · Bank transfer · VIR ACME 0042',
       '200,00 € 30/10/2026 · Cheque',
     ]);
+  });
+
+  it('records a payment, then reloads the list and tells the page', async () => {
+    const success = vi.spyOn(TestBed.inject(ToastService), 'success');
+    let changed = 0;
+    fixture.componentInstance.changed.subscribe(() => changed++);
+    await open(testIssuedInvoice(), []);
+
+    button('Record a payment')!.click();
+    await fixture.whenStable();
+    const amount = panel.querySelector<HTMLInputElement>('app-payment-form [name="amount"]')!;
+    expect(amount.value).toBe('1560,00');
+    const form = panel.querySelector<HTMLFormElement>('app-payment-form form')!;
+    form.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    http
+      .expectOne((r) => r.method === 'POST' && r.url === paymentsUrl(1))
+      .flush(testPayment({ amount: 1560 }));
+    await fixture.whenStable();
+    http.expectOne(paymentsUrl(1)).flush([testPayment({ amount: 1560 })]);
+    await fixture.whenStable();
+
+    expect(plain(success.mock.calls[0][0] as string)).toBe('Payment of 1 560,00 € recorded.');
+    expect(changed).toBe(1);
+    expect(panel.querySelector('app-payment-form')).toBeNull();
+    expect(rows().length).toBe(1);
+  });
+
+  it('closes the form without recording', async () => {
+    await open(testIssuedInvoice(), []);
+    button('Record a payment')!.click();
+    await fixture.whenStable();
+
+    button('Cancel')!.click();
+    await fixture.whenStable();
+
+    expect(panel.querySelector('app-payment-form')).toBeNull();
+    expect(button('Record a payment')).toBeTruthy();
+  });
+
+  it('offers no new payment on a paid invoice', async () => {
+    await open(testPaidInvoice(), [testPayment({ amount: 1560 })]);
+
+    expect(button('Record a payment')).toBeUndefined();
   });
 
   it('says when nothing was received yet', async () => {
