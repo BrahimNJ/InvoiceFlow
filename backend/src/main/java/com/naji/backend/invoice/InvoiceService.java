@@ -77,13 +77,16 @@ public class InvoiceService {
                 invoice -> invoiceMapper.toListItem(invoice, today));
     }
 
-    /** Key figures for the list: drafts, outstanding, overdue and issued this month (in Paris time). */
+    /**
+     * Key figures for the list: drafts, outstanding, overdue and issued this month (in Paris time). Outstanding and
+     * overdue add up what is still due, so a partly paid invoice counts for its balance.
+     */
     public InvoiceSummaryResponse summary(Long ownerId) {
         LocalDate today = today();
         return new InvoiceSummaryResponse(
                 invoiceRepository.totals(ownerId, InvoiceStatus.DRAFT, null, null),
-                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, null),
-                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, today, null),
+                invoiceRepository.balances(ownerId, null),
+                invoiceRepository.balances(ownerId, today),
                 invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, today.withDayOfMonth(1)));
     }
 

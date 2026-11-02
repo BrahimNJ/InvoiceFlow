@@ -175,6 +175,24 @@ class InvoiceRepositoryTest {
         assertThatThrownBy(() -> save(invoice)).isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    void balances_addUpWhatIsStillDueOnTheOwnersIssuedInvoices() {
+        save(withTotal(draft(ownerId, "Draft"), "100.00"));
+        save(paid(withTotal(issued(ownerId, "Late", "F-2026-0001", LocalDate.of(2026, 9, 1), TODAY.minusDays(1)),
+                "1200.50"), "200.50"));
+        save(withTotal(issued(ownerId, "Recent", "F-2026-0002", LocalDate.of(2026, 10, 2), TODAY.plusDays(20)), "300.25"));
+        Invoice settled = withTotal(issued(ownerId, "Settled", "F-2026-0003", LocalDate.of(2026, 9, 3), TODAY.minusDays(3)),
+                "450.00");
+        settled.setStatus(InvoiceStatus.PAID);
+        save(paid(settled, "450.00"));
+        save(withTotal(issued(otherOwnerId, "Other", "F-2026-0001", LocalDate.of(2026, 9, 1), TODAY.minusDays(1)), "999.00"));
+
+        assertThat(invoiceRepository.balances(ownerId, null))
+                .isEqualTo(new InvoiceTotals(2L, new BigDecimal("1300.25")));
+        assertThat(invoiceRepository.balances(ownerId, TODAY))
+                .isEqualTo(new InvoiceTotals(1L, new BigDecimal("1000.00")));
+    }
+
     private Page<Invoice> search(Long owner, String pattern, InvoiceStatus status, LocalDate dueBefore,
                                  Long customerId, LocalDate from, LocalDate to) {
         return invoiceRepository.search(owner, pattern, status, dueBefore, customerId, from, to, FIRST_PAGE);
@@ -203,6 +221,11 @@ class InvoiceRepositoryTest {
 
     private static Invoice withTotal(Invoice invoice, String total) {
         invoice.setTotal(new BigDecimal(total));
+        return invoice;
+    }
+
+    private static Invoice paid(Invoice invoice, String amountPaid) {
+        invoice.setAmountPaid(new BigDecimal(amountPaid));
         return invoice;
     }
 

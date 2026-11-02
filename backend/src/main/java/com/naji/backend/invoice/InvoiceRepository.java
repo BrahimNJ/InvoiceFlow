@@ -65,6 +65,18 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             @Param("issuedFrom") LocalDate issuedFrom);
 
     /**
+     * Count and balance due (total minus the payments received) of the owner's issued invoices, optionally due
+     * strictly before {@code dueBefore} ({@code null}: no limit). A paid invoice owes nothing and is not counted.
+     */
+    @Query("""
+            select new com.naji.backend.invoice.dto.InvoiceTotals(count(i), sum(i.total - i.amountPaid)) from Invoice i
+            where i.ownerId = :ownerId
+              and i.status = com.naji.backend.invoice.InvoiceStatus.ISSUED
+              and (cast(:dueBefore as LocalDate) is null or i.dueDate < :dueBefore)
+            """)
+    InvoiceTotals balances(@Param("ownerId") Long ownerId, @Param("dueBefore") LocalDate dueBefore);
+
+    /**
      * Same as {@link #findByIdAndOwnerId}, with the row locked until the transaction ends: two requests changing the
      * status of the same invoice run one after the other (an invoice is never issued twice, burning a number).
      */

@@ -129,8 +129,8 @@ class InvoiceServiceTest {
     @Test
     void summary_countsDraftsOutstandingOverdueAndIssuedThisMonth() {
         when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.DRAFT, null, null)).thenReturn(totals(3, "2400"));
-        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, null, null)).thenReturn(totals(12, "18950"));
-        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, TODAY, null)).thenReturn(totals(2, "3120"));
+        when(invoiceRepository.balances(OWNER_ID, null)).thenReturn(totals(12, "18950"));
+        when(invoiceRepository.balances(OWNER_ID, TODAY)).thenReturn(totals(2, "3120"));
         when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, null, LocalDate.of(2026, 10, 1)))
                 .thenReturn(totals(7, "9800"));
 
