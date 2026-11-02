@@ -87,6 +87,7 @@ describe('InvoiceList', () => {
     expect(plain(kpi('Overdue').textContent)).toContain('3 120,00 €');
     expect(plain(kpi('Overdue').textContent)).toContain('2 invoices');
     expect(kpi('Overdue').classList).toContain('alert');
+    expect(plain(kpi('Outstanding').textContent)).toContain('still due, part payments deducted');
 
     const rows = page.querySelectorAll('tbody tr');
     expect(rows.length).toBe(3);

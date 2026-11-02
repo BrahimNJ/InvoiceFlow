@@ -92,8 +92,8 @@ type Kpi = { key: keyof InvoiceSummary; label: string; hint: string; icon: IconN
 
 const KPIS: Kpi[] = [
   { key: 'drafts', label: 'Drafts', hint: 'not issued yet', icon: 'pencil', status: 'DRAFT', tone: 'neutral' },
-  { key: 'outstanding', label: 'Outstanding', hint: 'issued, awaiting payment', icon: 'clock', status: 'ISSUED', tone: 'brand' },
-  { key: 'overdue', label: 'Overdue', hint: 'past their due date', icon: 'alert', status: 'OVERDUE', tone: 'danger' },
+  { key: 'outstanding', label: 'Outstanding', hint: 'still due, part payments deducted', icon: 'clock', status: 'ISSUED', tone: 'brand' },
+  { key: 'overdue', label: 'Overdue', hint: 'still due past the due date', icon: 'alert', status: 'OVERDUE', tone: 'danger' },
   { key: 'issuedThisMonth', label: 'Issued this month', hint: 'since the 1st', icon: 'send', status: 'ISSUED', tone: 'accent' },
 ];
 
