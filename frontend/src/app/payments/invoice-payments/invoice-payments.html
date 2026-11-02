@@ -1,0 +1,30 @@
+<section class="panel card" aria-labelledby="payments-title">
+  <h2 id="payments-title">Payments</h2>
+
+  @if (loading()) {
+    <p class="status-line" role="status"><span class="spinner dark" aria-hidden="true"></span>Loading payments…</p>
+  } @else if (loadError(); as message) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="16" /><span>{{ message }}</span>
+      <button class="btn btn-ghost btn-sm" type="button" (click)="load()">Try again</button>
+    </div>
+  } @else if (list().length === 0) {
+    <p class="empty">No payment received yet.</p>
+  } @else {
+    <ul class="payments">
+      @for (payment of list(); track payment.id) {
+        <li>
+          <span class="what">
+            <strong>{{ formatEuros(payment.amount) }}</strong>
+            <small>
+              {{ formatDate(payment.date) }} · {{ methods[payment.method] }}
+              @if (payment.reference) {
+                · {{ payment.reference }}
+              }
+            </small>
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</section>
