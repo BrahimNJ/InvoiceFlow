@@ -13,7 +13,8 @@ com.naji.backend
 ├── auth/        register, login, refresh, logout; access and refresh tokens
 ├── customer/    customer book, scoped to the owner        (reference module)
 ├── product/     catalogue: goods / services, price, VAT rate
-└── invoice/     drafts, lines, totals, numbering, readiness, lifecycle
+├── invoice/     drafts, lines, totals, numbering, readiness, lifecycle, amount paid and balance
+└── payment/     payments received on issued invoices, applied through the invoice API ([ADR 0009](adr/0009-payments-module.md))
 ```
 
 ### Module dependencies, verified
@@ -84,6 +85,7 @@ erDiagram
     customers |o--o{ invoices : "billed (details copied)"
     invoices ||--|{ invoice_lines : contains
     products |o--o{ invoice_lines : "source (values copied)"
+    invoices ||--o{ payments : "receives (sum kept in amount_paid)"
 ```
 
 - Every business table carries `owner_id` with `ON DELETE CASCADE` to its user.
@@ -91,7 +93,7 @@ erDiagram
   issued invoice must never change when the customer or the catalogue is edited later (`ON DELETE SET NULL` on the
   links).
 - `invoices (owner_id, number)` is unique; `invoice_number_sequences` holds one counter per owner and fiscal year.
-- Six Flyway migrations (`V1` to `V6`) build the schema; the application never alters it at runtime
+- Eight Flyway migrations (`V1` to `V8`) build the schema; the application never alters it at runtime
   (`ddl-auto=validate`).
 
 ## Frontend
@@ -102,7 +104,7 @@ frontend/src/app
 ├── shared/      UI kit: page header, empty state, help tips, confirm dialog, toasts, icons, money formatting
 ├── home/        public landing page
 ├── docs/        this documentation
-├── customers/ products/ invoices/   one folder per business feature, one sub-folder per screen
+├── customers/ products/ invoices/ payments/   one folder per business feature, one sub-folder per screen
 └── auth/        sign-in and sign-up pages
 ```
 
