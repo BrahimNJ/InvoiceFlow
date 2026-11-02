@@ -96,7 +96,7 @@ class InvoiceControllerTest {
 
     @Test
     void search_returns400OnAnUnknownStatusOrADateThatIsNotIso() throws Exception {
-        mockMvc.perform(get("/api/invoices").param("status", "PAID").with(owner()))
+        mockMvc.perform(get("/api/invoices").param("status", "SENT").with(owner()))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/invoices").param("issuedFrom", "01/10/2026").with(owner()))
                 .andExpect(status().isBadRequest());
