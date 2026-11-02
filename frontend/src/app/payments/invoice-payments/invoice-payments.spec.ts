@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { testIssuedInvoice, testPaidInvoice } from '../../invoices/invoice.fixtures';
 import { Invoice } from '../../invoices/invoice.models';
+import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
 import { testPayment } from '../payment.fixtures';
 import { Payment } from '../payment.models';
@@ -38,6 +39,8 @@ describe('InvoicePayments', () => {
     [...panel.querySelectorAll<HTMLButtonElement>('button')].find(
       (b) => plain(b.textContent) === label,
     );
+  const deleteButton = () =>
+    panel.querySelector<HTMLButtonElement>('button[aria-label^="Delete the payment of"]');
   const rows = () => [...panel.querySelectorAll('.payments li')].map((li) => plain(li.textContent));
 
   it('lists the payments received, oldest first as the API sends them', async () => {
@@ -94,6 +97,37 @@ describe('InvoicePayments', () => {
     await open(testPaidInvoice(), [testPayment({ amount: 1560 })]);
 
     expect(button('Record a payment')).toBeUndefined();
+  });
+
+  it('deletes a payment after a warning, then reloads the list and tells the page', async () => {
+    const confirm = vi.spyOn(TestBed.inject(ConfirmService), 'ask').mockResolvedValue(true);
+    let changed = 0;
+    fixture.componentInstance.changed.subscribe(() => changed++);
+    await open(testPaidInvoice(), [testPayment({ amount: 1560 })]);
+
+    deleteButton()!.click();
+    await fixture.whenStable();
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ tone: 'danger' }));
+    const request = http.expectOne(`${paymentsUrl(1)}/11`);
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+    await fixture.whenStable();
+    http.expectOne(paymentsUrl(1)).flush([]);
+    await fixture.whenStable();
+
+    expect(changed).toBe(1);
+    expect(rows()).toEqual([]);
+  });
+
+  it('keeps the payment when the warning is dismissed', async () => {
+    vi.spyOn(TestBed.inject(ConfirmService), 'ask').mockResolvedValue(false);
+    await open(testIssuedInvoice(), [testPayment()]);
+
+    deleteButton()!.click();
+    await fixture.whenStable();
+
+    http.expectNone(`${paymentsUrl(1)}/11`);
+    expect(rows().length).toBe(1);
   });
 
   it('says when nothing was received yet', async () => {

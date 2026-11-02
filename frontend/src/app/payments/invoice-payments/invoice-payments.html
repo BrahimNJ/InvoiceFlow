@@ -39,6 +39,16 @@
               }
             </small>
           </span>
+          <button
+            class="btn btn-ghost btn-sm icon-only danger"
+            type="button"
+            [disabled]="deleting() !== null"
+            [attr.aria-busy]="deleting() === payment.id"
+            [attr.aria-label]="'Delete the payment of ' + formatEuros(payment.amount)"
+            (click)="delete(payment)"
+          >
+            <app-icon name="trash" [size]="16" />
+          </button>
         </li>
       }
     </ul>

@@ -17,6 +17,7 @@ import { formatDate } from '../../invoices/invoice-calc';
 import { Invoice } from '../../invoices/invoice.models';
 import { formatEuros } from '../../shared/format/money';
 import { Icon } from '../../shared/icon/icon';
+import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
 import { PaymentForm } from '../payment-form/payment-form';
 import { PAYMENT_METHODS, Payment } from '../payment.models';
@@ -36,6 +37,7 @@ import { PaymentService } from '../payment.service';
 export class InvoicePayments implements OnInit {
   private readonly payments = inject(PaymentService);
   private readonly toasts = inject(ToastService);
+  private readonly confirm = inject(ConfirmService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly invoice = input.required<Invoice>();
@@ -49,6 +51,8 @@ export class InvoicePayments implements OnInit {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly recording = signal(false);
+  /** Id of the payment being deleted; one at a time. */
+  protected readonly deleting = signal<number | null>(null);
   /** Only an issued invoice waits for payment; a paid one is settled. */
   protected readonly canRecord = computed(() => this.invoice().status === 'ISSUED');
 
@@ -61,6 +65,39 @@ export class InvoicePayments implements OnInit {
     this.toasts.success(`Payment of ${formatEuros(payment.amount)} recorded.`);
     this.load();
     this.changed.emit();
+  }
+
+  /** Deletes a payment recorded by mistake; its amount is due again and a paid invoice is reopened. */
+  protected async delete(payment: Payment): Promise<void> {
+    if (this.deleting() !== null) {
+      return;
+    }
+    const ok = await this.confirm.ask({
+      title: `Delete the payment of ${formatEuros(payment.amount)}?`,
+      message:
+        `Received on ${formatDate(payment.date)}. Its amount will be due again on this invoice. ` +
+        'Record it again if it was only wrong.',
+      confirmLabel: 'Delete payment',
+      tone: 'danger',
+    });
+    if (!ok) {
+      return;
+    }
+    this.deleting.set(payment.id);
+    this.payments
+      .delete(this.invoice().id, payment.id)
+      .pipe(
+        finalize(() => this.deleting.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.toasts.success('Payment deleted.');
+          this.load();
+          this.changed.emit();
+        },
+        error: (error: unknown) => this.toasts.error(errorMessage(error)),
+      });
   }
 
   protected load(): void {
