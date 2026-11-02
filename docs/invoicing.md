@@ -71,7 +71,8 @@ only through `InvoicePayments`, the invoice module's public API (ADR 0009).
 - The invoice keeps `amount_paid`, the sum of its payments, so the list and the key figures read the balance without a
   join. The payment and the new amount paid are written in one transaction, after locking the invoice row, so two
   payments recorded at the same time cannot both fit in the same balance.
-- When the balance reaches zero the invoice becomes `PAID` (`paidAt` set) and is no longer overdue.
+- When the balance reaches zero the invoice becomes `PAID` (`paidAt` set) and is no longer overdue. An invoice of
+  0 € owes nothing and is `PAID` as soon as it is issued.
 - A payment is never edited: a mistake is deleted, which gives its amount back and reopens a paid invoice.
 - An invoice with payments cannot be cancelled (`409`): delete the payments first. Credit notes will cover
   refunds.
@@ -100,7 +101,8 @@ the checklist shows them as pending without blocking.
 
 ## Screens
 
-The design answers recurring complaints found in reviews of French invoicing tools and invoicing UX write-ups:
+The design answers recurring complaints found in reviews of French invoicing tools and invoicing UX write-ups
+(payments: user reviews of Square Invoices, Invoiced and InvoiceApp on Capterra, G2 and Secret, November 2026):
 
 | Complaint | Answer |
 |-----------|--------|
@@ -109,6 +111,9 @@ The design answers recurring complaints found in reviews of French invoicing too
 | Issued invoices cannot be changed, and nothing explains why | The detail page says it, and offers Duplicate and Cancel |
 | Late invoices are hard to spot, filter by customer | Key figure tiles, an Overdue tab, a customer filter, sorting by due date, "9 days late" on each row |
 | The preview and the PDF disagree | One document component renders the editor preview and the detail page (the PDF of task 4.1 will reuse its model) |
+| No partial payments: an invoice paid in instalments stays overdue for its full amount until the last one | Any number of payments; the list, the key figures and the document show the balance still due |
+| An invoice marked paid by mistake cannot be corrected | A payment is deleted in one click after a warning; a paid invoice waits for payment again |
+| Balances are not shown next to the totals | "1 000,00 € still due" under the total in the list, Paid and Balance due in the amounts and on the A4 page |
 
 - **List** `/invoices`: key figures (drafts, outstanding, overdue, issued this month) that filter the list, status
   tabs, search by number or customer, customer and period filters, sortable columns, relative due dates. Cards on
@@ -142,5 +147,6 @@ Every call is scoped to the owner of the access token: another user's invoice an
 
 ## Follow-ups
 
-Seller details (5.1), credit notes and refunds, payment reminders, bank reconciliation to correct an issued invoice, PDF (4.1) and
+Seller details (5.1), credit notes and refunds, payment reminders that stop once an invoice is paid, bank
+reconciliation to correct an issued invoice, PDF (4.1) and
 Factur-X (4.2), delivery address and the "VAT on debits" option, discounts.
