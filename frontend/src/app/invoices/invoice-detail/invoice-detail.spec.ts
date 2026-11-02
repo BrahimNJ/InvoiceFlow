@@ -56,6 +56,7 @@ describe('InvoiceDetail', () => {
     expect(timeline()[2]).toContain('3 days late');
     expect(page.querySelector('.timeline li:last-child')?.className).toBe('danger');
     expect(plain(page.querySelector('.amounts .grand')?.textContent)).toContain('1 560,00 €');
+    expect(page.querySelector('.amounts .balance')).toBeNull();
     expect(button('Download PDF')?.disabled).toBe(true);
     expect(button('Edit draft')).toBeUndefined();
     expect(page.querySelector('.actions .note')?.textContent).toContain('frozen by law');
@@ -70,6 +71,14 @@ describe('InvoiceDetail', () => {
     expect(button('Duplicate')).toBeTruthy();
     expect(button('Cancel invoice')).toBeUndefined();
     expect(page.querySelector('.actions .note')?.textContent).toContain('nothing is left to collect');
+  });
+
+  it('shows the amount paid and the balance due once a payment is in', async () => {
+    await open(testIssuedInvoice({ amountPaid: 560, balance: 1000 }));
+
+    expect(plain(page.querySelector('.amounts .paid dd')?.textContent)).toBe('− 560,00 €');
+    expect(plain(page.querySelector('.amounts .balance dt')?.textContent)).toBe('Balance due');
+    expect(plain(page.querySelector('.amounts .balance dd')?.textContent)).toBe('1 000,00 €');
   });
 
   it('cancels an issued invoice after a warning', async () => {

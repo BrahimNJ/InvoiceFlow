@@ -45,6 +45,8 @@ h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 750; font-variant-numer
 .amounts dd { margin: 0; font-weight: 600; }
 .vat { color: var(--ink-500); font-size: .9rem; }
 .grand { margin-top: .3rem; padding-top: .6rem; border-top: 1px solid var(--line); font-size: 1.1rem; font-weight: 750; }
+.amounts .paid { color: var(--ink-500); }
+.amounts .balance { padding-top: .4rem; border-top: 1px dashed var(--line); color: var(--brand-600); font-weight: 750; }
 
 .customer { display: grid; gap: .1rem; font-size: .925rem; }
 .customer a { color: var(--brand); }

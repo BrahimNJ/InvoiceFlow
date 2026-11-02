@@ -112,6 +112,10 @@
               <div class="vat"><dt>VAT {{ formatPercent(vat.rate) }}</dt><dd>{{ formatEuros(vat.amount) }}</dd></div>
             }
             <div class="grand"><dt>Total incl. VAT</dt><dd>{{ formatEuros(inv.total) }}</dd></div>
+            @if (inv.amountPaid > 0) {
+              <div class="paid"><dt>Paid</dt><dd>− {{ formatEuros(inv.amountPaid) }}</dd></div>
+              <div class="balance"><dt>Balance due</dt><dd>{{ formatEuros(inv.balance) }}</dd></div>
+            }
           </dl>
         </section>
 
