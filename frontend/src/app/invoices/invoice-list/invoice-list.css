@@ -42,6 +42,7 @@
 .due, .amount { display: inline-grid; gap: .1rem; }
 .amount { justify-items: end; }
 .amount .muted { font-size: .8rem; }
+.amount .still-due { font-size: .8rem; font-weight: 600; color: var(--brand-600); }
 .relative { font-size: .8rem; color: var(--ink-500); }
 .relative.late { font-weight: 700; color: var(--danger); }
 .pagination { padding: .9rem 1rem; border-top: 1px solid var(--line); }

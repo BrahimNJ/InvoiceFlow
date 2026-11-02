@@ -99,6 +99,19 @@ describe('InvoiceList', () => {
     expect(rows[1].querySelector('.relative.late')?.textContent).toBe('9 days late');
     expect(plain(rows[2].querySelector('a')?.textContent)).toBe('Draft');
     expect(plain(rows[2].querySelector('[data-label="Customer"]')?.textContent)).toBe('No customer yet');
+    expect(page.querySelector('.still-due')).toBeNull();
+  });
+
+  it('shows what is still due on a partly paid invoice', async () => {
+    await start([
+      testListItem({ amountPaid: 560, balance: 1000 }),
+      testListItem({ id: 2, status: 'PAID', amountPaid: 1560, balance: 0 }),
+    ]);
+
+    const rows = page.querySelectorAll('tbody tr');
+    expect(plain(rows[0].querySelector('.still-due')?.textContent)).toBe('1 000,00 € still due');
+    expect(plain(rows[1].querySelector('.status-badge')?.textContent)).toBe('Paid');
+    expect(rows[1].querySelector('.still-due')).toBeNull();
   });
 
   it('says the key figures are unavailable instead of loading forever when they fail', async () => {

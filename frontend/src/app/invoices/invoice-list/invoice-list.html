@@ -182,6 +182,9 @@
                     <span class="amount">
                       <strong>{{ formatEuros(invoice.total) }}</strong>
                       <span class="muted">{{ formatEuros(invoice.subtotal) }} excl. VAT</span>
+                      @if (invoice.status === 'ISSUED' && invoice.amountPaid > 0) {
+                        <span class="still-due">{{ formatEuros(invoice.balance) }} still due</span>
+                      }
                     </span>
                   </td>
                 </tr>
