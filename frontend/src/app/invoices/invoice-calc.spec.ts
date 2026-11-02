@@ -9,6 +9,7 @@ import {
   parseQuantity,
   quantityInputValue,
   readiness,
+  todayInParis,
   todayIso,
 } from './invoice-calc';
 import { BilledCustomer } from './invoice.models';
@@ -72,6 +73,13 @@ describe('invoice calculations', () => {
     expect(formatDate('2026-10-24')).toBe('24/10/2026');
     expect(formatDate(null)).toBe('—');
     expect(todayIso(new Date(2026, 9, 24, 23, 59))).toBe('2026-10-24');
+  });
+
+  it('gives the date in Paris whatever the time zone of the browser', () => {
+    // 22:30 UTC is already the next day in Paris (UTC+1 in winter), still the same day in UTC
+    expect(todayInParis(new Date('2026-11-02T22:30:00Z'))).toBe('2026-11-02');
+    expect(todayInParis(new Date('2026-11-02T23:30:00Z'))).toBe('2026-11-03');
+    expect(todayInParis(new Date('2026-07-01T22:30:00Z'))).toBe('2026-07-02');
   });
 
   it('derives the operation nature from the line types', () => {

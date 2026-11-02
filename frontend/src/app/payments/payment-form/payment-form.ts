@@ -21,7 +21,7 @@ import {
 import { finalize } from 'rxjs';
 
 import { errorMessage } from '../../core/http/problem-detail';
-import { formatDate, todayIso } from '../../invoices/invoice-calc';
+import { formatDate, todayInParis } from '../../invoices/invoice-calc';
 import { amountInputValue, formatEuros, parseAmount } from '../../shared/format/money';
 import { applyServerErrors, focusFirstInvalid, showError } from '../../shared/forms/forms';
 import { SubmitButton } from '../../shared/forms/submit-button';
@@ -59,7 +59,8 @@ export class PaymentForm implements OnInit {
   readonly recorded = output<Payment>();
   readonly cancelled = output<void>();
 
-  protected readonly today = todayIso();
+  /** In Paris, like the backend check: a user abroad cannot pick a day that is still the future there. */
+  protected readonly today = todayInParis();
   protected readonly referenceMax = REFERENCE_MAX_LENGTH;
   protected readonly methods = (Object.keys(PAYMENT_METHODS) as PaymentMethod[]).map((method) => ({
     method,

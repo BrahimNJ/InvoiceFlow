@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { addDays, todayIso } from '../../invoices/invoice-calc';
+import { addDays, todayInParis } from '../../invoices/invoice-calc';
 import { testPayment } from '../payment.fixtures';
 import { Payment } from '../payment.models';
 import { paymentsUrl } from '../payment.service';
@@ -15,7 +15,7 @@ describe('PaymentForm', () => {
   let fixture: ComponentFixture<PaymentForm>;
   let form: HTMLElement;
   let http: HttpTestingController;
-  const today = todayIso();
+  const today = todayInParis();
   const issueDate = addDays(today, -10);
 
   beforeEach(async () => {

@@ -67,6 +67,13 @@ export function addDays(iso: string, days: number): string {
   return format(date);
 }
 
+const PARIS_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' });
+
+/** Today in Paris, the day the backend uses to date invoices and check payment dates (`2026-10-24`). */
+export function todayInParis(now = new Date()): string {
+  return PARIS_DATE.format(now);
+}
+
 /** Today in the user's time zone. */
 export function todayIso(now = new Date()): string {
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
