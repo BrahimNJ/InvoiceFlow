@@ -1,0 +1,6 @@
+.payment-form { display: grid; gap: 1rem; }
+h3 { margin: 0; font-size: 1rem; }
+/* The side panel is narrow: one column whatever the viewport */
+.form-grid { grid-template-columns: 1fr; gap: .9rem; }
+.optional { font-weight: 400; color: var(--ink-500); }
+.buttons { display: grid; grid-template-columns: auto 1fr; gap: .6rem; align-items: start; }

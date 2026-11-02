@@ -1,0 +1,80 @@
+<form class="payment-form" [formGroup]="form" (ngSubmit)="submit()" novalidate aria-labelledby="payment-form-title">
+  <h3 id="payment-form-title">Record a payment</h3>
+  <div class="form-grid">
+    <div class="field">
+      <label for="payment-amount">Amount received</label>
+      <div class="input-affix">
+        <input
+          id="payment-amount"
+          class="input"
+          formControlName="amount"
+          name="amount"
+          inputmode="decimal"
+          autocomplete="off"
+          [attr.aria-invalid]="showError(form.controls.amount)"
+          [attr.aria-describedby]="describedBy('amount') ?? 'payment-amount-hint'"
+        />
+        <span class="affix" aria-hidden="true">€</span>
+      </div>
+      @if (message('amount'); as text) {
+        <p class="field-error" id="payment-amount-error">{{ text }}</p>
+      } @else {
+        <p class="hint" id="payment-amount-hint">Balance due: {{ formatEuros(balance()) }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="payment-date">Received on</label>
+      <input
+        id="payment-date"
+        class="input"
+        type="date"
+        formControlName="date"
+        name="date"
+        [min]="issueDate()"
+        [max]="today"
+        [attr.aria-invalid]="showError(form.controls.date)"
+        [attr.aria-describedby]="describedBy('date')"
+      />
+      @if (message('date'); as text) {
+        <p class="field-error" id="payment-date-error">{{ text }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="payment-method">Method</label>
+      <select id="payment-method" class="input" formControlName="method" name="method">
+        @for (option of methods; track option.method) {
+          <option [value]="option.method">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="payment-reference">Reference <span class="optional">optional</span></label>
+      <input
+        id="payment-reference"
+        class="input"
+        formControlName="reference"
+        name="reference"
+        autocomplete="off"
+        placeholder="Transfer label, cheque number…"
+        [attr.maxlength]="referenceMax"
+        [attr.aria-invalid]="showError(form.controls.reference)"
+        [attr.aria-describedby]="describedBy('reference')"
+      />
+      @if (message('reference'); as text) {
+        <p class="field-error" id="payment-reference-error">{{ text }}</p>
+      }
+    </div>
+  </div>
+
+  @if (error(); as text) {
+    <p class="alert" role="alert"><app-icon name="alert" [size]="16" /><span>{{ text }}</span></p>
+  }
+
+  <div class="buttons">
+    <button class="btn btn-ghost" type="button" [disabled]="saving()" (click)="cancelled.emit()">Cancel</button>
+    <app-submit-button label="Record payment" busyLabel="Recording…" [busy]="saving()" />
+  </div>
+</form>
