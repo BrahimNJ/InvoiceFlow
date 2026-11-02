@@ -35,6 +35,7 @@ flowchart LR
     invoice --> common
     invoice --> customer
     invoice --> product
+    payment --> invoice
     product --> common
 ```
 <!-- modules:end -->
