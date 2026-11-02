@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -87,6 +88,28 @@ class PaymentServiceTest {
         assertThatThrownBy(() -> paymentService.findByInvoice(OWNER_ID, 42L))
                 .isInstanceOf(ResourceNotFoundException.class);
         verify(paymentRepository, never()).findByInvoiceIdAndOwnerIdOrderByDateAscIdAsc(any(), any());
+    }
+
+    @Test
+    void delete_givesTheAmountBackToTheInvoiceAndDeletesThePayment() {
+        Payment payment = new PaymentMapper().toPayment(OWNER_ID, 3L, request("250"));
+        when(paymentRepository.findByIdAndInvoiceIdAndOwnerId(11L, 3L, OWNER_ID)).thenReturn(Optional.of(payment));
+
+        paymentService.delete(OWNER_ID, 3L, 11L);
+
+        verify(invoicePayments).giveBack(OWNER_ID, 3L, new BigDecimal("250.00"));
+        verify(paymentRepository).delete(payment);
+    }
+
+    @Test
+    void delete_throwsWhenThePaymentIsNotUnderTheOwnersInvoice() {
+        when(paymentRepository.findByIdAndInvoiceIdAndOwnerId(11L, 3L, OWNER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> paymentService.delete(OWNER_ID, 3L, 11L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Payment with id 11 not found");
+        verify(invoicePayments, never()).giveBack(any(), any(), any());
+        verify(paymentRepository, never()).delete(any());
     }
 
     private static PaymentRequest request(String amount) {

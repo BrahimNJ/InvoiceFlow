@@ -1,5 +1,6 @@
 package com.naji.backend.payment;
 
+import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.invoice.InvoicePayments;
 import com.naji.backend.payment.dto.PaymentRequest;
 import com.naji.backend.payment.dto.PaymentResponse;
@@ -37,5 +38,17 @@ public class PaymentService {
         Payment payment = paymentMapper.toPayment(ownerId, invoiceId, request);
         invoicePayments.receive(ownerId, invoiceId, payment.getAmount(), payment.getDate());
         return paymentMapper.toResponse(paymentRepository.save(payment));
+    }
+
+    /**
+     * Deletes a payment recorded by mistake and gives its amount back to the invoice, which waits for payment again if
+     * it was paid. 404 when the payment does not exist under this invoice of the owner.
+     */
+    @Transactional
+    public void delete(Long ownerId, Long invoiceId, Long paymentId) {
+        Payment payment = paymentRepository.findByIdAndInvoiceIdAndOwnerId(paymentId, invoiceId, ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment", paymentId));
+        invoicePayments.giveBack(ownerId, invoiceId, payment.getAmount());
+        paymentRepository.delete(payment);
     }
 }
