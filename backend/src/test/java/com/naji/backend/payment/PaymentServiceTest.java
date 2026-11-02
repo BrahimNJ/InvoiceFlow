@@ -93,7 +93,7 @@ class PaymentServiceTest {
     @Test
     void delete_givesTheAmountBackToTheInvoiceAndDeletesThePayment() {
         Payment payment = new PaymentMapper().toPayment(OWNER_ID, 3L, request("250"));
-        when(paymentRepository.findByIdAndInvoiceIdAndOwnerId(11L, 3L, OWNER_ID)).thenReturn(Optional.of(payment));
+        when(paymentRepository.lockByIdAndInvoiceIdAndOwnerId(11L, 3L, OWNER_ID)).thenReturn(Optional.of(payment));
 
         paymentService.delete(OWNER_ID, 3L, 11L);
 
@@ -103,7 +103,7 @@ class PaymentServiceTest {
 
     @Test
     void delete_throwsWhenThePaymentIsNotUnderTheOwnersInvoice() {
-        when(paymentRepository.findByIdAndInvoiceIdAndOwnerId(11L, 3L, OWNER_ID)).thenReturn(Optional.empty());
+        when(paymentRepository.lockByIdAndInvoiceIdAndOwnerId(11L, 3L, OWNER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> paymentService.delete(OWNER_ID, 3L, 11L))
                 .isInstanceOf(ResourceNotFoundException.class)

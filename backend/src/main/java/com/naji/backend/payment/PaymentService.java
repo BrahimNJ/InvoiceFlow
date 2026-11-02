@@ -46,7 +46,7 @@ public class PaymentService {
      */
     @Transactional
     public void delete(Long ownerId, Long invoiceId, Long paymentId) {
-        Payment payment = paymentRepository.findByIdAndInvoiceIdAndOwnerId(paymentId, invoiceId, ownerId)
+        Payment payment = paymentRepository.lockByIdAndInvoiceIdAndOwnerId(paymentId, invoiceId, ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment", paymentId));
         invoicePayments.giveBack(ownerId, invoiceId, payment.getAmount());
         paymentRepository.delete(payment);

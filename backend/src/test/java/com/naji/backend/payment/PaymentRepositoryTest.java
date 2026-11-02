@@ -66,10 +66,10 @@ class PaymentRepositoryTest {
         Long id = save(payment(ownerId, invoiceId, "100.00", ISSUE_DATE)).getId();
         Long otherInvoice = invoice(ownerId, "F-2026-0002");
 
-        assertThat(paymentRepository.findByIdAndInvoiceIdAndOwnerId(id, invoiceId, ownerId)).isPresent();
-        assertThat(paymentRepository.findByIdAndInvoiceIdAndOwnerId(id, invoiceId, otherOwnerId)).isEmpty();
-        assertThat(paymentRepository.findByIdAndInvoiceIdAndOwnerId(id, otherInvoice, ownerId)).isEmpty();
         assertThat(paymentRepository.findByInvoiceIdAndOwnerIdOrderByDateAscIdAsc(invoiceId, otherOwnerId)).isEmpty();
+        assertThat(paymentRepository.lockByIdAndInvoiceIdAndOwnerId(id, invoiceId, ownerId)).isPresent();
+        assertThat(paymentRepository.lockByIdAndInvoiceIdAndOwnerId(id, invoiceId, otherOwnerId)).isEmpty();
+        assertThat(paymentRepository.lockByIdAndInvoiceIdAndOwnerId(id, otherInvoice, ownerId)).isEmpty();
     }
 
     @Test
