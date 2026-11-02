@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -165,6 +166,7 @@ class InvoiceRepositoryTest {
         save(withTotal(issued(ownerId, "Open", "F-2026-0001", LocalDate.of(2026, 10, 2), TODAY.plusDays(20)), "300.25"));
         Invoice settled = withTotal(issued(ownerId, "Settled", "F-2026-0002", LocalDate.of(2026, 10, 5), TODAY), "450.00");
         settled.setStatus(InvoiceStatus.PAID);
+        settled.setPaidAt(Instant.parse("2026-10-20T10:00:00Z"));
         save(paid(settled, "450.00"));
 
         assertThat(invoiceRepository.totals(ownerId, List.of(InvoiceStatus.ISSUED, InvoiceStatus.PAID), null,
@@ -198,6 +200,7 @@ class InvoiceRepositoryTest {
         Invoice settled = withTotal(issued(ownerId, "Settled", "F-2026-0003", LocalDate.of(2026, 9, 3), TODAY.minusDays(3)),
                 "450.00");
         settled.setStatus(InvoiceStatus.PAID);
+        settled.setPaidAt(Instant.parse("2026-10-20T10:00:00Z"));
         save(paid(settled, "450.00"));
         save(withTotal(issued(otherOwnerId, "Other", "F-2026-0001", LocalDate.of(2026, 9, 1), TODAY.minusDays(1)), "999.00"));
 

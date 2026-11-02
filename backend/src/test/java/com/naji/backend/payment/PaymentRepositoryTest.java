@@ -94,6 +94,17 @@ class PaymentRepositoryTest {
     }
 
     @Test
+    void rejectsAPaidInvoiceThatStillAsksForMoney() {
+        Invoice invoice = invoiceRepository.findById(invoiceId).orElseThrow();
+        invoice.setStatus(InvoiceStatus.PAID);
+        invoice.setAmountPaid(new BigDecimal("4000.00"));
+        invoice.setPaidAt(java.time.Instant.now());
+
+        assertThatThrownBy(() -> invoiceRepository.saveAndFlush(invoice))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
     void rejectsAPaymentOfAMissingInvoice() {
         assertThatThrownBy(() -> save(payment(ownerId, 999_999L, "10.00", ISSUE_DATE)))
                 .isInstanceOf(DataIntegrityViolationException.class);
