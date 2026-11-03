@@ -13,6 +13,7 @@ import { Icon, IconName } from '../../shared/icon/icon';
 import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
 import { dueDate, dueLabel, formatDate, todayIso } from '../invoice-calc';
+import { InvoicePayments } from '../../payments/invoice-payments/invoice-payments';
 import { InvoiceDocumentView, documentFromInvoice } from '../invoice-document/invoice-document';
 import { Invoice, READINESS, statusBadge } from '../invoice.models';
 import { InvoiceService } from '../invoice.service';
@@ -30,11 +31,11 @@ interface TimelineStep {
 
 /**
  * One invoice (`/invoices/:id`): the A4 document as the customer receives it, and beside it the status timeline,
- * the amounts, the customer and what can still be done with it.
+ * the amounts, the payments, the customer and what can still be done with it.
  */
 @Component({
   selector: 'app-invoice-detail',
-  imports: [AppHeader, DatePipe, Icon, InvoiceDocumentView, RouterLink],
+  imports: [AppHeader, DatePipe, Icon, InvoiceDocumentView, InvoicePayments, RouterLink],
   templateUrl: './invoice-detail.html',
   styleUrl: './invoice-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,6 +93,8 @@ export class InvoiceDetail implements OnInit {
     });
     if (invoice.status === 'CANCELLED') {
       steps.push({ label: 'Cancelled', icon: 'x', when: invoice.cancelledAt, tone: 'danger' });
+    } else if (invoice.status === 'PAID') {
+      steps.push({ label: 'Paid in full', icon: 'check-circle', when: invoice.paidAt, tone: 'done' });
     } else if (invoice.dueDate) {
       const due = dueLabel(invoice.dueDate, this.today);
       steps.push({
@@ -120,6 +123,17 @@ export class InvoiceDetail implements OnInit {
               ? 'This invoice does not exist or has been deleted.'
               : errorMessage(error),
           ),
+      });
+  }
+
+  /** After a payment was recorded or deleted: the amount paid, the balance and the status changed. */
+  protected reload(): void {
+    this.invoices
+      .get(this.invoice()!.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (invoice) => this.invoice.set(invoice),
+        error: (error: unknown) => this.toasts.error(errorMessage(error)),
       });
   }
 

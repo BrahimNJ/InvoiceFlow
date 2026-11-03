@@ -58,13 +58,33 @@
               <button class="btn btn-ghost" type="button" [disabled]="busy() !== null" (click)="duplicate()">
                 <app-icon name="copy" [size]="16" />Duplicate
               </button>
-              <button class="btn btn-ghost danger" type="button" [disabled]="busy() !== null" (click)="cancel()">
+              <button
+                class="btn btn-ghost danger"
+                type="button"
+                [disabled]="busy() !== null || inv.amountPaid > 0"
+                (click)="cancel()"
+              >
                 <app-icon name="x" [size]="16" />Cancel invoice
               </button>
+              @if (inv.amountPaid > 0) {
+                <p class="note warn">
+                  <app-icon name="alert" [size]="14" />
+                  This invoice received payments: delete them before cancelling it.
+                </p>
+              }
               <p class="note">
                 <app-icon name="lock" [size]="14" />
                 Issued invoices are frozen by law. To correct one, cancel it and issue a corrected duplicate.
               </p>
+            }
+            @case ('PAID') {
+              <button class="btn btn-primary" type="button" disabled title="Coming with PDF generation">
+                <app-icon name="download" [size]="16" />Download PDF
+              </button>
+              <button class="btn btn-ghost" type="button" [disabled]="busy() !== null" (click)="duplicate()">
+                <app-icon name="copy" [size]="16" />Duplicate
+              </button>
+              <p class="note"><app-icon name="check-circle" [size]="14" />Paid in full: nothing is left to collect.</p>
             }
             @case ('CANCELLED') {
               <button class="btn btn-primary" type="button" [disabled]="busy() !== null" (click)="duplicate()">
@@ -103,8 +123,16 @@
               <div class="vat"><dt>VAT {{ formatPercent(vat.rate) }}</dt><dd>{{ formatEuros(vat.amount) }}</dd></div>
             }
             <div class="grand"><dt>Total incl. VAT</dt><dd>{{ formatEuros(inv.total) }}</dd></div>
+            @if (inv.amountPaid > 0) {
+              <div class="paid"><dt>Paid</dt><dd>− {{ formatEuros(inv.amountPaid) }}</dd></div>
+              <div class="balance"><dt>Balance due</dt><dd>{{ formatEuros(inv.balance) }}</dd></div>
+            }
           </dl>
         </section>
+
+        @if (inv.status === 'ISSUED' || inv.status === 'PAID') {
+          <app-invoice-payments [invoice]="inv" (changed)="reload()" />
+        }
 
         @if (inv.customer.name) {
           <section class="panel card" aria-labelledby="customer-title">

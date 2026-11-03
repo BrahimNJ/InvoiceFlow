@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
@@ -46,23 +47,37 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     Optional<Invoice> findByIdAndOwnerId(Long id, Long ownerId);
 
+    boolean existsByIdAndOwnerId(Long id, Long ownerId);
+
     /**
-     * Count and total including VAT of the owner's invoices in a status, optionally due strictly before
+     * Count and total including VAT of the owner's invoices in one of {@code statuses}, optionally due strictly before
      * {@code dueBefore} and issued on or after {@code issuedFrom} ({@code null}: no limit). Dates are cast for
      * PostgreSQL, see {@link #search}.
      */
     @Query("""
             select new com.naji.backend.invoice.dto.InvoiceTotals(count(i), sum(i.total)) from Invoice i
             where i.ownerId = :ownerId
-              and i.status = :status
+              and i.status in :statuses
               and (cast(:dueBefore as LocalDate) is null or i.dueDate < :dueBefore)
               and (cast(:issuedFrom as LocalDate) is null or i.issueDate >= :issuedFrom)
             """)
     InvoiceTotals totals(
             @Param("ownerId") Long ownerId,
-            @Param("status") InvoiceStatus status,
+            @Param("statuses") Collection<InvoiceStatus> statuses,
             @Param("dueBefore") LocalDate dueBefore,
             @Param("issuedFrom") LocalDate issuedFrom);
+
+    /**
+     * Count and balance due (total minus the payments received) of the owner's issued invoices, optionally due
+     * strictly before {@code dueBefore} ({@code null}: no limit). A paid invoice owes nothing and is not counted.
+     */
+    @Query("""
+            select new com.naji.backend.invoice.dto.InvoiceTotals(count(i), sum(i.total - i.amountPaid)) from Invoice i
+            where i.ownerId = :ownerId
+              and i.status = com.naji.backend.invoice.InvoiceStatus.ISSUED
+              and (cast(:dueBefore as LocalDate) is null or i.dueDate < :dueBefore)
+            """)
+    InvoiceTotals balances(@Param("ownerId") Long ownerId, @Param("dueBefore") LocalDate dueBefore);
 
     /**
      * Same as {@link #findByIdAndOwnerId}, with the row locked until the transaction ends: two requests changing the

@@ -41,6 +41,8 @@
 .vat { color: var(--ink-500); }
 .grand { margin-top: .3em; padding: .6em .8em; border-radius: .5em; background: var(--night); color: #fff;
          font-weight: 700; font-size: 1.15em; }
+.paid { color: #475569; }
+.balance { padding: .2em .8em 0; font-weight: 700; }
 .legal { margin-top: auto; display: grid; gap: .35em; padding-top: 1.2em; border-top: 1px solid #e5e9f2;
          font-size: .8em; color: var(--ink-500); }
 .notes { color: #1e293b; font-size: 1.15em; white-space: pre-line; }

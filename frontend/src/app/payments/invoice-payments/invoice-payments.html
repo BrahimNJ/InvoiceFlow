@@ -1,0 +1,57 @@
+<section class="panel card" aria-labelledby="payments-title">
+  <h2 id="payments-title" tabindex="-1">Payments</h2>
+
+  @if (canRecord()) {
+    @if (recording()) {
+      <app-payment-form
+        [invoiceId]="invoice().id"
+        [balance]="invoice().balance"
+        [issueDate]="invoice().issueDate!"
+        (recorded)="recorded($event)"
+        (cancelled)="closeForm()"
+        (outdated)="refresh()"
+      />
+    } @else {
+      <button class="btn btn-primary record" type="button" (click)="recording.set(true)">
+        <app-icon name="euro" [size]="16" />Record a payment
+      </button>
+    }
+  }
+
+  @if (loading()) {
+    <p class="status-line" role="status"><span class="spinner dark" aria-hidden="true"></span>Loading payments…</p>
+  } @else if (loadError(); as message) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="16" /><span>{{ message }}</span>
+      <button class="btn btn-ghost btn-sm" type="button" (click)="load()">Try again</button>
+    </div>
+  } @else if (list().length === 0) {
+    <p class="empty">No payment received yet.</p>
+  } @else {
+    <ul class="payments">
+      @for (payment of list(); track payment.id) {
+        <li>
+          <span class="what">
+            <strong>{{ formatEuros(payment.amount) }}</strong>
+            <small>
+              {{ formatDate(payment.date) }} · {{ methods[payment.method] }}
+              @if (payment.reference) {
+                · {{ payment.reference }}
+              }
+            </small>
+          </span>
+          <button
+            class="btn btn-ghost btn-sm icon-only danger"
+            type="button"
+            [disabled]="deleting() !== null"
+            [attr.aria-busy]="deleting() === payment.id"
+            [attr.aria-label]="'Delete the payment of ' + formatEuros(payment.amount)"
+            (click)="delete(payment)"
+          >
+            <app-icon name="trash" [size]="16" />
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

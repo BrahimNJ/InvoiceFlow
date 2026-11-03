@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
-/** One row of the invoices list: no lines, so that a page costs a single query. */
+/** One row of the invoices list: no lines, so that a page costs a single query. {@code balance}: still due. */
 public record InvoiceListItem(
         Long id,
         String number,
@@ -18,6 +18,8 @@ public record InvoiceListItem(
         LocalDate dueDate,
         BigDecimal subtotal,
         BigDecimal total,
+        BigDecimal amountPaid,
+        BigDecimal balance,
         Instant createdAt,
         Instant updatedAt
 ) {

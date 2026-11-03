@@ -1,7 +1,7 @@
 # InvoiceFlow — progress
 
 > Single source of truth for project status. Updated at the end of every task (see `CLAUDE.md`, rule 7).
-> Last update: **2026-10-29**
+> Last update: **2026-11-02**
 
 ## Status legend
 
@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ **Showcase** (#33): review the editor description column fix (#41), then lot 5 (supply chain). After #33: payments (3.5) or company details (5.1).
+➡️ **Payments** (#44): review and merge PR #45. Then company details (5.1), which unlocks the seller mentions and the PDF (4.1). Showcase lot 5 (supply chain) is still open.
 
 ---
 
@@ -36,7 +36,7 @@
 | 0.9 | CORS + frontend API base URL (dev and prod) | ✅ Done | #17 / #18 | `CORS_ALLOWED_ORIGINS`, Angular `environments/`; cross-origin calls verified in production on 2026-10-18 |
 | 0.11 | Landing page (product presentation, live API status) | ✅ Done | #17 / #18 | Same PR as 0.9; plain CSS, no UI library. Follow-up: French translation |
 | 0.13 | Multi-agent Claude Code workflow: subagents, scoped `CLAUDE.md`, skills, hook scripts, Playwright MCP | ✅ Done | #33 / #34 | Branch `33-chore/claude-workflow`. Hook scripts covered by `node --test .claude/hooks/*.test.mjs` (26 cases); activation in `.claude/settings.json` left to the maintainer |
-| 0.14 | Showcase: visual identity, in-app docs, ADRs, backend tooling, E2E/a11y/Lighthouse, supply-chain security | 🚧 In progress | #33 | One PR per lot |
+| 0.14 | Showcase: visual identity, in-app docs, ADRs, backend tooling, E2E/a11y/Lighthouse, supply-chain security | 🚧 In progress | #33 | One PR per lot; #33 closed with lots 1–4 and 6 merged, lot 5 (supply chain) not started |
 | 0.10 | Integration tests on real PostgreSQL (Testcontainers) | 📋 Planned | — | Tests currently run on H2 |
 | 0.12.1 | Deploy wait step: keep polling when the backend times out during a deploy | ✅ Done | #25 / #26 | Run for #24 failed after 38 s although production served the commit. *Deploy backend* green on the merge commit `f6bebad` |
 | 0.12 | Verified backend deploy: hook check, deploy pinned to the CI commit, wait for `/actuator/info`, smoke test; professional README | ✅ Done | #21 / #22 | Production had silently stayed on #12 for a day: the hook secret held a Vercel hook, then the Blueprint sync URL |
@@ -70,10 +70,10 @@
 | 3.2 | Subtotal / VAT / total calculation | ✅ Done | #31 / #32 | Half up per line, VAT once per rate; same rules in the frontend preview |
 | 3.3 | Invoice numbering and status lifecycle | ✅ Done | #31 / #32 | Draft → Issued → Cancelled, overdue derived; `F-<year>-<0001>` gap-free, tested concurrently. Paid comes with 3.5 |
 | 3.4 | Invoice CRUD API | ✅ Done | #31 / #32 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
-| 3.5 | Payment tracking | 📋 Planned | — | |
+| 3.5 | Payment tracking | 🔍 In review | #44 / #45 | Branch `44-feat/payments`. New `payment` module applied through `InvoicePayments` in one transaction (ADR 0009); `PAID` status, balance due, payments panel. 297 backend, 262 frontend and 23 E2E tests pass locally; 0 € invoices are paid when issued; independent review done, its blocking finding (double delete race) fixed and covered by `PaymentConcurrencyTest` |
 | 3.6 | Invoices UI | ✅ Done | #31 / #32 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Real-browser check planned in #33 (Playwright) |
 | 3.6.1 | Fix: invoice summary and date filters failed on PostgreSQL | ✅ Done | #39 / #40 | Untyped null `LocalDate` in `:param is null`; H2 hid it. Found by the README screenshots on PostgreSQL; now guarded by the E2E journey |
-| 3.6.2 | Fix: line description column collapses in the invoice editor on desktop widths | 🔍 In review | #41 | Was 23 px at every desktop width; container queries on the lines panel; now 308–627 px, guarded by `invoice-editor-layout.e2e.ts`; editor screenshot back in the README |
+| 3.6.2 | Fix: line description column collapses in the invoice editor on desktop widths | ✅ Done | #41 / #43 | Was 23 px at every desktop width; container queries on the lines panel; now 308–627 px, guarded by `invoice-editor-layout.e2e.ts`; editor screenshot back in the README |
 
 ## Phase 4 — Documents
 
@@ -109,6 +109,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-11-02 | Payments implemented on `44-feat/payments` (#44): record, list and delete payments, `PAID` status, balance-based key figures; 297 backend, 262 frontend and 23 E2E tests pass. #41 merged (#43). |
 | 2026-10-29 | Quality-in-numbers lot merged (#42): six badges published from `main`. Fix #41 in review: line description usable at every desktop width; 21 E2E and 233 frontend tests pass. |
 | 2026-10-29 | Fix #39 merged (#40). Quality-in-numbers lot on `33-docs/quality-in-numbers` (#33): 252 backend, 233 frontend and 20 E2E tests pass; issue #41 opened for the editor description column. |
 | 2026-10-29 | Fix #39 in review: invoice summary, Overdue tab and single-date filters returned 500 on PostgreSQL; 252 backend, 233 frontend and 20 E2E tests pass. |

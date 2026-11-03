@@ -116,6 +116,17 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void search_paidListsTheSettledInvoices() {
+        when(invoiceRepository.search(eq(OWNER_ID), eq("%"), eq(InvoiceStatus.PAID), isNull(), isNull(), isNull(),
+                isNull(), any(Pageable.class))).thenReturn(Page.empty());
+
+        invoiceService.search(OWNER_ID, new InvoiceSearch(null, InvoiceStatusFilter.PAID, null, null, null, null, null), 0, 20);
+
+        verify(invoiceRepository).search(eq(OWNER_ID), eq("%"), eq(InvoiceStatus.PAID), isNull(), isNull(), isNull(),
+                isNull(), any(Pageable.class));
+    }
+
+    @Test
     void search_sortsAscendingOnAColumnAndClampsPageAndSize() {
         Pageable expected = PageRequest.of(0, InvoiceService.MAX_PAGE_SIZE,
                 Sort.by(Sort.Direction.ASC, "dueDate").and(Sort.by(Sort.Direction.ASC, "id")));
@@ -128,10 +139,11 @@ class InvoiceServiceTest {
 
     @Test
     void summary_countsDraftsOutstandingOverdueAndIssuedThisMonth() {
-        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.DRAFT, null, null)).thenReturn(totals(3, "2400"));
-        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, null, null)).thenReturn(totals(12, "18950"));
-        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, TODAY, null)).thenReturn(totals(2, "3120"));
-        when(invoiceRepository.totals(OWNER_ID, InvoiceStatus.ISSUED, null, LocalDate.of(2026, 10, 1)))
+        when(invoiceRepository.totals(OWNER_ID, List.of(InvoiceStatus.DRAFT), null, null)).thenReturn(totals(3, "2400"));
+        when(invoiceRepository.balances(OWNER_ID, null)).thenReturn(totals(12, "18950"));
+        when(invoiceRepository.balances(OWNER_ID, TODAY)).thenReturn(totals(2, "3120"));
+        when(invoiceRepository.totals(OWNER_ID, List.of(InvoiceStatus.ISSUED, InvoiceStatus.PAID), null,
+                LocalDate.of(2026, 10, 1)))
                 .thenReturn(totals(7, "9800"));
 
         InvoiceSummaryResponse summary = invoiceService.summary(OWNER_ID);
@@ -303,6 +315,27 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void issue_marksAnInvoiceOfZeroEurosPaid() {
+        Invoice draft = draft(1L);
+        InvoiceMapper mapper = new InvoiceMapper();
+        mapper.copyCustomer(draft, addressed(customer()));
+        mapper.updateDraft(draft, request(3L, new InvoiceLineRequest(null, ProductType.SERVICE, "Free audit", null,
+                BigDecimal.ONE, ProductUnit.DAY, BigDecimal.ZERO, new BigDecimal("20"))));
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(addressed(customer())));
+        when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0001");
+        when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
+
+        InvoiceResponse response = invoiceService.issue(OWNER_ID, 1L);
+
+        assertThat(response.total()).isZero();
+        assertThat(response.status()).isEqualTo(InvoiceStatus.PAID);
+        assertThat(response.paidAt()).isEqualTo(CLOCK.instant());
+        assertThat(response.number()).isEqualTo("F-2026-0001");
+        assertThat(response.overdue()).isFalse();
+    }
+
+    @Test
     void issue_keepsTheCopiedDetailsWhenTheCustomerWasDeleted() {
         Invoice draft = readyDraft();
         draft.setCustomerId(null);
@@ -371,6 +404,26 @@ class InvoiceServiceTest {
         assertThatThrownBy(() -> invoiceService.cancel(OWNER_ID, 2L))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Invoice F-2026-0001 is already cancelled");
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void cancel_refusesAPaidOrPartlyPaidInvoice() {
+        Invoice paid = issued(1L);
+        paid.setStatus(InvoiceStatus.PAID);
+        paid.setAmountPaid(paid.getTotal());
+        Invoice partlyPaid = issued(2L);
+        partlyPaid.setAmountPaid(new BigDecimal("100.00"));
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(paid));
+        when(invoiceRepository.lockByIdAndOwnerId(2L, OWNER_ID)).thenReturn(Optional.of(partlyPaid));
+
+        assertThatThrownBy(() -> invoiceService.cancel(OWNER_ID, 1L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Invoice F-2026-0001 is paid: it cannot be cancelled");
+        assertThatThrownBy(() -> invoiceService.cancel(OWNER_ID, 2L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Invoice F-2026-0001 has payments: delete them before cancelling it");
+        assertThat(partlyPaid.getStatus()).isEqualTo(InvoiceStatus.ISSUED);
         verify(invoiceRepository, never()).saveAndFlush(any());
     }
 

@@ -67,6 +67,7 @@ public class InvoiceService {
                         status == null ? null : switch (status) {
                             case DRAFT -> InvoiceStatus.DRAFT;
                             case ISSUED, OVERDUE -> InvoiceStatus.ISSUED;
+                            case PAID -> InvoiceStatus.PAID;
                             case CANCELLED -> InvoiceStatus.CANCELLED;
                         },
                         status == InvoiceStatusFilter.OVERDUE ? today : null,
@@ -77,14 +78,18 @@ public class InvoiceService {
                 invoice -> invoiceMapper.toListItem(invoice, today));
     }
 
-    /** Key figures for the list: drafts, outstanding, overdue and issued this month (in Paris time). */
+    /**
+     * Key figures for the list: drafts, outstanding, overdue and issued this month (in Paris time). Outstanding and
+     * overdue add up what is still due, so a partly paid invoice counts for its balance.
+     */
     public InvoiceSummaryResponse summary(Long ownerId) {
         LocalDate today = today();
         return new InvoiceSummaryResponse(
-                invoiceRepository.totals(ownerId, InvoiceStatus.DRAFT, null, null),
-                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, null),
-                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, today, null),
-                invoiceRepository.totals(ownerId, InvoiceStatus.ISSUED, null, today.withDayOfMonth(1)));
+                invoiceRepository.totals(ownerId, List.of(InvoiceStatus.DRAFT), null, null),
+                invoiceRepository.balances(ownerId, null),
+                invoiceRepository.balances(ownerId, today),
+                invoiceRepository.totals(ownerId, List.of(InvoiceStatus.ISSUED, InvoiceStatus.PAID), null,
+                        today.withDayOfMonth(1)));
     }
 
     public InvoiceResponse findById(Long ownerId, Long id) {
@@ -114,8 +119,9 @@ public class InvoiceService {
 
     /**
      * Issues a draft: it gets today's date, its due date and the next number of the year, and can no longer be
-     * changed. The customer's billing details are refreshed one last time, then frozen. Answers 422 with the failed
-     * checks when a required mention is missing.
+     * changed. The customer's billing details are refreshed one last time, then frozen. An invoice of 0 € owes
+     * nothing: it is paid as soon as it is issued, so it never counts as outstanding or overdue. Answers 422 with the
+     * failed checks when a required mention is missing.
      */
     @Transactional
     public InvoiceResponse issue(Long ownerId, Long id) {
@@ -137,12 +143,17 @@ public class InvoiceService {
         invoice.setNumber(numberGenerator.next(ownerId, today.getYear()));
         invoice.setStatus(InvoiceStatus.ISSUED);
         invoice.setIssuedAt(clock.instant());
+        if (invoice.getTotal().signum() == 0) {
+            invoice.setStatus(InvoiceStatus.PAID);
+            invoice.setPaidAt(invoice.getIssuedAt());
+        }
         return toResponse(invoiceRepository.saveAndFlush(invoice));
     }
 
     /**
      * Cancels an issued invoice. It keeps its number, so that the sequence has no gap, and stays in the records.
-     * A draft is deleted instead.
+     * A draft is deleted instead. An invoice that received payments cannot be cancelled: its payments would point
+     * to an invoice that no longer asks for anything (delete them first, or issue a credit note once they exist).
      */
     @Transactional
     public InvoiceResponse cancel(Long ownerId, Long id) {
@@ -150,7 +161,13 @@ public class InvoiceService {
         switch (invoice.getStatus()) {
             case DRAFT -> throw new ConflictException("A draft cannot be cancelled: delete it instead");
             case CANCELLED -> throw new ConflictException("Invoice %s is already cancelled".formatted(invoice.getNumber()));
+            case PAID -> throw new ConflictException(
+                    "Invoice %s is paid: it cannot be cancelled".formatted(invoice.getNumber()));
             case ISSUED -> {
+                if (invoice.getAmountPaid().signum() > 0) {
+                    throw new ConflictException("Invoice %s has payments: delete them before cancelling it"
+                            .formatted(invoice.getNumber()));
+                }
                 invoice.setStatus(InvoiceStatus.CANCELLED);
                 invoice.setCancelledAt(clock.instant());
             }

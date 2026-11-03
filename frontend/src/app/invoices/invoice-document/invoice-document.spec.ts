@@ -79,6 +79,19 @@ describe('InvoiceDocumentView', () => {
     expect(page.querySelector('.watermark')?.textContent).toBe('Cancelled');
   });
 
+  it('prints what was already paid and the balance due once a payment is in', async () => {
+    await render(testIssuedInvoice({ amountPaid: 560, balance: 1000 }));
+
+    expect(plain(page.querySelector('.totals .paid dd')?.textContent)).toBe('− 560,00 €');
+    expect(plain(page.querySelector('.totals .balance dd')?.textContent)).toBe('1 000,00 €');
+  });
+
+  it('prints no payment lines on an unpaid invoice', async () => {
+    await render();
+
+    expect(page.querySelector('.totals .balance')).toBeNull();
+  });
+
   it('shows placeholders while the draft is empty', async () => {
     await render(
       testInvoice({ customerId: null, customer: { ...testInvoice().customer, name: null }, lines: [], operationNature: null }),

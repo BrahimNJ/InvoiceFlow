@@ -1,8 +1,8 @@
 # Quality and testing
 
 Tests are part of every feature, never a follow-up: a module is not merged until its service, controller,
-repository and ownership tests pass in CI. At the time of writing the suites hold **252 backend tests**,
-**233 frontend tests** and **21 end-to-end tests**. The backend tests cover **97.5 % of lines and 91.7 % of
+repository and ownership tests pass in CI. At the time of writing the suites hold **297 backend tests**,
+**262 frontend tests** and **23 end-to-end tests**. The backend tests cover **97.8 % of lines and 92.7 % of
 branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches** (Vitest, v8).
 
 ## Test pyramid
@@ -12,13 +12,13 @@ branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches
 | Unit (backend) | JUnit 5, Mockito, AssertJ | Business rules in isolation: totals, rounding, readiness, numbering format, token rotation | `InvoiceCalculatorTest`, `InvoiceReadinessTest`, `RefreshTokenServiceTest` |
 | Web slice | `@WebMvcTest` + Spring Security test (`jwt()`) | HTTP contract: status codes, validation errors as problem details, authentication required | `InvoiceControllerTest`, `CustomerControllerTest` |
 | Persistence slice | `@DataJpaTest` on the Flyway schema | Queries, constraints and pagination against the real migrations | `InvoiceRepositoryTest` |
-| Integration | `@SpringBootTest` | Whole flows: register → refresh → replay detection; invoice lifecycle; tenant isolation | `AuthFlowIntegrationTest`, `InvoiceLifecycleIntegrationTest`, `*OwnershipIntegrationTest` |
-| Concurrency | Parallel threads on the real transaction boundaries | Gap-free numbering when invoices are issued at the same time | `InvoiceNumberGeneratorTest` |
+| Integration | `@SpringBootTest` | Whole flows: register → refresh → replay detection; invoice lifecycle; payments across two modules in one transaction; tenant isolation | `AuthFlowIntegrationTest`, `InvoiceLifecycleIntegrationTest`, `PaymentFlowIntegrationTest`, `*OwnershipIntegrationTest` |
+| Concurrency | Parallel threads on the real transaction boundaries | Gap-free numbering when invoices are issued at the same time; payments that cannot both fit in a balance, a payment deleted twice | `InvoiceNumberGeneratorTest`, `PaymentConcurrencyTest` |
 | Frontend unit | Vitest, Angular `TestBed`, `HttpTestingController` | Services, interceptor (refresh-and-retry, no loops), guards, validators, money arithmetic, components | `auth.interceptor.spec.ts`, `invoice-calc.spec.ts` |
 | Architecture | Spring Modulith on the compiled classes | Modules only use each other's public API, no dependency cycle, and the module diagram in the docs matches the code | `ModularityTest` |
 | Contract | `@SpringBootTest` on `/v3/api-docs` | The published OpenAPI description covers the secured endpoints and marks the public ones | `ApiDocumentationIntegrationTest` |
 | Tooling | `node:test` | The Claude Code commit guard blocks secrets however they are named | `.claude/hooks/guard-commit.test.mjs` |
-| End to end | Playwright on the production build, real API and PostgreSQL | A new user signs up, adds a customer and a product, then issues invoice `F-<year>-0001`; on desktop and phone viewports | `invoice-journey.e2e.ts`, `invoice-editor-layout.e2e.ts` |
+| End to end | Playwright on the production build, real API and PostgreSQL | A new user signs up, adds a customer and a product, then issues invoice `F-<year>-0001`; an issued invoice paid in two instalments; on desktop and phone viewports | `invoice-journey.e2e.ts`, `payment-journey.e2e.ts`, `invoice-editor-layout.e2e.ts` |
 | Accessibility | axe-core in every end-to-end test (WCAG 2.1 A and AA) | Every screen of the journey has no violation, and neither have the public pages in light and dark themes | `public-pages.e2e.ts`, `e2e/fixtures.ts` |
 | Performance budget | Lighthouse CI on `/`, `/docs/overview` and `/login` | Category scores (accessibility 100, performance ≥ 85, best practices and SEO ≥ 95) and transferred bytes per page | `frontend/lighthouserc.json` |
 

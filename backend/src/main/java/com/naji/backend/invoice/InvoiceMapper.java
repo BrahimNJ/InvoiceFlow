@@ -82,6 +82,8 @@ public class InvoiceMapper {
                 invoice.getSubtotal(),
                 invoice.getVatTotal(),
                 invoice.getTotal(),
+                invoice.getAmountPaid(),
+                invoice.getBalance(),
                 totals.vatBreakdown().stream()
                         .map(vat -> new VatBreakdown(vat.rate(), vat.base(), vat.amount()))
                         .toList(),
@@ -89,6 +91,7 @@ public class InvoiceMapper {
                         .map(result -> new ReadinessCheck(result.check().name(), result.check().required(), result.passed()))
                         .toList(),
                 invoice.getIssuedAt(),
+                invoice.getPaidAt(),
                 invoice.getCancelledAt(),
                 invoice.getCreatedAt(),
                 invoice.getUpdatedAt()
@@ -107,6 +110,8 @@ public class InvoiceMapper {
                 invoice.getDueDate(),
                 invoice.getSubtotal(),
                 invoice.getTotal(),
+                invoice.getAmountPaid(),
+                invoice.getBalance(),
                 invoice.getCreatedAt(),
                 invoice.getUpdatedAt()
         );

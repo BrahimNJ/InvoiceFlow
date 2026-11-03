@@ -1,7 +1,8 @@
 # Invoicing
 
 How InvoiceFlow writes, numbers and follows invoices, and why the screens look the way they do.
-Code: backend `com.naji.backend.invoice`, frontend `src/app/invoices`. Issue #31.
+Code: backend `com.naji.backend.invoice` and `com.naji.backend.payment`, frontend `src/app/invoices` and
+`src/app/payments`. Issues #31 (invoices) and #44 (payments).
 
 ## Lifecycle
 
@@ -11,13 +12,17 @@ stateDiagram-v2
     DRAFT --> DRAFT: edit (customer, terms, lines, notes)
     DRAFT --> [*]: delete
     DRAFT --> ISSUED: issue (number, dates, frozen)
-    ISSUED --> CANCELLED: cancel (keeps its number)
+    ISSUED --> ISSUED: payment (balance still due)
+    ISSUED --> PAID: payment (balance reaches zero)
+    PAID --> ISSUED: payment deleted
+    ISSUED --> CANCELLED: cancel (keeps its number, no payment)
 ```
 
 | Status | Edit | Delete | Issue | Cancel | Duplicate |
 |--------|------|--------|-------|--------|-----------|
 | `DRAFT` | yes | yes | if ready | `409` | yes |
-| `ISSUED` | `409` | `409` | `409` | yes | yes |
+| `ISSUED` | `409` | `409` | `409` | yes, without payments | yes |
+| `PAID` | `409` | `409` | `409` | `409` | yes |
 | `CANCELLED` | `409` | `409` | `409` | `409` | yes |
 
 **Overdue** is not a status: an issued invoice is overdue the day after its due date (Paris time). The list derives it
@@ -54,6 +59,25 @@ The issue date is set when the invoice is issued (today in Paris), never typed: 
 together. The due date follows the payment terms: on receipt, 15, 30, 45 or 60 days, or 45 days end of month
 (45 days, then the end of that month), the terms allowed by French law.
 
+### Payments
+
+A payment records money received on an issued invoice: amount, date received, method (bank transfer, card, cheque,
+cash, direct debit, other), an optional reference. It lives in its own module, `payment`, which changes the invoice
+only through `InvoicePayments`, the invoice module's public API (ADR 0009).
+
+- Only an `ISSUED` invoice takes payments: a draft, a paid or a cancelled one answers `409`.
+- A payment is more than 0 € and at most the balance due (`422` with `balance`): no overpayment, no credit.
+- It is dated between the issue date and today in Paris (`422` with `issueDate`).
+- The invoice keeps `amount_paid`, the sum of its payments, so the list and the key figures read the balance without a
+  join. The payment and the new amount paid are written in one transaction, after locking the invoice row, so two
+  payments recorded at the same time cannot both fit in the same balance.
+- When the balance reaches zero the invoice becomes `PAID` (`paidAt` set) and is no longer overdue. An invoice of
+  0 € owes nothing and is `PAID` as soon as it is issued.
+- A payment is never edited: a mistake is deleted, which gives its amount back and reopens a paid invoice.
+- An invoice with payments cannot be cancelled (`409`): delete the payments first. Credit notes will cover
+  refunds.
+- Outstanding and overdue figures add up the balance due, not the total; issued this month includes paid invoices.
+
 ### Customer details
 
 The customer's billing details are copied onto the invoice on every draft save, refreshed once more when it is issued,
@@ -77,7 +101,8 @@ the checklist shows them as pending without blocking.
 
 ## Screens
 
-The design answers recurring complaints found in reviews of French invoicing tools and invoicing UX write-ups:
+The design answers recurring complaints found in reviews of French invoicing tools and invoicing UX write-ups
+(payments: user reviews of Square Invoices, Invoiced and InvoiceApp on Capterra, G2 and Secret, November 2026):
 
 | Complaint | Answer |
 |-----------|--------|
@@ -86,6 +111,9 @@ The design answers recurring complaints found in reviews of French invoicing too
 | Issued invoices cannot be changed, and nothing explains why | The detail page says it, and offers Duplicate and Cancel |
 | Late invoices are hard to spot, filter by customer | Key figure tiles, an Overdue tab, a customer filter, sorting by due date, "9 days late" on each row |
 | The preview and the PDF disagree | One document component renders the editor preview and the detail page (the PDF of task 4.1 will reuse its model) |
+| No partial payments: an invoice paid in instalments stays overdue for its full amount until the last one | Any number of payments; the list, the key figures and the document show the balance still due |
+| An invoice marked paid by mistake cannot be corrected | A payment is deleted in one click after a warning; a paid invoice waits for payment again |
+| Balances are not shown next to the totals | "1 000,00 € still due" under the total in the list, Paid and Balance due in the amounts and on the A4 page |
 
 - **List** `/invoices`: key figures (drafts, outstanding, overdue, issued this month) that filter the list, status
   tabs, search by number or customer, customer and period filters, sortable columns, relative due dates. Cards on
@@ -96,23 +124,29 @@ The design answers recurring complaints found in reviews of French invoicing too
   preview. On phones a bottom bar keeps the total in sight and opens the preview full screen. Leaving with unsaved
   changes asks first.
 - **Detail** `/invoices/:id`: the A4 document, with actions by status, a status timeline, the amounts and the customer.
+  On an issued or paid invoice, a Payments panel lists what was received and records the next payment, its amount
+  proposed at the balance due; the amounts and the document show what was paid and the balance.
 
 ## API
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/invoices?search=&status=&customerId=&issuedFrom=&issuedTo=&sort=&direction=&page=&size=` | List; `status` = `DRAFT`, `ISSUED` (overdue included), `OVERDUE`, `CANCELLED`; `sort` = `CREATED_AT` (default, newest first), `NUMBER`, `CUSTOMER`, `ISSUE_DATE`, `DUE_DATE`, `TOTAL` |
+| `GET` | `/api/invoices?search=&status=&customerId=&issuedFrom=&issuedTo=&sort=&direction=&page=&size=` | List; `status` = `DRAFT`, `ISSUED` (overdue included), `OVERDUE`, `PAID`, `CANCELLED`; `sort` = `CREATED_AT` (default, newest first), `NUMBER`, `CUSTOMER`, `ISSUE_DATE`, `DUE_DATE`, `TOTAL` |
 | `GET` | `/api/invoices/summary` | Count and total of drafts, outstanding, overdue and issued this month |
-| `GET` | `/api/invoices/{id}` | Full invoice: lines, VAT breakdown, checks, operation nature, `overdue` |
+| `GET` | `/api/invoices/{id}` | Full invoice: lines, VAT breakdown, checks, operation nature, `overdue`, `amountPaid`, `balance`, `paidAt` |
 | `POST` `PUT` | `/api/invoices[/{id}]` | Create or rewrite a draft; validation errors per line (`lines[1].quantity`) |
 | `DELETE` | `/api/invoices/{id}` | Delete a draft |
 | `POST` | `/api/invoices/{id}/issue` | Issue a draft (`422` with `missing` when not ready) |
 | `POST` | `/api/invoices/{id}/cancel` | Cancel an issued invoice |
 | `POST` | `/api/invoices/{id}/duplicate` | New draft from any invoice (`201`) |
+| `GET` | `/api/invoices/{id}/payments` | Payments of the invoice, oldest first |
+| `POST` | `/api/invoices/{id}/payments` | Record a payment (`201`; `409` when not issued, `422` with `balance` or `issueDate`) |
+| `DELETE` | `/api/invoices/{id}/payments/{paymentId}` | Delete a payment; a paid invoice is issued again |
 
 Every call is scoped to the owner of the access token: another user's invoice answers `404`, like a missing one.
 
 ## Follow-ups
 
-Payments and the `PAID` status (3.5), seller details (5.1), credit notes to correct an issued invoice, PDF (4.1) and
+Seller details (5.1), credit notes and refunds, payment reminders that stop once an invoice is paid, bank
+reconciliation to correct an issued invoice, PDF (4.1) and
 Factur-X (4.2), delivery address and the "VAT on debits" option, discounts.

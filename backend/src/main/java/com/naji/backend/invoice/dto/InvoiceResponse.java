@@ -10,8 +10,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * A full invoice. {@code overdue}: issued and past its due date. {@code checks}: what the invoice needs before it
- * can be issued (still computed once issued, for the record).
+ * A full invoice. {@code overdue}: issued and past its due date. {@code balance}: total minus {@code amountPaid}.
+ * {@code checks}: what the invoice needs before it can be issued (still computed once issued, for the record).
  */
 public record InvoiceResponse(
         Long id,
@@ -29,9 +29,12 @@ public record InvoiceResponse(
         BigDecimal subtotal,
         BigDecimal vatTotal,
         BigDecimal total,
+        BigDecimal amountPaid,
+        BigDecimal balance,
         List<VatBreakdown> vatBreakdown,
         List<ReadinessCheck> checks,
         Instant issuedAt,
+        Instant paidAt,
         Instant cancelledAt,
         Instant createdAt,
         Instant updatedAt

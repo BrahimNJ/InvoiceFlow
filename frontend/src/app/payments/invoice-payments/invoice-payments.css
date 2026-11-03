@@ -1,0 +1,16 @@
+:host { display: block; }
+/* Same card as the other panels of the invoice page, whose styles are scoped to that page */
+.card { padding: 1.15rem; }
+.card h2 { margin-bottom: .8rem; font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+           color: var(--ink-500); }
+.record { width: 100%; margin-bottom: .75rem; }
+app-payment-form { display: block; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.empty { margin: 0; color: var(--ink-500); font-size: .9rem; }
+.payments { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.payments li {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  padding: .55rem 0; border-bottom: 1px solid var(--line);
+}
+.payments li:last-child { border-bottom: 0; }
+.what { display: grid; gap: .1rem; min-width: 0; font-variant-numeric: tabular-nums; }
+.what small { color: var(--ink-500); overflow-wrap: anywhere; }
