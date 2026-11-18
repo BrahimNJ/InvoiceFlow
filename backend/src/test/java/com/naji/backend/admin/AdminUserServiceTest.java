@@ -1,6 +1,7 @@
 package com.naji.backend.admin;
 
 import com.naji.backend.admin.dto.AdminUserResponse;
+import com.naji.backend.auth.RefreshTokenService;
 import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.common.web.PageResponse;
@@ -19,7 +20,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,13 +46,17 @@ class AdminUserServiceTest {
     @Mock
     private AdminAccess adminAccess;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     private AdminUserService service;
 
     static final Long ADMIN_ID = 9L;
 
     @BeforeEach
     void setUp() {
-        service = new AdminUserService(userRepository, new AdminUserMapper(), adminAccess);
+        service = new AdminUserService(userRepository, new AdminUserMapper(), adminAccess, refreshTokenService,
+                Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test
@@ -135,6 +142,62 @@ class AdminUserServiceTest {
 
         assertThatThrownBy(() -> service.changeRole(ADMIN_ID, 404L, Role.ADMIN))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void suspend_stampsTheAccountAndEndsItsSessions() {
+        User jane = givenTarget(user(2L, "jane@acme.fr", Role.USER));
+
+        AdminUserResponse response = service.suspend(ADMIN_ID, 2L);
+
+        assertThat(jane.getSuspendedAt()).isEqualTo(NOW);
+        assertThat(response.suspendedAt()).isEqualTo(NOW);
+        verify(refreshTokenService).revokeAll(2L);
+    }
+
+    @Test
+    void suspend_keepsTheFirstDateOfAnAlreadySuspendedAccount() {
+        User jane = user(2L, "jane@acme.fr", Role.USER);
+        jane.setSuspendedAt(NOW.minusSeconds(86400));
+        givenTarget(jane);
+
+        service.suspend(ADMIN_ID, 2L);
+
+        assertThat(jane.getSuspendedAt()).isEqualTo(NOW.minusSeconds(86400));
+    }
+
+    @Test
+    void suspend_refusesTheCallersOwnAccount() {
+        assertThatThrownBy(() -> service.suspend(ADMIN_ID, ADMIN_ID))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage(AdminUserService.OWN_SUSPENSION);
+        verifyNoInteractions(refreshTokenService);
+    }
+
+    @Test
+    void suspend_refusesACallerSuspendedWhileWaitingForTheLock() {
+        when(userRepository.lockActiveAdminIds()).thenReturn(List.of(2L));
+
+        assertThatThrownBy(() -> service.suspend(ADMIN_ID, 2L)).isInstanceOf(AccessDeniedException.class);
+        verifyNoInteractions(refreshTokenService);
+    }
+
+    @Test
+    void reactivate_clearsTheSuspension() {
+        User jane = user(2L, "jane@acme.fr", Role.USER);
+        jane.setSuspendedAt(NOW.minusSeconds(60));
+        givenTarget(jane);
+
+        AdminUserResponse response = service.reactivate(ADMIN_ID, 2L);
+
+        assertThat(jane.isSuspended()).isFalse();
+        assertThat(response.suspendedAt()).isNull();
+    }
+
+    private User givenTarget(User target) {
+        when(userRepository.lockActiveAdminIds()).thenReturn(List.of(ADMIN_ID));
+        when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+        return target;
     }
 
     static User user(Long id, String email, Role role) {

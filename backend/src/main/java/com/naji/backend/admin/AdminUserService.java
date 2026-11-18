@@ -1,6 +1,7 @@
 package com.naji.backend.admin;
 
 import com.naji.backend.admin.dto.AdminUserResponse;
+import com.naji.backend.auth.RefreshTokenService;
 import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.common.persistence.SearchPatterns;
@@ -15,6 +16,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+
 /** Account management for admins (ADR 0010). */
 @Service
 @RequiredArgsConstructor
@@ -23,6 +26,7 @@ public class AdminUserService {
 
     public static final int MAX_PAGE_SIZE = 100;
     static final String OWN_ROLE = "You cannot change your own role";
+    static final String OWN_SUSPENSION = "You cannot suspend or reactivate your own account";
 
     /** Newest accounts first, then by id so that pages stay stable. */
     private static final Sort SORT = Sort.by("createdAt").descending().and(Sort.by("id").descending());
@@ -30,6 +34,8 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final AdminUserMapper adminUserMapper;
     private final AdminAccess adminAccess;
+    private final RefreshTokenService refreshTokenService;
+    private final Clock clock;
 
     /**
      * One page of the accounts whose email or name contains {@code search} (case-insensitive, taken literally).
@@ -51,6 +57,29 @@ public class AdminUserService {
     public AdminUserResponse changeRole(Long adminId, Long userId, Role role) {
         User target = startChange(adminId, userId, OWN_ROLE);
         target.setRole(role);
+        return adminUserMapper.toResponse(target);
+    }
+
+    /**
+     * Suspends another account: it can no longer sign in or refresh, and every session it has is ended now. Its
+     * current access token still works for at most 15 minutes outside the back-office (ADR 0010). Suspending an
+     * account that is already suspended keeps the first date.
+     */
+    @Transactional
+    public AdminUserResponse suspend(Long adminId, Long userId) {
+        User target = startChange(adminId, userId, OWN_SUSPENSION);
+        if (!target.isSuspended()) {
+            target.setSuspendedAt(clock.instant());
+        }
+        refreshTokenService.revokeAll(userId);
+        return adminUserMapper.toResponse(target);
+    }
+
+    /** Lets a suspended account sign in again. Does nothing on an active account. */
+    @Transactional
+    public AdminUserResponse reactivate(Long adminId, Long userId) {
+        User target = startChange(adminId, userId, OWN_SUSPENSION);
+        target.setSuspendedAt(null);
         return adminUserMapper.toResponse(target);
     }
 
