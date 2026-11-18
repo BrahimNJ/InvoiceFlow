@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -172,6 +173,27 @@ class AuthServiceTest {
         authService.login(new LoginRequest("jane@acme.fr", PASSWORD));
 
         assertThat(user.getLockedUntil()).isNull();
+    }
+
+    @Test
+    void login_refusesASuspendedAccountWithTheRightPassword() {
+        User user = storedUser();
+        user.setSuspendedAt(NOW.minusSeconds(60));
+
+        assertThatThrownBy(() -> authService.login(new LoginRequest("jane@acme.fr", PASSWORD)))
+                .isInstanceOf(DisabledException.class)
+                .hasMessage(AuthService.ACCOUNT_SUSPENDED);
+        verify(refreshTokenService, never()).create(any());
+    }
+
+    @Test
+    void login_doesNotRevealASuspensionToAWrongPassword() {
+        User user = storedUser();
+        user.setSuspendedAt(NOW.minusSeconds(60));
+
+        assertThatThrownBy(() -> authService.login(new LoginRequest("jane@acme.fr", "Wrong-password-1")))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessage(AuthService.INVALID_CREDENTIALS);
     }
 
     @Test
