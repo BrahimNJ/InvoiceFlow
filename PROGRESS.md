@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ **Role-based access and admin back-office** (#46): open the PR from `46-feat/role-based-access`, merge, then set `ADMIN_EMAILS` on Render. Then natural-language invoices (7.1) and company details (5.1), which unlocks the seller mentions and the PDF (4.1). Showcase lot 5 (supply chain) is still open.
+➡️ **Role-based access and admin back-office** (#46): review and merge PR #47 (merge commit, not squash), then set `ADMIN_EMAILS` on Render. Then natural-language invoices (7.1) and company details (5.1), which unlocks the seller mentions and the PDF (4.1). Showcase lot 5 (supply chain) is still open.
 
 ---
 
@@ -94,7 +94,7 @@
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
 | 6.1 | Authentication: JWT access tokens, rotating refresh tokens, sign-up/sign-in pages | ✅ Done | #19 / #20 | Verified in production on 2026-10-18 (register, me, refresh, CSRF, logout). See `docs/authentication.md`. Follow-up: Safari third-party cookies |
-| 6.2 | Role-based access and admin back-office | 🚧 In progress | #46 | Branch `46-feat/role-based-access`, complete, PR not opened yet. New `admin` module (ADR 0010): accounts list, role change, suspension (sign-in 403, sessions revoked), append-only audit log, platform counts; never business data. `/api/admin/**` needs `ROLE_ADMIN` and a database check of the caller; last-admin guard under a row lock. `ADMIN_EMAILS` bootstraps the first admins at startup while none is active. 368 backend (98.1 % / 93.6 %), 286 frontend (96.7 % / 90.8 %) and 27 E2E tests pass locally; independent review done, its 3 findings fixed (sign-up promotion removed, `@DynamicUpdate` on `users`, no re-promotion after a demotion). Follow-ups: PostgreSQL concurrency test (0.10), email verification, set `ADMIN_EMAILS` on Render after merge |
+| 6.2 | Role-based access and admin back-office | 🔍 In review | #46 / #47 | Branch `46-feat/role-based-access`. New `admin` module (ADR 0010): accounts list, role change, suspension (sign-in 403, sessions revoked), append-only audit log, platform counts; never business data. `/api/admin/**` needs `ROLE_ADMIN` and a database check of the caller; last-admin guard under a row lock. `ADMIN_EMAILS` bootstraps the first admins at startup while none is active. 368 backend (98.1 % / 93.6 %), 286 frontend (96.7 % / 90.8 %) and 27 E2E tests pass locally; independent review done, its 3 findings fixed (sign-up promotion removed, `@DynamicUpdate` on `users`, no re-promotion after a demotion). Follow-ups: PostgreSQL concurrency test (0.10), email verification, set `ADMIN_EMAILS` on Render after merge |
 
 ## Phase 7 — AI features
 
