@@ -1,7 +1,7 @@
 # Quality and testing
 
 Tests are part of every feature, never a follow-up: a module is not merged until its service, controller,
-repository and ownership tests pass in CI. At the time of writing the suites hold **369 backend tests**,
+repository and ownership tests pass in CI. At the time of writing the suites hold **368 backend tests**,
 **286 frontend tests** and **27 end-to-end tests**. The backend tests cover **98.1 % of lines and 93.6 % of
 branches** (JaCoCo), the frontend tests **96.7 % of lines and 90.8 % of branches** (Vitest, v8).
 
@@ -68,6 +68,8 @@ End-to-end tests and the Lighthouse budget need PostgreSQL and the API on `local
 docker compose up -d                      # PostgreSQL
 cd backend && ADMIN_EMAILS=e2e-admin-desktop@example.com,e2e-admin-phone@example.com \
   APP_RATE_LIMIT_AUTH_CAPACITY=120 ./mvnw spring-boot:run   # API, dev profile (other terminal)
+# Once per database: sign up both admins (password Correct-horse-42!), then restart the API so that
+# ADMIN_EMAILS promotes them; e2e.yml does the same with curl
 cd frontend && npm run build:e2e          # production build that calls localhost:8080
 npx playwright test                       # serves the build on :4200 and runs the journey
 npx --yes @lhci/cli@0.15.1 autorun        # Lighthouse budget, reports in .lighthouseci/

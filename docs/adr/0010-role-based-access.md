@@ -30,9 +30,12 @@ cannot reach a token that was already issued.
 - The admin API manages **accounts**: list and search users, change a role, suspend and reactivate. It reports
   **aggregates** only (number of users, invoices, customers). No admin endpoint returns a customer, a product, an
   invoice or a payment.
-- The first admins come from configuration: `ADMIN_EMAILS` promotes the listed accounts at startup, and a listed
-  email that signs up later as soon as it registers (a synchronous listener of the registration event, so its first
-  token already says `ADMIN`). It is idempotent and never demotes anyone; there is no endpoint to become admin.
+- The first admins come from configuration: at startup, while the platform has **no active admin**, the existing
+  accounts listed in `ADMIN_EMAILS` become admins. Afterwards the list is ignored, so an admin who demotes a listed
+  account is not overruled at the next restart. Never at sign-up: emails are not verified, so whoever registered an
+  unclaimed listed address first would become admin. There is no endpoint to become admin.
+- `users` rows are updated column by column (`@DynamicUpdate`): a sign-in that loaded an account before an admin
+  suspended it writes only its own columns and cannot undo the suspension.
 - Admin endpoints check the role and the suspension **in the database** as well as in the token, so a demoted or
   suspended admin loses access at once, not 15 minutes later.
 - The platform always keeps one active admin: an admin cannot demote or suspend themselves, and the last active admin
@@ -47,6 +50,10 @@ cannot reach a token that was already issued.
   every request would close that window at the cost of one query per call; we accept the window.
 - A promoted user sees the admin area after their next token refresh, at most 15 minutes later, or at once after
   signing in again.
+- Setting up a new platform takes one restart: the first admin signs up, then the backend restarts with their email
+  in `ADMIN_EMAILS`. The same path recovers a platform whose admins were all suspended or demoted.
+- The last-admin guarantee relies on PostgreSQL re-checking `SELECT … FOR UPDATE` rows after a lock wait; the
+  concurrency tests run on H2 until Testcontainers (task 0.10).
 - A new `admin` module depends on `user`, `auth` (to revoke sessions) and on small count queries of the business
   modules; no business module depends on it (verified by `ModularityTest`).
 - Support cases that need to look at a user's invoices are out of scope; they would need the user's consent and a

@@ -95,7 +95,7 @@ Every figure below is produced by CI on each push, and most of them **fail the b
 
 | Check | Result | Gate |
 |-------|--------|------|
-| Backend tests (JUnit 5, Spring slices, integration) | **369** passing | `./mvnw verify` |
+| Backend tests (JUnit 5, Spring slices, integration) | **368** passing | `./mvnw verify` |
 | Backend coverage (JaCoCo, Lombok excluded) | **98.1 %** lines · **93.6 %** branches | fails under 95 % / 85 % |
 | Frontend tests (Vitest, Angular TestBed) | **286** passing | `npm run test:coverage` |
 | Frontend coverage (v8) | **96.7 %** lines · **90.8 %** branches | fails under 95 % / 85 % |
@@ -237,7 +237,7 @@ from the environment, fails fast when a secret is missing).
 ## Tests
 
 ```bash
-cd backend  && ./mvnw verify                 # 369 tests, modularity, coverage floor
+cd backend  && ./mvnw verify                 # 368 tests, modularity, coverage floor
 cd frontend && npm run test:coverage         # 286 tests, coverage floor
 ```
 

@@ -11,9 +11,9 @@ application: what could go wrong, what stops it, and where in the code. Authenti
 | Another account reads or changes my data (IDOR) | Every repository query takes the authenticated owner id; a foreign id answers `404`, exactly like a missing one, so ids reveal nothing. Covered by an ownership integration test per module | `*Service`, `*OwnershipIntegrationTest` |
 | An admin reads the businesses' data | The admin API manages accounts and returns counts only; no admin endpoint returns a customer, product, invoice or payment ([ADR 0010](adr/0010-role-based-access.md)) | `admin` module |
 | A user reaches the back-office | `/api/admin/**` requires `ROLE_ADMIN` in the filter chain (`401` / `403`); every admin service also checks in the database that the caller is still an active admin, so a demoted or suspended admin loses access at once instead of when the token expires | `SecurityConfig`, `AdminAccess` |
-| A user makes themselves admin | No endpoint grants the role to oneself: the first admins come from `ADMIN_EMAILS` (at startup and at sign-up), then admins promote others; an admin cannot change their own role or suspend themselves | `AdminBootstrap`, `AdminUserService` |
+| A user makes themselves admin | No endpoint grants the role to oneself. `ADMIN_EMAILS` promotes existing accounts at startup, only while no active admin exists, and never at sign-up (emails are not verified, so a listed address must not be claimable). Then admins promote others; an admin cannot change their own role or suspend themselves | `AdminBootstrap`, `AdminUserService` |
 | The platform is left without an admin | Changes take a lock on the active admin rows and check the caller again under it, so two admins demoting or suspending each other at the same time cannot both succeed | `UserRepository.lockActiveAdminIds`, `AdminConcurrencyTest` |
-| An abusive account keeps using the service | An admin suspends it: sign-in answers `403`, every refresh token is revoked and refused; its access token lives at most 15 more minutes outside the back-office | `AdminUserService`, `AuthService`, `RefreshTokenService` |
+| An abusive account keeps using the service | An admin suspends it: sign-in answers `403`, every refresh token is revoked and refused; its access token lives at most 15 more minutes outside the back-office. A concurrent sign-in cannot write the account back as active: `users` updates touch only the changed columns | `AdminUserService`, `AuthService`, `RefreshTokenService`, `UserConcurrentUpdateTest` |
 | Admin actions cannot be traced | Append-only audit log written in the transaction of each change (who, what, whom, when), mapped to an immutable entity | `AuditLog`, `admin_actions` |
 | Stolen session through XSS | Access token in memory only, refresh token in an `HttpOnly` cookie limited to `/api/auth`; Angular escapes template output and sanitizes bound HTML | `AuthService`, `RefreshTokenCookies` |
 | Replayed refresh token | Rotation on every use; presenting a revoked token revokes every session of the account (RFC 9700) | `RefreshTokenService` |
@@ -46,6 +46,8 @@ no user input ever reaches this path. See [ADR 0007](adr/0007-docs-rendered-at-b
 | No automated dependency and code scanning | Dependabot and CodeQL, issue #33 lot 5 |
 | Refresh cookie is third-party in production (different domains) | Serve the API under the frontend domain, then `SameSite=Strict` ([Authentication](authentication.md)) |
 | A suspended account keeps its access token for up to 15 minutes outside the back-office | Accepted in [ADR 0010](adr/0010-role-based-access.md); checking the account on every request would close it at one query per call |
+| The last-admin lock is tested on H2 only | PostgreSQL concurrency test with Testcontainers, task 0.10 |
+| No email verification | Needed before any feature trusts an email address; `ADMIN_EMAILS` therefore never acts at sign-up |
 | No per-company team roles (owner, accountant) | Needs the company model, task 5.1 in [`PROGRESS.md`](../PROGRESS.md) |
 
 To report a vulnerability, please open a private security advisory on GitHub rather than a public issue.
