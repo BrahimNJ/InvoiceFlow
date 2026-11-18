@@ -1,0 +1,123 @@
+<app-header />
+
+<main class="container app-page">
+  <app-page-header
+    icon="shield"
+    heading="Accounts"
+    subtitle="Every account of the platform. You manage access here; their invoices and customers stay private."
+  />
+
+  <div class="toolbar">
+    <form class="search-field" role="search" (submit)="submitSearch($event)">
+      <app-icon name="search" [size]="18" />
+      <label class="visually-hidden" for="account-search">Search accounts</label>
+      <input
+        id="account-search"
+        class="input"
+        type="search"
+        placeholder="Search by email or name"
+        autocomplete="off"
+        spellcheck="false"
+        [formControl]="searchControl"
+      />
+      @if (searchControl.value) {
+        <button class="icon-btn clear" type="button" aria-label="Clear the search" (click)="clearSearch()">
+          <app-icon name="x" [size]="16" />
+        </button>
+      }
+    </form>
+
+    @if (result(); as page) {
+      <p class="result-count" aria-live="polite">
+        @if (activeSearch()) {
+          {{ page.totalElements }} {{ page.totalElements === 1 ? 'match' : 'matches' }} for “{{ activeSearch() }}”
+        } @else {
+          {{ page.totalElements }} {{ page.totalElements === 1 ? 'account' : 'accounts' }}
+        }
+      </p>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="18" />
+      <span>{{ message }}</span>
+      <button class="btn btn-ghost btn-sm" type="button" (click)="retry()">Retry</button>
+    </div>
+  }
+
+  @if (loading() && !result()) {
+    <div class="panel data-table-wrap" role="status" aria-label="Loading accounts">
+      @for (row of skeletonRows; track row) {
+        <div class="skeleton-row">
+          <span class="skeleton" style="width: 40%"></span>
+          <span class="skeleton" style="width: 15%"></span>
+        </div>
+      }
+    </div>
+  } @else if (result(); as page) {
+    @if (page.content.length === 0) {
+      <app-empty-state
+        icon="search"
+        [heading]="'No account matches “' + activeSearch() + '”'"
+        text="Try another email address or name."
+      >
+        <button class="btn btn-ghost" type="button" (click)="clearSearch()">Clear the search</button>
+      </app-empty-state>
+    } @else {
+      <div class="panel data-table-wrap" [attr.aria-busy]="loading()">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Account</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col">Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (account of page.content; track account.id) {
+              <tr>
+                <td>
+                  <div class="account">
+                    <span class="name">{{ account.firstName }} {{ account.lastName }}</span>
+                    <span class="email">{{ account.email }}</span>
+                  </div>
+                </td>
+                <td data-label="Role">
+                  @if (account.role === 'ADMIN') {
+                    <span class="status-badge tone-brand">Admin</span>
+                  } @else {
+                    <span class="status-badge tone-neutral">User</span>
+                  }
+                </td>
+                <td data-label="Status">
+                  @if (account.suspendedAt) {
+                    <span class="status-badge tone-danger" [title]="'Since ' + (account.suspendedAt | date: 'medium')">
+                      Suspended
+                    </span>
+                  } @else {
+                    <span class="status-badge tone-neutral">Active</span>
+                  }
+                </td>
+                <td data-label="Joined" class="joined">{{ account.createdAt | date: 'mediumDate' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (page.totalPages > 1) {
+        <nav class="pagination" aria-label="Pagination">
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasPrevious() || loading()" (click)="goTo(page.page - 1)">
+            <app-icon name="chevron-left" [size]="16" />Previous
+          </button>
+          <span>Page {{ page.page + 1 }} of {{ page.totalPages }}</span>
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasNext() || loading()" (click)="goTo(page.page + 1)">
+            Next<app-icon name="chevron-right" [size]="16" />
+          </button>
+        </nav>
+      }
+    }
+  }
+</main>
