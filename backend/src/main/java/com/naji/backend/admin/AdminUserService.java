@@ -23,12 +23,14 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final AdminUserMapper adminUserMapper;
+    private final AdminAccess adminAccess;
 
     /**
      * One page of the accounts whose email or name contains {@code search} (case-insensitive, taken literally).
      * A blank search returns every account. Out-of-range page and size are clamped.
      */
-    public PageResponse<AdminUserResponse> search(String search, int page, int size) {
+    public PageResponse<AdminUserResponse> search(Long adminId, String search, int page, int size) {
+        adminAccess.requireActiveAdmin(adminId);
         int pageSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), pageSize, SORT);
         return PageResponse.of(userRepository.search(SearchPatterns.contains(search), pageRequest),

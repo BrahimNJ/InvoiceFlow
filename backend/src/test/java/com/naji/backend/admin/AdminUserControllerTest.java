@@ -38,7 +38,7 @@ class AdminUserControllerTest {
 
     @Test
     void search_returnsAPageOfAccounts() throws Exception {
-        when(adminUserService.search("acme", 1, 10)).thenReturn(new PageResponse<>(
+        when(adminUserService.search(ADMIN_ID, "acme", 1, 10)).thenReturn(new PageResponse<>(
                 List.of(new AdminUserResponse(2L, "jane@acme.fr", "Jane", "Doe", Role.USER, null, CREATED)),
                 1, 10, 11, 2));
 
@@ -54,7 +54,7 @@ class AdminUserControllerTest {
 
     @Test
     void search_defaultsToTheFirstPageOf20() throws Exception {
-        when(adminUserService.search(null, 0, 20)).thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 0));
+        when(adminUserService.search(ADMIN_ID, null, 0, 20)).thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 0));
 
         mockMvc.perform(get("/api/admin/users").with(admin()))
                 .andExpect(status().isOk())

@@ -15,14 +15,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,11 +36,16 @@ class AdminUserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private AdminAccess adminAccess;
+
     private AdminUserService service;
+
+    static final Long ADMIN_ID = 9L;
 
     @BeforeEach
     void setUp() {
-        service = new AdminUserService(userRepository, new AdminUserMapper());
+        service = new AdminUserService(userRepository, new AdminUserMapper(), adminAccess);
     }
 
     @Test
@@ -47,7 +55,7 @@ class AdminUserServiceTest {
         when(userRepository.search(eq("%acme%"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(jane), PageRequest.of(0, 20), 1));
 
-        PageResponse<AdminUserResponse> page = service.search("ACME", 0, 20);
+        PageResponse<AdminUserResponse> page = service.search(ADMIN_ID, "ACME", 0, 20);
 
         assertThat(page.totalElements()).isEqualTo(1);
         assertThat(page.content()).containsExactly(new AdminUserResponse(
@@ -58,7 +66,7 @@ class AdminUserServiceTest {
     void search_clampsThePageAndSortsNewestFirst() {
         when(userRepository.search(eq("%"), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
 
-        service.search(null, -3, 1000);
+        service.search(ADMIN_ID, null, -3, 1000);
 
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
         verify(userRepository).search(eq("%"), pageable.capture());
@@ -66,6 +74,14 @@ class AdminUserServiceTest {
         assertThat(pageable.getValue().getPageSize()).isEqualTo(AdminUserService.MAX_PAGE_SIZE);
         assertThat(pageable.getValue().getSort())
                 .isEqualTo(Sort.by("createdAt").descending().and(Sort.by("id").descending()));
+    }
+
+    @Test
+    void search_checksTheCallerFirst() {
+        when(adminAccess.requireActiveAdmin(ADMIN_ID)).thenThrow(new AccessDeniedException("no"));
+
+        assertThatThrownBy(() -> service.search(ADMIN_ID, null, 0, 20)).isInstanceOf(AccessDeniedException.class);
+        verifyNoInteractions(userRepository);
     }
 
     static User user(Long id, String email, Role role) {
