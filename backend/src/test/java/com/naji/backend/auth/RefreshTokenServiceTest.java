@@ -101,6 +101,18 @@ class RefreshTokenServiceTest {
     }
 
     @Test
+    void rotate_rejectsAndRevokesTheTokenOfASuspendedAccount() {
+        RefreshToken current = stored("current", NOW.plusSeconds(60), null);
+        current.getUser().setSuspendedAt(NOW.minusSeconds(5));
+
+        assertThatThrownBy(() -> service.rotate("current"))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessage(RefreshTokenService.INVALID_TOKEN_MESSAGE);
+        assertThat(current.getRevokedAt()).isEqualTo(NOW);
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
     void revoke_marksTheTokenRevoked() {
         RefreshToken token = stored("current", NOW.plusSeconds(60), null);
 

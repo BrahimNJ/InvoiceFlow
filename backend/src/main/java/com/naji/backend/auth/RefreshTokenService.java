@@ -71,6 +71,11 @@ public class RefreshTokenService {
         if (current.isExpired(now)) {
             throw new BadCredentialsException(INVALID_TOKEN_MESSAGE);
         }
+        // Suspension revokes every session; this also covers a token created while the suspension was committed
+        if (current.getUser().isSuspended()) {
+            current.setRevokedAt(now);
+            throw new BadCredentialsException(INVALID_TOKEN_MESSAGE);
+        }
 
         current.setRevokedAt(now);
         return new Rotation(current.getUser(), create(current.getUser()));
