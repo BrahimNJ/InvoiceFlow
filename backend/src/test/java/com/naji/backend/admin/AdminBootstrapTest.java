@@ -1,6 +1,5 @@
 package com.naji.backend.admin;
 
-import com.naji.backend.auth.UserRegistered;
 import com.naji.backend.user.Role;
 import com.naji.backend.user.User;
 import com.naji.backend.user.UserRepository;
@@ -14,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -28,11 +29,12 @@ class AdminBootstrapTest {
     private AuditLog auditLog;
 
     @Test
-    void promotesTheListedUsers() {
-        User jane = user(1L, "jane@acme.fr", Role.USER);
+    void promotesTheListedAccountsWhileThereIsNoActiveAdmin() {
+        User jane = user(1L, "jane@acme.fr");
+        when(userRepository.countByRoleAndSuspendedAtIsNull(Role.ADMIN)).thenReturn(0L);
         when(userRepository.findByEmail("jane@acme.fr")).thenReturn(Optional.of(jane));
 
-        List<User> promoted = bootstrap("jane@acme.fr").promote(List.of("jane@acme.fr"));
+        List<User> promoted = bootstrap().promote(List.of("jane@acme.fr"));
 
         assertThat(promoted).containsExactly(jane);
         assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
@@ -40,48 +42,37 @@ class AdminBootstrapTest {
     }
 
     @Test
-    void isIdempotentForAnExistingAdmin() {
-        User admin = user(1L, "admin@acme.fr", Role.ADMIN);
-        when(userRepository.findByEmail("admin@acme.fr")).thenReturn(Optional.of(admin));
+    void ignoresTheListOnceAnActiveAdminExists() {
+        when(userRepository.countByRoleAndSuspendedAtIsNull(Role.ADMIN)).thenReturn(1L);
 
-        assertThat(bootstrap().promote(List.of("admin@acme.fr"))).isEmpty();
-        assertThat(admin.getRole()).isEqualTo(Role.ADMIN);
+        // A listed account that an admin demoted stays demoted after a restart
+        assertThat(bootstrap().promote(List.of("jane@acme.fr"))).isEmpty();
+        verify(userRepository, never()).findByEmail(any());
         verifyNoInteractions(auditLog);
     }
 
     @Test
-    void skipsUnknownEmails() {
+    void skipsAddressesWithoutAnAccount() {
         when(userRepository.findByEmail("nobody@acme.fr")).thenReturn(Optional.empty());
 
         assertThat(bootstrap().promote(List.of("nobody@acme.fr"))).isEmpty();
+        verifyNoInteractions(auditLog);
+    }
+
+    @Test
+    void doesNothingWithoutAList() {
+        assertThat(bootstrap().promote(List.of())).isEmpty();
+        verifyNoInteractions(userRepository, auditLog);
     }
 
     @Test
     void run_usesTheConfiguredEmails() {
-        User jane = user(1L, "jane@acme.fr", Role.USER);
+        User jane = user(1L, "jane@acme.fr");
         when(userRepository.findByEmail("jane@acme.fr")).thenReturn(Optional.of(jane));
 
         bootstrap(" Jane@ACME.fr ").run(null);
 
         assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
-    }
-
-    @Test
-    void onRegistered_promotesAListedEmail() {
-        User jane = user(1L, "jane@acme.fr", Role.USER);
-        when(userRepository.findByEmail("jane@acme.fr")).thenReturn(Optional.of(jane));
-
-        bootstrap("jane@acme.fr").onRegistered(new UserRegistered(1L, "jane@acme.fr"));
-
-        assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
-        verify(auditLog).record(null, AdminActionType.PROMOTED_FROM_CONFIG, 1L, null);
-    }
-
-    @Test
-    void onRegistered_ignoresAnyOtherEmail() {
-        bootstrap("admin@acme.fr").onRegistered(new UserRegistered(1L, "jane@acme.fr"));
-
-        verifyNoInteractions(userRepository, auditLog);
     }
 
     @Test
@@ -96,11 +87,11 @@ class AdminBootstrapTest {
         return new AdminBootstrap(new AdminProperties(List.of(emails)), userRepository, auditLog);
     }
 
-    private static User user(Long id, String email, Role role) {
+    private static User user(Long id, String email) {
         User user = new User();
         user.setId(id);
         user.setEmail(email);
-        user.setRole(role);
+        user.setRole(Role.USER);
         return user;
     }
 }

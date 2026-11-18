@@ -33,6 +33,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countBySuspendedAtIsNotNull();
 
+    long countByRoleAndSuspendedAtIsNull(Role role);
+
     long countByCreatedAtGreaterThanEqual(Instant since);
 
     /**
