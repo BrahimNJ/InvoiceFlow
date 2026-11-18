@@ -157,6 +157,41 @@ describe('AdminUsers', () => {
       http.expectNone(`${ADMIN_API}/users/2/role`);
     });
 
+    it('suspends an account after a danger confirmation', async () => {
+      await respond(listRequest(), pageOf([testAdminUser()]));
+
+      labelled('Suspend: jane@acme.fr').click();
+      await fixture.whenStable();
+      expect(confirm.current()?.title).toBe('Suspend Jane Doe?');
+      expect(confirm.current()?.tone).toBe('danger');
+      await answer(true);
+
+      const request = http.expectOne(`${ADMIN_API}/users/2/suspension`);
+      expect(request.request.method).toBe('PUT');
+      request.flush(testAdminUser({ suspendedAt: '2026-11-18T10:00:00Z' }));
+      await fixture.whenStable();
+
+      expect(page.querySelector('[data-label="Status"]')?.textContent).toContain('Suspended');
+      expect(labelled('Reactivate: jane@acme.fr')).toBeTruthy();
+      expect(toasts.toasts().map((toast) => toast.message)).toEqual(['Jane Doe is suspended.']);
+    });
+
+    it('reactivates a suspended account without asking', async () => {
+      await respond(listRequest(), pageOf([testAdminUser({ suspendedAt: '2026-11-18T10:00:00Z' })]));
+
+      labelled('Reactivate: jane@acme.fr').click();
+      await fixture.whenStable();
+      expect(confirm.current()).toBeNull();
+
+      const request = http.expectOne(`${ADMIN_API}/users/2/suspension`);
+      expect(request.request.method).toBe('DELETE');
+      request.flush(testAdminUser());
+      await fixture.whenStable();
+
+      expect(page.querySelector('[data-label="Status"]')?.textContent).toContain('Active');
+      expect(toasts.toasts().map((toast) => toast.message)).toEqual(['Jane Doe can sign in again.']);
+    });
+
     it('shows the refusal of the API in a toast', async () => {
       await respond(listRequest(), pageOf([testAdminUser()]));
 

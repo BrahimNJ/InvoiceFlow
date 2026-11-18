@@ -117,6 +117,17 @@
                       >
                         {{ account.role === 'USER' ? 'Make admin' : 'Remove admin' }}
                       </button>
+                      <button
+                        class="btn btn-ghost btn-sm"
+                        [class.danger]="!account.suspendedAt"
+                        type="button"
+                        [disabled]="busyId() !== null"
+                        [attr.aria-label]="(account.suspendedAt ? 'Reactivate: ' : 'Suspend: ') + account.email"
+                        (click)="toggleSuspension(account)"
+                      >
+                        <app-icon [name]="account.suspendedAt ? 'check-circle' : 'lock'" [size]="15" />
+                        {{ account.suspendedAt ? 'Reactivate' : 'Suspend' }}
+                      </button>
                     }
                   </div>
                 </td>

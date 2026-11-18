@@ -133,6 +133,24 @@ export class AdminUsers {
     }
   }
 
+  protected async toggleSuspension(account: AdminUser): Promise<void> {
+    const name = `${account.firstName} ${account.lastName}`;
+    if (account.suspendedAt) {
+      this.run(account, this.admin.reactivate(account.id), () => `${name} can sign in again.`);
+      return;
+    }
+    const confirmed = await this.confirm.ask({
+      title: `Suspend ${name}?`,
+      message:
+        'They are signed out of every session and cannot sign in until you reactivate the account. Their data is kept.',
+      confirmLabel: 'Suspend',
+      tone: 'danger',
+    });
+    if (confirmed) {
+      this.run(account, this.admin.suspend(account.id), () => `${name} is suspended.`);
+    }
+  }
+
   /** One change at a time; the updated account replaces its row, nothing else is reloaded. */
   private run(account: AdminUser, request: Observable<AdminUser>, success: (updated: AdminUser) => string): void {
     if (this.busyId() !== null) {

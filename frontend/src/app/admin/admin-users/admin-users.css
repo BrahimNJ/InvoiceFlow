@@ -7,3 +7,4 @@
 .joined { color: var(--ink-500); font-variant-numeric: tabular-nums; }
 .row-actions { flex-wrap: wrap; }
 .self { color: var(--ink-500); font-size: .85rem; font-weight: 600; }
+.btn.danger:hover:not(:disabled) { color: var(--danger); background: var(--danger-50); }
