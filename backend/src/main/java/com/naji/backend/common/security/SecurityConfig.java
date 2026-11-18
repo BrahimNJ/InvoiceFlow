@@ -42,6 +42,9 @@ public class SecurityConfig {
             "/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout"
     };
 
+    /** Admin back-office (ADR 0010): accounts and aggregates only, never another user's business data. */
+    public static final String ADMIN_API = "/api/admin/**";
+
     /** OpenAPI description and the Scalar reference: public, read-only documentation of the API contract. */
     private static final String[] API_DOCUMENTATION = {"/v3/api-docs", "/v3/api-docs/**", "/scalar", "/scalar/**"};
 
@@ -73,6 +76,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, API_DOCUMENTATION).permitAll()
+                        .requestMatchers(ADMIN_API).hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
