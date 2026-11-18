@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -51,6 +52,9 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private ApplicationEventPublisher events;
+
     private final PasswordEncoder passwordEncoder = spy(PasswordEncoderFactories.createDelegatingPasswordEncoder());
 
     private AuthService authService;
@@ -58,7 +62,7 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         authService = new AuthService(userRepository, new UserMapper(), passwordEncoder,
-                accessTokenService, refreshTokenService, Clock.fixed(NOW, ZoneOffset.UTC));
+                accessTokenService, refreshTokenService, Clock.fixed(NOW, ZoneOffset.UTC), events);
     }
 
     @Test
@@ -85,6 +89,7 @@ class AuthServiceTest {
         assertThat(session.user().email()).isEqualTo("jane@acme.fr");
         assertThat(session.accessToken()).isEqualTo(ACCESS);
         assertThat(session.refreshToken()).isEqualTo(REFRESH);
+        verify(events).publishEvent(new UserRegistered(1L, "jane@acme.fr"));
     }
 
     @Test

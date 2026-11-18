@@ -10,6 +10,7 @@ import com.naji.backend.user.UserMapper;
 import com.naji.backend.user.UserRepository;
 import com.naji.backend.user.dto.UserResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -46,18 +47,21 @@ public class AuthService {
     private final AccessTokenService accessTokenService;
     private final RefreshTokenService refreshTokenService;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
     /** Checked when the email is unknown, so the response time does not reveal which accounts exist. */
     private final String dummyPasswordHash;
 
     public AuthService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder,
-                       AccessTokenService accessTokenService, RefreshTokenService refreshTokenService, Clock clock) {
+                       AccessTokenService accessTokenService, RefreshTokenService refreshTokenService, Clock clock,
+                       ApplicationEventPublisher events) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.accessTokenService = accessTokenService;
         this.refreshTokenService = refreshTokenService;
         this.clock = clock;
+        this.events = events;
         this.dummyPasswordHash = passwordEncoder.encode("dummy-password-for-timing-only");
     }
 
@@ -82,6 +86,8 @@ public class AuthService {
             // Two registrations with the same email at the same time: the unique constraint decides
             throw new ConflictException(EMAIL_TAKEN);
         }
+        // Synchronous listeners run here, in this transaction, so the first access token already reflects them
+        events.publishEvent(new UserRegistered(user.getId(), user.getEmail()));
         return startSession(user);
     }
 
