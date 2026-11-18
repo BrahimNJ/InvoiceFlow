@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
                or lower(u.lastName) like :pattern escape '!'
             """)
     Page<User> search(@Param("pattern") String pattern, Pageable pageable);
+
+    long countByRole(Role role);
+
+    long countBySuspendedAtIsNotNull();
+
+    long countByCreatedAtGreaterThanEqual(Instant since);
 
     /**
      * Ids of the active admins, with their rows locked until the transaction ends ({@code SELECT … FOR UPDATE}).

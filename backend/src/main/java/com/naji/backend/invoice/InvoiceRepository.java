@@ -15,6 +15,9 @@ import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
+    /** Invoices of every owner in one of the statuses: an aggregate for the admin back-office (ADR 0010). */
+    long countByStatusIn(Collection<InvoiceStatus> statuses);
+
     /**
      * Invoices of an owner whose number or customer name matches a lower-case {@code LIKE} pattern
      * ({@code !} escapes {@code %}, {@code _} and itself; {@code %} matches every invoice). Every other filter is

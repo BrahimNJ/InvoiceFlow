@@ -105,6 +105,25 @@ class UserRepositoryTest {
     }
 
     @Test
+    void counts_followRolesSuspensionsAndSignUpDates() {
+        // Counted as differences: the in-memory database is shared with other tests
+        long admins = userRepository.countByRole(Role.ADMIN);
+        long suspended = userRepository.countBySuspendedAtIsNotNull();
+        long recent = userRepository.countByCreatedAtGreaterThanEqual(Instant.now().minusSeconds(60));
+
+        User admin = user("count-admin-" + java.util.UUID.randomUUID() + "@acme.fr");
+        admin.setRole(Role.ADMIN);
+        User suspendedUser = user("count-suspended-" + java.util.UUID.randomUUID() + "@acme.fr");
+        suspendedUser.setSuspendedAt(Instant.parse("2026-11-18T10:00:00Z"));
+        userRepository.saveAllAndFlush(java.util.List.of(admin, suspendedUser));
+
+        assertThat(userRepository.countByRole(Role.ADMIN)).isEqualTo(admins + 1);
+        assertThat(userRepository.countBySuspendedAtIsNotNull()).isEqualTo(suspended + 1);
+        assertThat(userRepository.countByCreatedAtGreaterThanEqual(Instant.now().minusSeconds(60)))
+                .isEqualTo(recent + 2);
+    }
+
+    @Test
     void normalizeEmail_trimsAndLowerCases() {
         assertThat(User.normalizeEmail("  Jane.Doe@ACME.fr ")).isEqualTo("jane.doe@acme.fr");
     }
