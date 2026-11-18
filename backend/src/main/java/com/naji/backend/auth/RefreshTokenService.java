@@ -91,6 +91,11 @@ public class RefreshTokenService {
                 .ifPresent(token -> token.setRevokedAt(clock.instant()));
     }
 
+    /** Signs the user out of every session, e.g. when an admin suspends the account. Returns the sessions ended. */
+    public int revokeAll(Long userId) {
+        return refreshTokenRepository.revokeAllActiveByUserId(userId, clock.instant());
+    }
+
     private RefreshToken find(String value) {
         if (value == null || value.isBlank()) {
             throw new BadCredentialsException(INVALID_TOKEN_MESSAGE);

@@ -132,6 +132,13 @@ class RefreshTokenServiceTest {
     }
 
     @Test
+    void revokeAll_endsEveryActiveSessionOfTheUser() {
+        when(refreshTokenRepository.revokeAllActiveByUserId(1L, NOW)).thenReturn(3);
+
+        assertThat(service.revokeAll(1L)).isEqualTo(3);
+    }
+
+    @Test
     void hash_isSha256Hex() {
         assertThat(RefreshTokenService.hash("abc"))
                 .isEqualTo("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
