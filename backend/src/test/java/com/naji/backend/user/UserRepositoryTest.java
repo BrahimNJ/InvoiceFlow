@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -67,6 +70,26 @@ class UserRepositoryTest {
     }
 
     @Test
+    void search_matchesEmailOrNamesCaseInsensitively() {
+        // The in-memory database is shared with integration tests: unique values keep this test isolated
+        String tag = java.util.UUID.randomUUID().toString().substring(0, 8);
+        userRepository.saveAndFlush(user("jane-" + tag + "@acme.fr"));
+        User bob = user("bob-" + tag + "@globex.fr");
+        bob.setFirstName("Bob");
+        bob.setLastName("Martin" + tag);
+        userRepository.saveAndFlush(bob);
+        PageRequest firstPage = PageRequest.of(0, 10, Sort.by("email"));
+
+        assertThat(emails(userRepository.search("%jane-" + tag + "@acme%", firstPage)))
+                .containsExactly("jane-" + tag + "@acme.fr");
+        assertThat(emails(userRepository.search("%martin" + tag + "%", firstPage)))
+                .containsExactly("bob-" + tag + "@globex.fr");
+        assertThat(emails(userRepository.search("%" + tag + "%", firstPage)))
+                .containsExactly("bob-" + tag + "@globex.fr", "jane-" + tag + "@acme.fr");
+        assertThat(userRepository.search("%nobody-" + tag + "%", firstPage)).isEmpty();
+    }
+
+    @Test
     void normalizeEmail_trimsAndLowerCases() {
         assertThat(User.normalizeEmail("  Jane.Doe@ACME.fr ")).isEqualTo("jane.doe@acme.fr");
     }
@@ -80,6 +103,10 @@ class UserRepositoryTest {
         user.setLockedUntil(now.plusSeconds(60));
         assertThat(user.isLocked(now)).isTrue();
         assertThat(user.isLocked(now.plusSeconds(61))).isFalse();
+    }
+
+    private static java.util.List<String> emails(Page<User> page) {
+        return page.map(User::getEmail).getContent();
     }
 
     private static User user(String email) {
