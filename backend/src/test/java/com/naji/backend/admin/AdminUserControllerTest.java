@@ -1,6 +1,7 @@
 package com.naji.backend.admin;
 
 import com.naji.backend.admin.dto.AdminUserResponse;
+import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.security.SecurityConfig;
 import com.naji.backend.common.web.PageResponse;
 import com.naji.backend.user.Role;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,6 +22,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,6 +69,45 @@ class AdminUserControllerTest {
         mockMvc.perform(get("/api/admin/users").with(user()))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(adminUserService);
+    }
+
+    @Test
+    void changeRole_returnsTheUpdatedAccount() throws Exception {
+        when(adminUserService.changeRole(ADMIN_ID, 2L, Role.ADMIN)).thenReturn(
+                new AdminUserResponse(2L, "jane@acme.fr", "Jane", "Doe", Role.ADMIN, null, CREATED));
+
+        mockMvc.perform(put("/api/admin/users/2/role").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\": \"ADMIN\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+    }
+
+    @Test
+    void changeRole_returns400WithoutARole() throws Exception {
+        mockMvc.perform(put("/api/admin/users/2/role").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.role").value("Choose a role"));
+        verifyNoInteractions(adminUserService);
+    }
+
+    @Test
+    void changeRole_returns400OnAnUnknownRole() throws Exception {
+        mockMvc.perform(put("/api/admin/users/2/role").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\": \"ROOT\"}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(adminUserService);
+    }
+
+    @Test
+    void changeRole_returns409OnTheCallersOwnAccount() throws Exception {
+        when(adminUserService.changeRole(ADMIN_ID, ADMIN_ID, Role.USER))
+                .thenThrow(new ConflictException("You cannot change your own role"));
+
+        mockMvc.perform(put("/api/admin/users/1/role").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\": \"USER\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("You cannot change your own role"));
     }
 
     static RequestPostProcessor admin() {
