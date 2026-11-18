@@ -7,7 +7,7 @@ import { TEST_USER, authResponse } from '../../core/auth/auth.fixtures';
 import { AUTH_ENDPOINTS, AuthService } from '../../core/auth/auth.service';
 import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
-import { pageOf, testAdminUser } from '../admin.fixtures';
+import { pageOf, testAdminUser, testStats } from '../admin.fixtures';
 import { ADMIN_API } from '../admin.service';
 import { AdminUsers, PAGE_SIZE } from './admin-users';
 
@@ -25,7 +25,11 @@ describe('AdminUsers', () => {
     page = fixture.nativeElement as HTMLElement;
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // The figures above the list are covered by their own spec
+    http.match(`${ADMIN_API}/stats`).forEach((request) => request.flush(testStats()));
+    http.verify();
+  });
 
   const listRequest = (): TestRequest => http.expectOne((r) => r.url === `${ADMIN_API}/users`);
 
