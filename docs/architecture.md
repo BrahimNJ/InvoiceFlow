@@ -14,7 +14,8 @@ com.naji.backend
 ├── customer/    customer book, scoped to the owner        (reference module)
 ├── product/     catalogue: goods / services, price, VAT rate
 ├── invoice/     drafts, lines, totals, numbering, readiness, lifecycle, amount paid and balance
-└── payment/     payments received on issued invoices, applied through the invoice API ([ADR 0009](adr/0009-payments-module.md))
+├── payment/     payments received on issued invoices, applied through the invoice API ([ADR 0009](adr/0009-payments-module.md))
+└── admin/       back-office: accounts, roles, suspensions, audit log, platform counts ([ADR 0010](adr/0010-role-based-access.md))
 ```
 
 ### Module dependencies, verified
@@ -91,6 +92,7 @@ erDiagram
     invoices ||--|{ invoice_lines : contains
     products |o--o{ invoice_lines : "source (values copied)"
     invoices ||--o{ payments : "receives (sum kept in amount_paid)"
+    users ||--o{ admin_actions : "did or underwent"
 ```
 
 - Every business table carries `owner_id` with `ON DELETE CASCADE` to its user.
@@ -98,7 +100,9 @@ erDiagram
   issued invoice must never change when the customer or the catalogue is edited later (`ON DELETE SET NULL` on the
   links).
 - `invoices (owner_id, number)` is unique; `invoice_number_sequences` holds one counter per owner and fiscal year.
-- Nine Flyway migrations (`V1` to `V9`) build the schema; the application never alters it at runtime
+- `admin_actions` is append-only: the audit log of role changes and suspensions (`admin_id` is null for a promotion
+  from `ADMIN_EMAILS`). `users.suspended_at` marks a suspended account.
+- Eleven Flyway migrations (`V1` to `V11`) build the schema; the application never alters it at runtime
   (`ddl-auto=validate`).
 
 ## Frontend
@@ -110,6 +114,7 @@ frontend/src/app
 ├── home/        public landing page
 ├── docs/        this documentation
 ├── customers/ products/ invoices/ payments/   one folder per business feature, one sub-folder per screen
+├── admin/       back-office (accounts, audit log), behind adminGuard
 └── auth/        sign-in and sign-up pages
 ```
 
