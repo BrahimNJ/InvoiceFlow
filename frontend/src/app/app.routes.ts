@@ -104,5 +104,11 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     loadComponent: () => import('./admin/admin-users/admin-users').then((m) => m.AdminUsers),
   },
+  {
+    path: 'admin/audit',
+    title: 'Audit log · Admin · InvoiceFlow',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./admin/admin-audit/admin-audit').then((m) => m.AdminAudit),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,75 @@
+<app-header />
+
+<main class="container app-page">
+  <app-page-header
+    icon="clock"
+    heading="Audit log"
+    subtitle="Every role change and suspension, who made it and when. Entries cannot be edited or deleted."
+  />
+
+  <app-admin-tabs />
+
+  @if (error(); as message) {
+    <div class="alert" role="alert">
+      <app-icon name="alert" [size]="18" />
+      <span>{{ message }}</span>
+      <button class="btn btn-ghost btn-sm" type="button" (click)="retry()">Retry</button>
+    </div>
+  }
+
+  @if (loading() && !result()) {
+    <div class="panel data-table-wrap" role="status" aria-label="Loading the audit log">
+      @for (row of [1, 2, 3]; track row) {
+        <div class="skeleton-row"><span class="skeleton" style="width: 60%"></span></div>
+      }
+    </div>
+  } @else if (result(); as page) {
+    @if (page.content.length === 0) {
+      <app-empty-state
+        icon="clock"
+        heading="Nothing recorded yet"
+        text="Role changes and suspensions will appear here."
+      />
+    } @else {
+      <div class="panel data-table-wrap" [attr.aria-busy]="loading()">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">When</th>
+              <th scope="col">Action</th>
+              <th scope="col">Account</th>
+              <th scope="col">By</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of page.content; track entry.id) {
+              <tr>
+                <td class="when">{{ entry.createdAt | date: 'medium' }}</td>
+                <td data-label="Action">
+                  <span class="action">{{ label(entry) }}</span>
+                  @if (entry.details) {
+                    <span class="details">{{ entry.details }}</span>
+                  }
+                </td>
+                <td data-label="Account">{{ entry.targetEmail }}</td>
+                <td data-label="By" [class.muted]="!entry.adminEmail">{{ entry.adminEmail ?? 'ADMIN_EMAILS' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (page.totalPages > 1) {
+        <nav class="pagination" aria-label="Pagination">
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasPrevious() || loading()" (click)="goTo(page.page - 1)">
+            <app-icon name="chevron-left" [size]="16" />Previous
+          </button>
+          <span>Page {{ page.page + 1 }} of {{ page.totalPages }}</span>
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="!hasNext() || loading()" (click)="goTo(page.page + 1)">
+            Next<app-icon name="chevron-right" [size]="16" />
+          </button>
+        </nav>
+      }
+    }
+  }
+</main>

@@ -14,6 +14,7 @@ import { EmptyState } from '../../shared/ui/empty-state';
 import { PageHeader } from '../../shared/ui/page-header';
 import { ToastService } from '../../shared/ui/toast.service';
 import { AdminStats } from '../admin-stats/admin-stats';
+import { AdminTabs } from '../admin-tabs';
 import { AdminUser } from '../admin.models';
 import { AdminService } from '../admin.service';
 
@@ -26,7 +27,7 @@ type ListResult = { page: Page<AdminUser> } | { error: unknown };
 /** Back-office: every account of the platform, newest first, searchable by email or name. */
 @Component({
   selector: 'app-admin-users',
-  imports: [AdminStats, AppHeader, DatePipe, EmptyState, Icon, PageHeader, ReactiveFormsModule],
+  imports: [AdminStats, AdminTabs, AppHeader, DatePipe, EmptyState, Icon, PageHeader, ReactiveFormsModule],
   templateUrl: './admin-users.html',
   styleUrl: './admin-users.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

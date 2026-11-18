@@ -1,0 +1,6 @@
+.alert { align-items: center; }
+.alert span { flex: 1; }
+
+.when { color: var(--ink-500); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.action { font-weight: 650; color: var(--ink-900); }
+.details { display: block; color: var(--ink-500); font-size: .85rem; font-family: var(--font-mono, monospace); }
