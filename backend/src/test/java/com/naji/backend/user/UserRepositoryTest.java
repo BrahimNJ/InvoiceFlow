@@ -90,6 +90,21 @@ class UserRepositoryTest {
     }
 
     @Test
+    void lockActiveAdminIds_returnsOnlyActiveAdmins() {
+        User admin = user("admin-" + java.util.UUID.randomUUID() + "@acme.fr");
+        admin.setRole(Role.ADMIN);
+        User suspendedAdmin = user("suspended-" + java.util.UUID.randomUUID() + "@acme.fr");
+        suspendedAdmin.setRole(Role.ADMIN);
+        suspendedAdmin.setSuspendedAt(Instant.parse("2026-11-18T10:00:00Z"));
+        User plainUser = user("user-" + java.util.UUID.randomUUID() + "@acme.fr");
+        userRepository.saveAllAndFlush(java.util.List.of(admin, suspendedAdmin, plainUser));
+
+        assertThat(userRepository.lockActiveAdminIds())
+                .contains(admin.getId())
+                .doesNotContain(suspendedAdmin.getId(), plainUser.getId());
+    }
+
+    @Test
     void normalizeEmail_trimsAndLowerCases() {
         assertThat(User.normalizeEmail("  Jane.Doe@ACME.fr ")).isEqualTo("jane.doe@acme.fr");
     }
