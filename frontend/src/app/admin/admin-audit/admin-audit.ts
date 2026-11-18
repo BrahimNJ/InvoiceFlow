@@ -19,7 +19,7 @@ const ACTION_LABELS: Record<AdminActionType, string> = {
   ROLE_CHANGED: 'Role changed',
   ACCOUNT_SUSPENDED: 'Account suspended',
   ACCOUNT_REACTIVATED: 'Account reactivated',
-  PROMOTED_AT_STARTUP: 'Made admin at startup',
+  PROMOTED_FROM_CONFIG: 'Made admin by ADMIN_EMAILS',
 };
 
 type AuditResult = { page: Page<AdminAction> } | { error: unknown };

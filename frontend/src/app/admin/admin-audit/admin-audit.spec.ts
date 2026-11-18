@@ -42,7 +42,7 @@ describe('AdminAudit', () => {
       auditRequest(),
       pageOf([
         testAdminAction({ action: 'ROLE_CHANGED', details: 'USER -> ADMIN' }),
-        testAdminAction({ id: 4, action: 'PROMOTED_AT_STARTUP', adminId: null, adminEmail: null }),
+        testAdminAction({ id: 4, action: 'PROMOTED_FROM_CONFIG', adminId: null, adminEmail: null }),
       ]),
     );
 
@@ -51,7 +51,7 @@ describe('AdminAudit', () => {
     expect(rows[0].querySelector('.details')?.textContent).toBe('USER -> ADMIN');
     expect(rows[0].querySelector('[data-label="Account"]')?.textContent).toBe('jane@acme.fr');
     expect(rows[0].querySelector('[data-label="By"]')?.textContent).toBe('admin@acme.fr');
-    expect(rows[1].querySelector('.action')?.textContent).toBe('Made admin at startup');
+    expect(rows[1].querySelector('.action')?.textContent).toBe('Made admin by ADMIN_EMAILS');
     expect(rows[1].querySelector('[data-label="By"]')?.textContent).toBe('ADMIN_EMAILS');
   });
 

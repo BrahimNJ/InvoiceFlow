@@ -9,7 +9,7 @@ import java.util.Objects;
 /**
  * Admin settings ({@code app.admin.*}).
  *
- * @param emails accounts promoted to admin at startup ({@code ADMIN_EMAILS}, comma-separated); normalized,
+ * @param emails accounts promoted to admin at startup and at sign-up ({@code ADMIN_EMAILS}, comma-separated); normalized,
  *               blanks dropped
  */
 @ConfigurationProperties("app.admin")

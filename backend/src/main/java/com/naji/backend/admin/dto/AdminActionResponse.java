@@ -7,7 +7,7 @@ import java.time.Instant;
 /**
  * One line of the audit log.
  *
- * @param adminEmail {@code null} for the startup promotion from {@code ADMIN_EMAILS}
+ * @param adminEmail {@code null} for a promotion from {@code ADMIN_EMAILS}
  */
 public record AdminActionResponse(
         Long id,

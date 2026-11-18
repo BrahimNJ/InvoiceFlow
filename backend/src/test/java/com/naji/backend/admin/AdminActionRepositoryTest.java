@@ -40,7 +40,7 @@ class AdminActionRepositoryTest {
         Instant later = Instant.parse("2999-01-01T00:00:00Z");
         Long target = newUser().getId();
         AdminAction first = adminActionRepository.save(
-                new AdminAction(null, AdminActionType.PROMOTED_AT_STARTUP, target, null, later));
+                new AdminAction(null, AdminActionType.PROMOTED_FROM_CONFIG, target, null, later));
         AdminAction second = adminActionRepository.save(
                 new AdminAction(target, AdminActionType.ROLE_CHANGED, target, "USER → ADMIN", later.plusSeconds(1)));
         AdminAction sameInstant = adminActionRepository.saveAndFlush(

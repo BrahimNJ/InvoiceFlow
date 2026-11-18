@@ -1,5 +1,6 @@
 package com.naji.backend.admin;
 
+import com.naji.backend.auth.UserRegistered;
 import com.naji.backend.user.Role;
 import com.naji.backend.user.User;
 import com.naji.backend.user.UserRepository;
@@ -35,7 +36,7 @@ class AdminBootstrapTest {
 
         assertThat(promoted).containsExactly(jane);
         assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
-        verify(auditLog).record(null, AdminActionType.PROMOTED_AT_STARTUP, 1L, null);
+        verify(auditLog).record(null, AdminActionType.PROMOTED_FROM_CONFIG, 1L, null);
     }
 
     @Test
@@ -63,6 +64,24 @@ class AdminBootstrapTest {
         bootstrap(" Jane@ACME.fr ").run(null);
 
         assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
+    }
+
+    @Test
+    void onRegistered_promotesAListedEmail() {
+        User jane = user(1L, "jane@acme.fr", Role.USER);
+        when(userRepository.findByEmail("jane@acme.fr")).thenReturn(Optional.of(jane));
+
+        bootstrap("jane@acme.fr").onRegistered(new UserRegistered(1L, "jane@acme.fr"));
+
+        assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
+        verify(auditLog).record(null, AdminActionType.PROMOTED_FROM_CONFIG, 1L, null);
+    }
+
+    @Test
+    void onRegistered_ignoresAnyOtherEmail() {
+        bootstrap("admin@acme.fr").onRegistered(new UserRegistered(1L, "jane@acme.fr"));
+
+        verifyNoInteractions(userRepository, auditLog);
     }
 
     @Test

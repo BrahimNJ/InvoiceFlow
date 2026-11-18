@@ -31,12 +31,12 @@ export type AdminActionType =
   | 'ROLE_CHANGED'
   | 'ACCOUNT_SUSPENDED'
   | 'ACCOUNT_REACTIVATED'
-  | 'PROMOTED_AT_STARTUP';
+  | 'PROMOTED_FROM_CONFIG';
 
 export interface AdminAction {
   id: number;
   action: AdminActionType;
-  /** Null for the promotion from ADMIN_EMAILS at startup. */
+  /** Null for a promotion from ADMIN_EMAILS. */
   adminId: number | null;
   adminEmail: string | null;
   targetUserId: number;

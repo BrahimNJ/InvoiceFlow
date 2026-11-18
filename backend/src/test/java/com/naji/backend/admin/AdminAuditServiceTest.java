@@ -51,7 +51,7 @@ class AdminAuditServiceTest {
     @Test
     void list_namesTheAdminAndTheTargetOfEachAction() {
         AdminAction change = new AdminAction(ADMIN_ID, AdminActionType.ROLE_CHANGED, 2L, "USER -> ADMIN", NOW);
-        AdminAction startup = new AdminAction(null, AdminActionType.PROMOTED_AT_STARTUP, ADMIN_ID, null, NOW);
+        AdminAction startup = new AdminAction(null, AdminActionType.PROMOTED_FROM_CONFIG, ADMIN_ID, null, NOW);
         when(adminActionRepository.findAllByOrderByCreatedAtDescIdDesc(any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(change, startup), PageRequest.of(0, 20), 2));
         when(userRepository.findAllById(Set.of(ADMIN_ID, 2L))).thenReturn(List.of(

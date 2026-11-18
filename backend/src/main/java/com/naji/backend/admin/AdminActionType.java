@@ -5,6 +5,6 @@ public enum AdminActionType {
     ROLE_CHANGED,
     ACCOUNT_SUSPENDED,
     ACCOUNT_REACTIVATED,
-    /** Promoted by {@code ADMIN_EMAILS} at startup; no admin is behind it. */
-    PROMOTED_AT_STARTUP
+    /** Promoted because {@code ADMIN_EMAILS} lists the account, at startup or at sign-up; no admin is behind it. */
+    PROMOTED_FROM_CONFIG
 }

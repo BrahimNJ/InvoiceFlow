@@ -27,7 +27,7 @@ public class AdminAction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** {@code null} for the startup promotion from {@code ADMIN_EMAILS}. */
+    /** {@code null} for a promotion from {@code ADMIN_EMAILS}. */
     @Column(updatable = false)
     private Long adminId;
 

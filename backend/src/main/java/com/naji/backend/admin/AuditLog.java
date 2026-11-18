@@ -18,7 +18,7 @@ public class AuditLog {
     private final AdminActionRepository adminActionRepository;
     private final Clock clock;
 
-    /** @param adminId {@code null} when no admin is behind the action (startup promotion) */
+    /** @param adminId {@code null} when no admin is behind the action (promotion from {@code ADMIN_EMAILS}) */
     public void record(Long adminId, AdminActionType action, Long targetUserId, String details) {
         adminActionRepository.save(new AdminAction(adminId, action, targetUserId, details, clock.instant()));
     }
