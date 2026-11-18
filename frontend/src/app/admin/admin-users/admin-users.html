@@ -73,6 +73,7 @@
               <th scope="col">Role</th>
               <th scope="col">Status</th>
               <th scope="col">Joined</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -101,6 +102,24 @@
                   }
                 </td>
                 <td data-label="Joined" class="joined">{{ account.createdAt | date: 'mediumDate' }}</td>
+                <td>
+                  <div class="row-actions">
+                    @if (isSelf(account)) {
+                      <span class="self">You</span>
+                    } @else {
+                      <button
+                        class="btn btn-ghost btn-sm"
+                        type="button"
+                        [disabled]="busyId() !== null"
+                        [attr.aria-busy]="busyId() === account.id"
+                        [attr.aria-label]="(account.role === 'USER' ? 'Make admin: ' : 'Remove admin role: ') + account.email"
+                        (click)="changeRole(account)"
+                      >
+                        {{ account.role === 'USER' ? 'Make admin' : 'Remove admin' }}
+                      </button>
+                    }
+                  </div>
+                </td>
               </tr>
             }
           </tbody>

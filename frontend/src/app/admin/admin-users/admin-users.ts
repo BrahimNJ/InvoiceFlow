@@ -1,15 +1,18 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Subject, catchError, debounceTime, map, of, switchMap, tap } from 'rxjs';
+import { Observable, Subject, catchError, debounceTime, finalize, map, of, switchMap, tap } from 'rxjs';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { Page } from '../../core/http/page';
 import { errorMessage } from '../../core/http/problem-detail';
 import { AppHeader } from '../../shared/app-header';
 import { Icon } from '../../shared/icon/icon';
+import { ConfirmService } from '../../shared/ui/confirm.service';
 import { EmptyState } from '../../shared/ui/empty-state';
 import { PageHeader } from '../../shared/ui/page-header';
+import { ToastService } from '../../shared/ui/toast.service';
 import { AdminUser } from '../admin.models';
 import { AdminService } from '../admin.service';
 
@@ -29,6 +32,10 @@ type ListResult = { page: Page<AdminUser> } | { error: unknown };
 })
 export class AdminUsers {
   private readonly admin = inject(AdminService);
+  private readonly auth = inject(AuthService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly toasts = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Each request replaces the previous one (switchMap): a slow old page never overwrites a newer one. */
   private readonly requests = new Subject<{ search: string; page: number }>();
@@ -40,6 +47,8 @@ export class AdminUsers {
   protected readonly result = signal<Page<AdminUser> | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  /** Id of the account being changed; one change at a time. */
+  protected readonly busyId = signal<number | null>(null);
 
   protected readonly hasPrevious = computed(() => (this.result()?.page ?? 0) > 0);
   protected readonly hasNext = computed(() => {
@@ -93,6 +102,58 @@ export class AdminUsers {
 
   protected retry(): void {
     this.load(this.result()?.page ?? 0);
+  }
+
+  protected isSelf(account: AdminUser): boolean {
+    return account.id === this.auth.user()?.id;
+  }
+
+  protected async changeRole(account: AdminUser): Promise<void> {
+    const promote = account.role === 'USER';
+    const name = `${account.firstName} ${account.lastName}`;
+    const confirmed = await this.confirm.ask(
+      promote
+        ? {
+            title: `Make ${name} an admin?`,
+            message:
+              'They will manage every account of the platform, from their next sign-in or within 15 minutes.',
+            confirmLabel: 'Make admin',
+          }
+        : {
+            title: `Remove the admin role of ${name}?`,
+            message: 'They lose the back-office at once and keep their own invoices and customers.',
+            confirmLabel: 'Remove admin role',
+            tone: 'danger',
+          },
+    );
+    if (confirmed) {
+      this.run(account, this.admin.changeRole(account.id, promote ? 'ADMIN' : 'USER'), (updated) =>
+        updated.role === 'ADMIN' ? `${name} is now an admin.` : `${name} is no longer an admin.`,
+      );
+    }
+  }
+
+  /** One change at a time; the updated account replaces its row, nothing else is reloaded. */
+  private run(account: AdminUser, request: Observable<AdminUser>, success: (updated: AdminUser) => string): void {
+    if (this.busyId() !== null) {
+      return;
+    }
+    this.busyId.set(account.id);
+    request
+      .pipe(
+        finalize(() => this.busyId.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.result.update(
+            (page) =>
+              page && { ...page, content: page.content.map((row) => (row.id === updated.id ? updated : row)) },
+          );
+          this.toasts.success(success(updated));
+        },
+        error: (error: unknown) => this.toasts.error(errorMessage(error)),
+      });
   }
 
   private applySearch(value: string): void {
