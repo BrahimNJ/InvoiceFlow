@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../core/auth/auth.service';
@@ -16,7 +16,7 @@ import { ThemeToggle } from './theme-toggle';
       <div class="container bar">
         <a routerLink="/dashboard" aria-label="InvoiceFlow dashboard"><app-logo /></a>
         <nav aria-label="Main">
-          @for (link of links; track link.path) {
+          @for (link of links(); track link.path) {
             <a [routerLink]="link.path" routerLinkActive="active" ariaCurrentWhenActive="page">
               <app-icon [name]="link.icon" [size]="17" />{{ link.label }}
             </a>
@@ -58,12 +58,14 @@ export class AppHeader {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected readonly links: { path: string; label: string; icon: IconName }[] = [
+  /** The admin entry is only a shortcut: the admin area is guarded and the API checks the role itself. */
+  protected readonly links = computed<{ path: string; label: string; icon: IconName }[]>(() => [
     { path: '/dashboard', label: 'Dashboard', icon: 'grid' },
     { path: '/customers', label: 'Customers', icon: 'users' },
     { path: '/products', label: 'Products', icon: 'package' },
     { path: '/invoices', label: 'Invoices', icon: 'invoice' },
-  ];
+    ...(this.auth.isAdmin() ? [{ path: '/admin', label: 'Admin', icon: 'shield' as IconName }] : []),
+  ]);
   protected readonly user = this.auth.user;
   protected readonly signingOut = signal(false);
 

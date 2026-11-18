@@ -81,10 +81,10 @@ goes issue → branch → small commits → tests → pull request → human rev
 | Invoices: drafts, VAT per rate, gap-free numbering, readiness checks, issue and cancel, overdue tracking | ✅ Live |
 | In-app documentation (`/docs`): architecture, security model, testing, ADRs | ✅ Live |
 | API reference (OpenAPI + Scalar), per-IP rate limiting on authentication | ✅ Live |
-| Payments | 📋 Planned |
+| Payments: record and delete payments, balance due, paid status | ✅ Live |
 | PDF and Factur-X | 📋 Planned |
 | Dashboard (revenue, paid / pending / overdue) | 📋 Planned |
-| Role-based access | 📋 Planned |
+| Admin back-office: accounts, roles, suspension, audit log, platform counts (never business data) | ✅ Live |
 | AI assistant (natural-language invoices, Q&A) | 📋 Planned |
 
 Detailed tasks, issues and pull requests: [`PROGRESS.md`](PROGRESS.md).
@@ -95,11 +95,11 @@ Every figure below is produced by CI on each push, and most of them **fail the b
 
 | Check | Result | Gate |
 |-------|--------|------|
-| Backend tests (JUnit 5, Spring slices, integration) | **297** passing | `./mvnw verify` |
-| Backend coverage (JaCoCo, Lombok excluded) | **97.8 %** lines · **92.7 %** branches | fails under 95 % / 85 % |
-| Frontend tests (Vitest, Angular TestBed) | **262** passing | `npm run test:coverage` |
-| Frontend coverage (v8) | **96.5 %** lines · **90.4 %** branches | fails under 95 % / 85 % |
-| End-to-end (Playwright, desktop and phone) | **23** passing on the production build, real API and PostgreSQL 17 | `e2e.yml` |
+| Backend tests (JUnit 5, Spring slices, integration) | **368** passing | `./mvnw verify` |
+| Backend coverage (JaCoCo, Lombok excluded) | **98.1 %** lines · **93.6 %** branches | fails under 95 % / 85 % |
+| Frontend tests (Vitest, Angular TestBed) | **286** passing | `npm run test:coverage` |
+| Frontend coverage (v8) | **96.7 %** lines · **90.8 %** branches | fails under 95 % / 85 % |
+| End-to-end (Playwright, desktop and phone) | **27** passing on the production build, real API and PostgreSQL 17 | `e2e.yml` |
 | Accessibility (axe-core, WCAG 2.1 AA) | **0** violations on every screen of the journey and on the public pages, light and dark | any violation fails |
 | Lighthouse, desktop (`/`, `/docs/overview`, `/login`) | performance **93–100** · accessibility **100** · best practices **100** · SEO **100** | budget in `lighthouserc.json` |
 | Module boundaries (Spring Modulith) | no access to another module's internals, no cycle | `ModularityTest` |
@@ -237,8 +237,8 @@ from the environment, fails fast when a secret is missing).
 ## Tests
 
 ```bash
-cd backend  && ./mvnw verify                 # 297 tests, modularity, coverage floor
-cd frontend && npm run test:coverage         # 262 tests, coverage floor
+cd backend  && ./mvnw verify                 # 368 tests, modularity, coverage floor
+cd frontend && npm run test:coverage         # 286 tests, coverage floor
 ```
 
 End-to-end tests, the Lighthouse budget and the README screenshots run on the real stack (PostgreSQL and the API

@@ -71,6 +71,11 @@ public class RefreshTokenService {
         if (current.isExpired(now)) {
             throw new BadCredentialsException(INVALID_TOKEN_MESSAGE);
         }
+        // Suspension revokes every session; this also covers a token created while the suspension was committed
+        if (current.getUser().isSuspended()) {
+            current.setRevokedAt(now);
+            throw new BadCredentialsException(INVALID_TOKEN_MESSAGE);
+        }
 
         current.setRevokedAt(now);
         return new Rotation(current.getUser(), create(current.getUser()));
@@ -84,6 +89,11 @@ public class RefreshTokenService {
         refreshTokenRepository.findByTokenHash(hash(value))
                 .filter(token -> !token.isRevoked())
                 .ifPresent(token -> token.setRevokedAt(clock.instant()));
+    }
+
+    /** Signs the user out of every session, e.g. when an admin suspends the account. Returns the sessions ended. */
+    public int revokeAll(Long userId) {
+        return refreshTokenRepository.revokeAllActiveByUserId(userId, clock.instant());
     }
 
     private RefreshToken find(String value) {

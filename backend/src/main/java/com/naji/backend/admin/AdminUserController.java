@@ -1,0 +1,59 @@
+package com.naji.backend.admin;
+
+import com.naji.backend.admin.dto.AdminUserResponse;
+import com.naji.backend.admin.dto.RoleChangeRequest;
+import com.naji.backend.common.web.PageResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/** Accounts of the platform, for admins only ({@code /api/admin/**} requires {@code ROLE_ADMIN}). */
+@RestController
+@RequestMapping("/api/admin/users")
+@RequiredArgsConstructor
+public class AdminUserController {
+
+    private final AdminUserService adminUserService;
+
+    /** {@code GET /api/admin/users?search=acme&page=0&size=20}: newest first, {@code size} capped at 100. */
+    @GetMapping
+    public PageResponse<AdminUserResponse> search(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return adminUserService.search(adminId(jwt), search, page, size);
+    }
+
+    /** {@code PUT /api/admin/users/7/role {"role": "ADMIN"}}: 409 on the caller's own account. */
+    @PutMapping("/{id}/role")
+    public AdminUserResponse changeRole(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable Long id, @Valid @RequestBody RoleChangeRequest request) {
+        return adminUserService.changeRole(adminId(jwt), id, request.role());
+    }
+
+    /** {@code PUT /api/admin/users/7/suspension}: suspends the account and ends its sessions. Idempotent. */
+    @PutMapping("/{id}/suspension")
+    public AdminUserResponse suspend(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return adminUserService.suspend(adminId(jwt), id);
+    }
+
+    /** {@code DELETE /api/admin/users/7/suspension}: lets the account sign in again. Idempotent. */
+    @DeleteMapping("/{id}/suspension")
+    public AdminUserResponse reactivate(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return adminUserService.reactivate(adminId(jwt), id);
+    }
+
+    private static Long adminId(Jwt jwt) {
+        return Long.valueOf(jwt.getSubject());
+    }
+}

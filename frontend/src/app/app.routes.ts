@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, guestGuard } from './core/auth/auth.guards';
+import { adminGuard, authGuard, guestGuard } from './core/auth/auth.guards';
 import { unsavedChangesGuard } from './invoices/invoice-editor/unsaved-changes.guard';
 
 export const routes: Routes = [
@@ -97,6 +97,18 @@ export const routes: Routes = [
     title: 'Invoice · InvoiceFlow',
     canActivate: [authGuard],
     loadComponent: () => import('./invoices/invoice-detail/invoice-detail').then((m) => m.InvoiceDetail),
+  },
+  {
+    path: 'admin',
+    title: 'Accounts · Admin · InvoiceFlow',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./admin/admin-users/admin-users').then((m) => m.AdminUsers),
+  },
+  {
+    path: 'admin/audit',
+    title: 'Audit log · Admin · InvoiceFlow',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./admin/admin-audit/admin-audit').then((m) => m.AdminAudit),
   },
   { path: '**', redirectTo: '' },
 ];

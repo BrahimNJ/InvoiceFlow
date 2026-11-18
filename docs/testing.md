@@ -1,9 +1,9 @@
 # Quality and testing
 
 Tests are part of every feature, never a follow-up: a module is not merged until its service, controller,
-repository and ownership tests pass in CI. At the time of writing the suites hold **297 backend tests**,
-**262 frontend tests** and **23 end-to-end tests**. The backend tests cover **97.8 % of lines and 92.7 % of
-branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches** (Vitest, v8).
+repository and ownership tests pass in CI. At the time of writing the suites hold **368 backend tests**,
+**286 frontend tests** and **27 end-to-end tests**. The backend tests cover **98.1 % of lines and 93.6 % of
+branches** (JaCoCo), the frontend tests **96.7 % of lines and 90.8 % of branches** (Vitest, v8).
 
 ## Test pyramid
 
@@ -18,7 +18,7 @@ branches** (JaCoCo), the frontend tests **96.5 % of lines and 90.4 % of branches
 | Architecture | Spring Modulith on the compiled classes | Modules only use each other's public API, no dependency cycle, and the module diagram in the docs matches the code | `ModularityTest` |
 | Contract | `@SpringBootTest` on `/v3/api-docs` | The published OpenAPI description covers the secured endpoints and marks the public ones | `ApiDocumentationIntegrationTest` |
 | Tooling | `node:test` | The Claude Code commit guard blocks secrets however they are named | `.claude/hooks/guard-commit.test.mjs` |
-| End to end | Playwright on the production build, real API and PostgreSQL | A new user signs up, adds a customer and a product, then issues invoice `F-<year>-0001`; an issued invoice paid in two instalments; on desktop and phone viewports | `invoice-journey.e2e.ts`, `payment-journey.e2e.ts`, `invoice-editor-layout.e2e.ts` |
+| End to end | Playwright on the production build, real API and PostgreSQL | A new user signs up, adds a customer and a product, then issues invoice `F-<year>-0001`; an issued invoice paid in two instalments; an admin suspends an account that can then no longer sign in, and a user is kept out of `/admin`; on desktop and phone viewports | `invoice-journey.e2e.ts`, `payment-journey.e2e.ts`, `admin-journey.e2e.ts`, `invoice-editor-layout.e2e.ts` |
 | Accessibility | axe-core in every end-to-end test (WCAG 2.1 A and AA) | Every screen of the journey has no violation, and neither have the public pages in light and dark themes | `public-pages.e2e.ts`, `e2e/fixtures.ts` |
 | Performance budget | Lighthouse CI on `/`, `/docs/overview` and `/login` | Category scores (accessibility 100, performance ≥ 85, best practices and SEO ≥ 95) and transferred bytes per page | `frontend/lighthouserc.json` |
 
@@ -66,7 +66,10 @@ End-to-end tests and the Lighthouse budget need PostgreSQL and the API on `local
 
 ```bash
 docker compose up -d                      # PostgreSQL
-cd backend && ./mvnw spring-boot:run      # API, dev profile (other terminal)
+cd backend && ADMIN_EMAILS=e2e-admin-desktop@example.com,e2e-admin-phone@example.com \
+  APP_RATE_LIMIT_AUTH_CAPACITY=120 ./mvnw spring-boot:run   # API, dev profile (other terminal)
+# Once per database: sign up both admins (password Correct-horse-42!), then restart the API so that
+# ADMIN_EMAILS promotes them; e2e.yml does the same with curl
 cd frontend && npm run build:e2e          # production build that calls localhost:8080
 npx playwright test                       # serves the build on :4200 and runs the journey
 npx --yes @lhci/cli@0.15.1 autorun        # Lighthouse budget, reports in .lighthouseci/

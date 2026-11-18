@@ -13,11 +13,17 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.Instant;
 import java.util.Locale;
 
+/*
+ * Updates write only the changed columns: a sign-in (failed attempts, lock, password hash) and an admin action (role,
+ * suspension) can load the same account at the same time, and neither must write back the other's columns.
+ */
 @Entity
+@DynamicUpdate
 @Table(name = "users")
 @Getter
 @Setter
@@ -50,6 +56,9 @@ public class User {
 
     private Instant lockedUntil;
 
+    /** Set by an admin; a suspended account can neither sign in nor refresh its session. */
+    private Instant suspendedAt;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -62,6 +71,14 @@ public class User {
 
     public boolean isLocked(Instant now) {
         return lockedUntil != null && lockedUntil.isAfter(now);
+    }
+
+    public boolean isSuspended() {
+        return suspendedAt != null;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
     }
 
     @PrePersist

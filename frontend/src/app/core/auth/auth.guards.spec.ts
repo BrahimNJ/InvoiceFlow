@@ -3,20 +3,26 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
 import { Observable, firstValueFrom, of } from 'rxjs';
 
-import { authGuard, guestGuard, safeReturnUrl } from './auth.guards';
+import { adminGuard, authGuard, guestGuard, safeReturnUrl } from './auth.guards';
 import { AuthService } from './auth.service';
 
 describe('auth guards', () => {
   const signedIn = signal(false);
+  const admin = signal(false);
 
   beforeEach(() => {
     signedIn.set(false);
+    admin.set(false);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { restoreSession: () => of(signedIn()), isAuthenticated: signedIn.asReadonly() },
+          useValue: {
+            restoreSession: () => of(signedIn()),
+            isAuthenticated: signedIn.asReadonly(),
+            isAdmin: admin.asReadonly(),
+          },
         },
       ],
     });
@@ -44,6 +50,25 @@ describe('auth guards', () => {
       expect(serialize(await run(authGuard, '/dashboard?tab=2'))).toBe(
         '/login?returnUrl=%2Fdashboard%3Ftab%3D2',
       );
+    });
+  });
+
+  describe('adminGuard', () => {
+    it('lets an admin through', async () => {
+      signedIn.set(true);
+      admin.set(true);
+
+      expect(await run(adminGuard, '/admin')).toBe(true);
+    });
+
+    it('sends a signed-in user back to the dashboard', async () => {
+      signedIn.set(true);
+
+      expect(serialize(await run(adminGuard, '/admin'))).toBe('/dashboard');
+    });
+
+    it('sends a visitor to the sign-in page with the requested URL', async () => {
+      expect(serialize(await run(adminGuard, '/admin'))).toBe('/login?returnUrl=%2Fadmin');
     });
   });
 

@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -133,6 +134,15 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(LOGIN_BODY))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.detail").value("Too many failed sign-in attempts"));
+    }
+
+    @Test
+    void login_returns403WhenTheAccountIsSuspended() throws Exception {
+        when(authService.login(any(LoginRequest.class))).thenThrow(new DisabledException("This account is suspended"));
+
+        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(LOGIN_BODY))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("This account is suspended"));
     }
 
     @Test

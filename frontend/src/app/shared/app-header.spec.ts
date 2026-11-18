@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
-import { authResponse } from '../core/auth/auth.fixtures';
+import { TEST_USER, authResponse } from '../core/auth/auth.fixtures';
 import { AUTH_ENDPOINTS, AuthService } from '../core/auth/auth.service';
 import { AppHeader } from './app-header';
 
@@ -36,6 +36,19 @@ describe('AppHeader', () => {
     ]);
     expect(header.querySelectorAll('nav a app-icon').length).toBe(4);
     expect(header.querySelector('.who')?.textContent).toContain('Jane Doe');
+  });
+
+  it('adds the admin area for an admin', async () => {
+    TestBed.inject(AuthService).login({ email: 'admin@acme.fr', password: 'Correct-horse-42' }).subscribe();
+    http
+      .expectOne(AUTH_ENDPOINTS.login)
+      .flush({ ...authResponse(), user: { ...TEST_USER, email: 'admin@acme.fr', role: 'ADMIN' } });
+    const fixture = TestBed.createComponent(AppHeader);
+    await fixture.whenStable();
+
+    const last = [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a')].at(-1);
+    expect(last?.textContent?.trim()).toBe('Admin');
+    expect(last?.getAttribute('href')).toBe('/admin');
   });
 
   it('signs out and goes back to the sign-in page', async () => {

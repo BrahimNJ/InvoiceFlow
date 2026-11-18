@@ -12,6 +12,7 @@ import com.naji.backend.user.dto.UserResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,6 +38,7 @@ public class AuthService {
     static final String INVALID_CREDENTIALS = "Invalid email or password";
     static final String ACCOUNT_LOCKED = "Too many failed sign-in attempts. Try again in 15 minutes.";
     static final String EMAIL_TAKEN = "An account already exists with this email";
+    static final String ACCOUNT_SUSPENDED = "This account is suspended. Contact the administrator.";
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -97,6 +99,10 @@ public class AuthService {
         if (!passwordMatches(request.password(), user.getPasswordHash())) {
             recordFailedAttempt(user, now);
             throw new BadCredentialsException(INVALID_CREDENTIALS);
+        }
+        // Checked after the password, so only the account holder learns that it is suspended
+        if (user.isSuspended()) {
+            throw new DisabledException(ACCOUNT_SUSPENDED);
         }
 
         user.setFailedLoginAttempts(0);

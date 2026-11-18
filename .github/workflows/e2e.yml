@@ -62,15 +62,36 @@ jobs:
 
       - name: Start backend
         working-directory: backend
+        env:
+          # One admin per Playwright project for admin-journey.e2e.ts. ADMIN_EMAILS only promotes accounts that
+          # exist at startup (ADR 0010), so they sign up first and the backend is started again.
+          ADMIN_EMAILS: e2e-admin-desktop@example.com,e2e-admin-phone@example.com
+          # Every test signs up its own account from the same IP: 10 auth calls a minute is not enough.
+          # The limit itself is covered by AuthRateLimitIntegrationTest.
+          APP_RATE_LIMIT_AUTH_CAPACITY: "120"
         run: |
-          nohup java -jar target/backend-*.jar > "$RUNNER_TEMP/backend.log" 2>&1 &
-          for _ in $(seq 1 60); do
-            curl --silent --fail http://localhost:8080/actuator/health > /dev/null && exit 0
-            sleep 2
+          start_backend() {
+            nohup java -jar target/backend-*.jar >> "$RUNNER_TEMP/backend.log" 2>&1 &
+            echo $! > "$RUNNER_TEMP/backend.pid"
+            for _ in $(seq 1 60); do
+              curl --silent --fail http://localhost:8080/actuator/health > /dev/null && return 0
+              sleep 2
+            done
+            echo "::error::The backend did not become healthy within 2 minutes"
+            cat "$RUNNER_TEMP/backend.log"
+            exit 1
+          }
+          start_backend
+          for email in ${ADMIN_EMAILS//,/ }; do
+            curl --silent --fail --output /dev/null -X POST http://localhost:8080/api/auth/register \
+              -H 'Content-Type: application/json' \
+              -d "{\"firstName\":\"Ada\",\"lastName\":\"Test\",\"email\":\"$email\",\"password\":\"Correct-horse-42!\"}"
           done
-          echo "::error::The backend did not become healthy within 2 minutes"
-          cat "$RUNNER_TEMP/backend.log"
-          exit 1
+          kill "$(cat "$RUNNER_TEMP/backend.pid")"
+          while curl --silent --fail http://localhost:8080/actuator/health > /dev/null; do sleep 1; done
+          start_backend
+          grep -q "promoted to admin from ADMIN_EMAILS" "$RUNNER_TEMP/backend.log" \
+            || { echo "::error::The E2E admins were not promoted"; cat "$RUNNER_TEMP/backend.log"; exit 1; }
 
       - name: Install frontend dependencies
         working-directory: frontend

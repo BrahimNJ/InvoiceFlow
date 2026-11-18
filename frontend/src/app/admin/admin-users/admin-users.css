@@ -1,0 +1,10 @@
+.alert { align-items: center; }
+.alert span { flex: 1; }
+
+.account { display: grid; gap: .1rem; min-width: 0; }
+.name { font-weight: 650; color: var(--ink-900); }
+.email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-500); font-size: .85rem; }
+.joined { color: var(--ink-500); font-variant-numeric: tabular-nums; }
+.row-actions { flex-wrap: wrap; }
+.self { color: var(--ink-500); font-size: .85rem; font-weight: 600; }
+.btn.danger:hover:not(:disabled) { color: var(--danger); background: var(--danger-50); }
