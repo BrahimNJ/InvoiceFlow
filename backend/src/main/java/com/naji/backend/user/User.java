@@ -50,6 +50,9 @@ public class User {
 
     private Instant lockedUntil;
 
+    /** Set by an admin; a suspended account can neither sign in nor refresh its session. */
+    private Instant suspendedAt;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -62,6 +65,14 @@ public class User {
 
     public boolean isLocked(Instant now) {
         return lockedUntil != null && lockedUntil.isAfter(now);
+    }
+
+    public boolean isSuspended() {
+        return suspendedAt != null;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
     }
 
     @PrePersist
