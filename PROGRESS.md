@@ -1,7 +1,7 @@
 # InvoiceFlow — progress
 
 > Single source of truth for project status. Updated at the end of every task (see `CLAUDE.md`, rule 7).
-> Last update: **2026-11-02**
+> Last update: **2026-11-18**
 
 ## Status legend
 
@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ **Payments** (#44): review and merge PR #45. Then company details (5.1), which unlocks the seller mentions and the PDF (4.1). Showcase lot 5 (supply chain) is still open.
+➡️ **Role-based access and admin back-office** (#46), branch `46-feat/role-based-access`. Then natural-language invoices (7.1) and company details (5.1), which unlocks the seller mentions and the PDF (4.1). Showcase lot 5 (supply chain) is still open.
 
 ---
 
@@ -70,7 +70,7 @@
 | 3.2 | Subtotal / VAT / total calculation | ✅ Done | #31 / #32 | Half up per line, VAT once per rate; same rules in the frontend preview |
 | 3.3 | Invoice numbering and status lifecycle | ✅ Done | #31 / #32 | Draft → Issued → Cancelled, overdue derived; `F-<year>-<0001>` gap-free, tested concurrently. Paid comes with 3.5 |
 | 3.4 | Invoice CRUD API | ✅ Done | #31 / #32 | Plus issue (422 when a mention is missing), cancel, duplicate, summary |
-| 3.5 | Payment tracking | 🔍 In review | #44 / #45 | Branch `44-feat/payments`. New `payment` module applied through `InvoicePayments` in one transaction (ADR 0009); `PAID` status, balance due, payments panel. 297 backend, 262 frontend and 23 E2E tests pass locally; 0 € invoices are paid when issued; independent review done, its blocking finding (double delete race) fixed and covered by `PaymentConcurrencyTest` |
+| 3.5 | Payment tracking | ✅ Done | #44 / #45 | New `payment` module applied through `InvoicePayments` in one transaction (ADR 0009); `PAID` status, balance due, payments panel; 0 € invoices are paid when issued. Merged 2026-11-03, CI and deploys green on `462aa02` |
 | 3.6 | Invoices UI | ✅ Done | #31 / #32 | Cockpit list, editor workspace with checklist and A4 preview, detail page. Real-browser check planned in #33 (Playwright) |
 | 3.6.1 | Fix: invoice summary and date filters failed on PostgreSQL | ✅ Done | #39 / #40 | Untyped null `LocalDate` in `:param is null`; H2 hid it. Found by the README screenshots on PostgreSQL; now guarded by the E2E journey |
 | 3.6.2 | Fix: line description column collapses in the invoice editor on desktop widths | ✅ Done | #41 / #43 | Was 23 px at every desktop width; container queries on the lines panel; now 308–627 px, guarded by `invoice-editor-layout.e2e.ts`; editor screenshot back in the README |
@@ -94,7 +94,7 @@
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
 | 6.1 | Authentication: JWT access tokens, rotating refresh tokens, sign-up/sign-in pages | ✅ Done | #19 / #20 | Verified in production on 2026-10-18 (register, me, refresh, CSRF, logout). See `docs/authentication.md`. Follow-up: Safari third-party cookies |
-| 6.2 | Role-based access | 📋 Planned | — | |
+| 6.2 | Role-based access and admin back-office | 🚧 In progress | #46 | Branch `46-feat/role-based-access`. Admin manages accounts (role, suspension, audit log) and sees aggregates only, never another user's business data |
 
 ## Phase 7 — AI features
 
@@ -109,6 +109,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-11-18 | Payments merged (#45), production serves `462aa02`; 297 backend and 262 frontend tests pass on `main`. Role-based access started on `46-feat/role-based-access` (#46). |
 | 2026-11-02 | Payments implemented on `44-feat/payments` (#44): record, list and delete payments, `PAID` status, balance-based key figures; 297 backend, 262 frontend and 23 E2E tests pass. #41 merged (#43). |
 | 2026-10-29 | Quality-in-numbers lot merged (#42): six badges published from `main`. Fix #41 in review: line description usable at every desktop width; 21 E2E and 233 frontend tests pass. |
 | 2026-10-29 | Fix #39 merged (#40). Quality-in-numbers lot on `33-docs/quality-in-numbers` (#33): 252 backend, 233 frontend and 20 E2E tests pass; issue #41 opened for the editor description column. |
