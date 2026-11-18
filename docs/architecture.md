@@ -32,6 +32,8 @@ the code:
 flowchart LR
     admin --> auth
     admin --> common
+    admin --> customer
+    admin --> invoice
     admin --> user
     auth --> common
     auth --> user
