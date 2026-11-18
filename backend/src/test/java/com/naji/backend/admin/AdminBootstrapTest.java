@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,6 +22,9 @@ class AdminBootstrapTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private AuditLog auditLog;
 
     @Test
     void promotesTheListedUsers() {
@@ -30,6 +35,7 @@ class AdminBootstrapTest {
 
         assertThat(promoted).containsExactly(jane);
         assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
+        verify(auditLog).record(null, AdminActionType.PROMOTED_AT_STARTUP, 1L, null);
     }
 
     @Test
@@ -39,6 +45,7 @@ class AdminBootstrapTest {
 
         assertThat(bootstrap().promote(List.of("admin@acme.fr"))).isEmpty();
         assertThat(admin.getRole()).isEqualTo(Role.ADMIN);
+        verifyNoInteractions(auditLog);
     }
 
     @Test
@@ -67,7 +74,7 @@ class AdminBootstrapTest {
     }
 
     private AdminBootstrap bootstrap(String... emails) {
-        return new AdminBootstrap(new AdminProperties(List.of(emails)), userRepository);
+        return new AdminBootstrap(new AdminProperties(List.of(emails)), userRepository, auditLog);
     }
 
     private static User user(Long id, String email, Role role) {

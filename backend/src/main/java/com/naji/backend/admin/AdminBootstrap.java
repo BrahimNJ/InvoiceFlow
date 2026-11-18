@@ -26,6 +26,7 @@ public class AdminBootstrap implements ApplicationRunner {
 
     private final AdminProperties properties;
     private final UserRepository userRepository;
+    private final AuditLog auditLog;
 
     @Override
     @Transactional
@@ -44,6 +45,7 @@ public class AdminBootstrap implements ApplicationRunner {
             } else if (!user.get().isAdmin()) {
                 user.get().setRole(Role.ADMIN);
                 promoted.add(user.get());
+                auditLog.record(null, AdminActionType.PROMOTED_AT_STARTUP, user.get().getId(), null);
                 // Ids only: emails are personal data and stay out of the logs
                 log.info("User {} promoted to admin from ADMIN_EMAILS", user.get().getId());
             }

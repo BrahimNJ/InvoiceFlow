@@ -35,6 +35,7 @@ public class AdminUserService {
     private final AdminUserMapper adminUserMapper;
     private final AdminAccess adminAccess;
     private final RefreshTokenService refreshTokenService;
+    private final AuditLog auditLog;
     private final Clock clock;
 
     /**
@@ -56,7 +57,10 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse changeRole(Long adminId, Long userId, Role role) {
         User target = startChange(adminId, userId, OWN_ROLE);
-        target.setRole(role);
+        if (target.getRole() != role) {
+            auditLog.record(adminId, AdminActionType.ROLE_CHANGED, userId, target.getRole() + " -> " + role);
+            target.setRole(role);
+        }
         return adminUserMapper.toResponse(target);
     }
 
@@ -70,6 +74,7 @@ public class AdminUserService {
         User target = startChange(adminId, userId, OWN_SUSPENSION);
         if (!target.isSuspended()) {
             target.setSuspendedAt(clock.instant());
+            auditLog.record(adminId, AdminActionType.ACCOUNT_SUSPENDED, userId, null);
         }
         refreshTokenService.revokeAll(userId);
         return adminUserMapper.toResponse(target);
@@ -79,7 +84,10 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse reactivate(Long adminId, Long userId) {
         User target = startChange(adminId, userId, OWN_SUSPENSION);
-        target.setSuspendedAt(null);
+        if (target.isSuspended()) {
+            target.setSuspendedAt(null);
+            auditLog.record(adminId, AdminActionType.ACCOUNT_REACTIVATED, userId, null);
+        }
         return adminUserMapper.toResponse(target);
     }
 

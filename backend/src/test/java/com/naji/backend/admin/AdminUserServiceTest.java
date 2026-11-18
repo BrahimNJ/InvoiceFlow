@@ -49,6 +49,9 @@ class AdminUserServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private AuditLog auditLog;
+
     private AdminUserService service;
 
     static final Long ADMIN_ID = 9L;
@@ -56,7 +59,7 @@ class AdminUserServiceTest {
     @BeforeEach
     void setUp() {
         service = new AdminUserService(userRepository, new AdminUserMapper(), adminAccess, refreshTokenService,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                auditLog, Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test
@@ -105,6 +108,7 @@ class AdminUserServiceTest {
 
         assertThat(jane.getRole()).isEqualTo(Role.ADMIN);
         assertThat(response.role()).isEqualTo(Role.ADMIN);
+        verify(auditLog).record(ADMIN_ID, AdminActionType.ROLE_CHANGED, 2L, "USER -> ADMIN");
     }
 
     @Test
@@ -116,6 +120,15 @@ class AdminUserServiceTest {
         service.changeRole(ADMIN_ID, 2L, Role.USER);
 
         assertThat(other.getRole()).isEqualTo(Role.USER);
+    }
+
+    @Test
+    void changeRole_toTheSameRoleChangesAndLogsNothing() {
+        givenTarget(user(2L, "jane@acme.fr", Role.USER));
+
+        service.changeRole(ADMIN_ID, 2L, Role.USER);
+
+        verifyNoInteractions(auditLog);
     }
 
     @Test
@@ -153,6 +166,7 @@ class AdminUserServiceTest {
         assertThat(jane.getSuspendedAt()).isEqualTo(NOW);
         assertThat(response.suspendedAt()).isEqualTo(NOW);
         verify(refreshTokenService).revokeAll(2L);
+        verify(auditLog).record(ADMIN_ID, AdminActionType.ACCOUNT_SUSPENDED, 2L, null);
     }
 
     @Test
@@ -164,6 +178,7 @@ class AdminUserServiceTest {
         service.suspend(ADMIN_ID, 2L);
 
         assertThat(jane.getSuspendedAt()).isEqualTo(NOW.minusSeconds(86400));
+        verifyNoInteractions(auditLog);
     }
 
     @Test
@@ -192,6 +207,16 @@ class AdminUserServiceTest {
 
         assertThat(jane.isSuspended()).isFalse();
         assertThat(response.suspendedAt()).isNull();
+        verify(auditLog).record(ADMIN_ID, AdminActionType.ACCOUNT_REACTIVATED, 2L, null);
+    }
+
+    @Test
+    void reactivate_anActiveAccountLogsNothing() {
+        givenTarget(user(2L, "jane@acme.fr", Role.USER));
+
+        service.reactivate(ADMIN_ID, 2L);
+
+        verifyNoInteractions(auditLog);
     }
 
     private User givenTarget(User target) {
