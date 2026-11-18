@@ -30,8 +30,9 @@ cannot reach a token that was already issued.
 - The admin API manages **accounts**: list and search users, change a role, suspend and reactivate. It reports
   **aggregates** only (number of users, invoices, customers). No admin endpoint returns a customer, a product, an
   invoice or a payment.
-- The first admins come from configuration: `ADMIN_EMAILS` promotes the listed accounts at startup. It is idempotent
-  and never demotes anyone; there is no endpoint to become admin.
+- The first admins come from configuration: `ADMIN_EMAILS` promotes the listed accounts at startup, and a listed
+  email that signs up later as soon as it registers (a synchronous listener of the registration event, so its first
+  token already says `ADMIN`). It is idempotent and never demotes anyone; there is no endpoint to become admin.
 - Admin endpoints check the role and the suspension **in the database** as well as in the token, so a demoted or
   suspended admin loses access at once, not 15 minutes later.
 - The platform always keeps one active admin: an admin cannot demote or suspend themselves, and the last active admin
