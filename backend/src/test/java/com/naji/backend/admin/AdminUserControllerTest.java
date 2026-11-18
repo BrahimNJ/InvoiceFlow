@@ -2,6 +2,7 @@ package com.naji.backend.admin;
 
 import com.naji.backend.admin.dto.AdminUserResponse;
 import com.naji.backend.common.exception.ConflictException;
+import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.common.security.SecurityConfig;
 import com.naji.backend.common.web.PageResponse;
 import com.naji.backend.user.Role;
@@ -21,6 +22,7 @@ import java.util.List;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -108,6 +110,44 @@ class AdminUserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"role\": \"USER\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.detail").value("You cannot change your own role"));
+    }
+
+    @Test
+    void suspend_returnsTheSuspendedAccount() throws Exception {
+        Instant suspendedAt = Instant.parse("2026-11-18T10:00:00Z");
+        when(adminUserService.suspend(ADMIN_ID, 2L)).thenReturn(
+                new AdminUserResponse(2L, "jane@acme.fr", "Jane", "Doe", Role.USER, suspendedAt, CREATED));
+
+        mockMvc.perform(put("/api/admin/users/2/suspension").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suspendedAt").value("2026-11-18T10:00:00Z"));
+    }
+
+    @Test
+    void suspend_returns404OnAnUnknownAccount() throws Exception {
+        when(adminUserService.suspend(ADMIN_ID, 404L)).thenThrow(new ResourceNotFoundException("User", 404L));
+
+        mockMvc.perform(put("/api/admin/users/404/suspension").with(admin()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void reactivate_returnsTheActiveAccount() throws Exception {
+        when(adminUserService.reactivate(ADMIN_ID, 2L)).thenReturn(
+                new AdminUserResponse(2L, "jane@acme.fr", "Jane", "Doe", Role.USER, null, CREATED));
+
+        mockMvc.perform(delete("/api/admin/users/2/suspension").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suspendedAt").doesNotExist());
+    }
+
+    @Test
+    void suspension_isForbiddenToAUser() throws Exception {
+        mockMvc.perform(put("/api/admin/users/2/suspension").with(user()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/admin/users/2/suspension").with(user()))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(adminUserService);
     }
 
     static RequestPostProcessor admin() {

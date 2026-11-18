@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,6 +39,18 @@ public class AdminUserController {
     public AdminUserResponse changeRole(
             @AuthenticationPrincipal Jwt jwt, @PathVariable Long id, @Valid @RequestBody RoleChangeRequest request) {
         return adminUserService.changeRole(adminId(jwt), id, request.role());
+    }
+
+    /** {@code PUT /api/admin/users/7/suspension}: suspends the account and ends its sessions. Idempotent. */
+    @PutMapping("/{id}/suspension")
+    public AdminUserResponse suspend(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return adminUserService.suspend(adminId(jwt), id);
+    }
+
+    /** {@code DELETE /api/admin/users/7/suspension}: lets the account sign in again. Idempotent. */
+    @DeleteMapping("/{id}/suspension")
+    public AdminUserResponse reactivate(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return adminUserService.reactivate(adminId(jwt), id);
     }
 
     private static Long adminId(Jwt jwt) {
