@@ -7,19 +7,19 @@ import { signUp } from './steps';
 const PASSWORD = 'Correct-horse-42!';
 
 /**
- * One admin per Playwright project, so the desktop and phone runs never act on each other. The API must list both
- * emails in ADMIN_EMAILS (see e2e.yml and docs/testing.md): they become admins when they sign up.
+ * One admin per Playwright project, so the desktop and phone runs never act on each other. Both accounts exist
+ * before the API starts with them in ADMIN_EMAILS, which promotes only existing accounts (see e2e.yml and
+ * docs/testing.md).
  */
 function adminEmail(projectName: string): string {
   return `e2e-admin-${projectName}@example.com`;
 }
 
-/** Creates an account through the API; an account left by a previous run is reused. */
-async function ensureAccount(page: Page, email: string, firstName: string): Promise<void> {
+async function createAccount(page: Page, email: string, firstName: string): Promise<void> {
   const response = await page.request.post(`${API_URL}/api/auth/register`, {
     data: { firstName, lastName: 'Test', email, password: PASSWORD },
   });
-  expect([201, 409]).toContain(response.status());
+  expect(response.status()).toBe(201);
 }
 
 async function signIn(page: Page, email: string): Promise<void> {
@@ -35,8 +35,7 @@ test('an admin suspends an account, which can no longer sign in, and finds it in
   test.slow();
   const admin = adminEmail(testInfo.project.name);
   const target = uniqueEmail();
-  await ensureAccount(page, admin, 'Ada');
-  await ensureAccount(page, target, 'Jane');
+  await createAccount(page, target, 'Jane');
 
   await signIn(page, admin);
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
