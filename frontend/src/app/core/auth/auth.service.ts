@@ -40,6 +40,8 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly accessToken = this._accessToken.asReadonly();
   readonly isAuthenticated = computed(() => this._user() !== null);
+  /** Shows the admin area. Only a hint for the UI: the API checks the role on every admin call. */
+  readonly isAdmin = computed(() => this._user()?.role === 'ADMIN');
 
   register(payload: RegisterPayload): Observable<User> {
     return this.http

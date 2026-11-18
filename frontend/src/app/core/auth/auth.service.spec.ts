@@ -22,8 +22,16 @@ describe('AuthService', () => {
 
   afterEach(() => http.verify());
 
+  it('knows when the signed-in user is an admin', () => {
+    service.login({ email: 'jane@acme.fr', password: 'Correct-horse-42' }).subscribe();
+    http.expectOne(AUTH_ENDPOINTS.login).flush({ ...authResponse(), user: { ...TEST_USER, role: 'ADMIN' } });
+
+    expect(service.isAdmin()).toBe(true);
+  });
+
   it('starts signed out', () => {
     expect(service.isAuthenticated()).toBe(false);
+    expect(service.isAdmin()).toBe(false);
     expect(service.user()).toBeNull();
     expect(service.accessToken()).toBeNull();
   });
@@ -39,6 +47,7 @@ describe('AuthService', () => {
 
     expect(user).toEqual(TEST_USER);
     expect(service.isAuthenticated()).toBe(true);
+    expect(service.isAdmin()).toBe(false);
     expect(service.accessToken()).toBe('access-1');
     expect(JSON.stringify({ ...localStorage })).not.toContain('access-1');
     expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
