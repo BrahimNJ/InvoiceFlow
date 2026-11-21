@@ -1,5 +1,7 @@
 package com.naji.backend.invoice;
 
+import com.naji.backend.company.VatRegime;
+
 import java.util.List;
 
 /**
@@ -20,7 +22,11 @@ public final class InvoiceReadiness {
         /** The invoice has at least one line. */
         LINES(true),
         /** The customer's SIRET, whose first 9 digits are the SIREN required by the e-invoicing reform. */
-        CUSTOMER_SIREN(false);
+        CUSTOMER_SIREN(false),
+        /** The owner has recorded their company, the seller printed on the invoice. */
+        SELLER_DETAILS(true),
+        /** A seller under the VAT exemption (franchise) charges no VAT: every line is at 0 %. */
+        VAT_EXEMPTION(true);
 
         private final boolean required;
 
@@ -40,8 +46,11 @@ public final class InvoiceReadiness {
         }
     }
 
-    /** Every check, in display order. */
-    public static List<Result> check(Invoice invoice) {
+    /**
+     * Every check, in display order. {@code seller} is the owner's current company for a draft, the frozen snapshot
+     * for an issued invoice; {@code null} when there is none.
+     */
+    public static List<Result> check(Invoice invoice, InvoiceSeller seller) {
         InvoiceCustomer customer = invoice.getCustomer();
         boolean hasCustomer = invoice.getCustomerId() != null || present(customer.getName());
         return List.of(
@@ -49,12 +58,15 @@ public final class InvoiceReadiness {
                 new Result(Check.CUSTOMER_ADDRESS, hasCustomer
                         && present(customer.getStreet()) && present(customer.getPostalCode()) && present(customer.getCity())),
                 new Result(Check.LINES, !invoice.getLines().isEmpty()),
-                new Result(Check.CUSTOMER_SIREN, hasCustomer && present(customer.getSiret())));
+                new Result(Check.CUSTOMER_SIREN, hasCustomer && present(customer.getSiret())),
+                new Result(Check.SELLER_DETAILS, seller != null),
+                new Result(Check.VAT_EXEMPTION, seller == null || seller.getVatRegime() != VatRegime.FRANCHISE
+                        || invoice.getLines().stream().allMatch(line -> line.getVatRate().signum() == 0)));
     }
 
     /** The required checks that fail; empty when the invoice can be issued. */
-    public static List<Check> blocking(Invoice invoice) {
-        return check(invoice).stream().filter(Result::blocking).map(Result::check).toList();
+    public static List<Check> blocking(Invoice invoice, InvoiceSeller seller) {
+        return check(invoice, seller).stream().filter(Result::blocking).map(Result::check).toList();
     }
 
     private static boolean present(String value) {

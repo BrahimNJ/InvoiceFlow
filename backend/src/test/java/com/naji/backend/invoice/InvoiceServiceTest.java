@@ -4,6 +4,10 @@ import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.common.exception.UnprocessableException;
 import com.naji.backend.common.web.PageResponse;
+import com.naji.backend.company.Company;
+import com.naji.backend.company.CompanyRepository;
+import com.naji.backend.company.LegalForm;
+import com.naji.backend.company.VatRegime;
 import com.naji.backend.customer.Customer;
 import com.naji.backend.customer.CustomerRepository;
 import com.naji.backend.invoice.dto.InvoiceLineRequest;
@@ -63,13 +67,16 @@ class InvoiceServiceTest {
     private ProductRepository productRepository;
 
     @Mock
+    private CompanyRepository companyRepository;
+
+    @Mock
     private InvoiceNumberGenerator numberGenerator;
 
     private InvoiceService invoiceService;
 
     @BeforeEach
     void setUp() {
-        invoiceService = new InvoiceService(invoiceRepository, customerRepository, productRepository,
+        invoiceService = new InvoiceService(invoiceRepository, customerRepository, productRepository, companyRepository,
                 new InvoiceMapper(), numberGenerator, CLOCK);
     }
 
@@ -186,7 +193,8 @@ class InvoiceServiceTest {
 
         assertThat(response.customerId()).isNull();
         assertThat(response.lines()).isEmpty();
-        assertThat(response.checks()).filteredOn(InvoiceResponse.ReadinessCheck::required).noneMatch(InvoiceResponse.ReadinessCheck::passed);
+        assertThat(response.checks()).filteredOn(check -> check.required() && !check.code().equals("VAT_EXEMPTION"))
+                .noneMatch(InvoiceResponse.ReadinessCheck::passed);
     }
 
     @Test
@@ -300,6 +308,7 @@ class InvoiceServiceTest {
         Customer customer = addressed(customer());
         customer.setName("Acme SAS (renamed)");
         when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(customer));
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.of(company()));
         when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0007");
         when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
 
@@ -323,6 +332,7 @@ class InvoiceServiceTest {
                 BigDecimal.ONE, ProductUnit.DAY, BigDecimal.ZERO, new BigDecimal("20"))));
         when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
         when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(addressed(customer())));
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.of(company()));
         when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0001");
         when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
 
@@ -340,6 +350,7 @@ class InvoiceServiceTest {
         Invoice draft = readyDraft();
         draft.setCustomerId(null);
         when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.of(company()));
         when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0001");
         when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
 
@@ -356,9 +367,137 @@ class InvoiceServiceTest {
 
         assertThatThrownBy(() -> invoiceService.issue(OWNER_ID, 1L))
                 .isInstanceOfSatisfying(UnprocessableException.class, ex ->
-                        assertThat(ex.getProperties()).containsEntry("missing", List.of("CUSTOMER", "CUSTOMER_ADDRESS", "LINES")));
+                        assertThat(ex.getProperties()).containsEntry("missing", List.of("CUSTOMER", "CUSTOMER_ADDRESS", "LINES", "SELLER_DETAILS")));
         verify(numberGenerator, never()).next(any(), any(Integer.class));
         verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void issue_freezesASnapshotOfTheCompanyAsTheSeller() {
+        Invoice draft = readyDraft();
+        Company company = company();
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(addressed(customer())));
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.of(company));
+        when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0001");
+        when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
+        when(invoiceRepository.findByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+
+        InvoiceResponse response = invoiceService.issue(OWNER_ID, 1L);
+
+        assertThat(response.seller().legalName()).isEqualTo("Acme SAS");
+        assertThat(response.seller().siren()).isEqualTo("732829320");
+        assertThat(draft.getSeller().getLegalName()).isEqualTo("Acme SAS");
+
+        // Editing the company afterwards changes neither the snapshot nor what the issued invoice shows
+        company.setLegalName("Renamed SAS");
+        company.setVatRegime(VatRegime.FRANCHISE);
+        assertThat(invoiceService.findById(OWNER_ID, 1L).seller().legalName()).isEqualTo("Acme SAS");
+        assertThat(draft.getSeller().getVatRegime()).isEqualTo(VatRegime.STANDARD);
+    }
+
+    @Test
+    void issue_refusesWhenNoCompanyIsRecorded() {
+        Invoice draft = readyDraft();
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(addressed(customer())));
+
+        assertThatThrownBy(() -> invoiceService.issue(OWNER_ID, 1L))
+                .isInstanceOfSatisfying(UnprocessableException.class, ex ->
+                        assertThat(ex.getProperties()).containsEntry("missing", List.of("SELLER_DETAILS")));
+        assertThat(draft.getSeller()).isNull();
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void issue_refusesAFranchiseSellerWithVatOnALine() {
+        Invoice draft = readyDraft();
+        Company company = company();
+        company.setVatRegime(VatRegime.FRANCHISE);
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(addressed(customer())));
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.of(company));
+
+        assertThatThrownBy(() -> invoiceService.issue(OWNER_ID, 1L))
+                .isInstanceOfSatisfying(UnprocessableException.class, ex ->
+                        assertThat(ex.getProperties()).containsEntry("missing", List.of("VAT_EXEMPTION")));
+        verify(invoiceRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void issue_acceptsAFranchiseSellerWithLinesAtZeroVat() {
+        Invoice draft = draft(1L);
+        InvoiceMapper mapper = new InvoiceMapper();
+        mapper.copyCustomer(draft, addressed(customer()));
+        mapper.updateDraft(draft, request(3L, new InvoiceLineRequest(null, ProductType.SERVICE, "Consulting", null,
+                BigDecimal.ONE, ProductUnit.DAY, new BigDecimal("650"), BigDecimal.ZERO)));
+        Company company = company();
+        company.setVatRegime(VatRegime.FRANCHISE);
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(customerRepository.findByIdAndOwnerId(3L, OWNER_ID)).thenReturn(Optional.of(addressed(customer())));
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.of(company));
+        when(numberGenerator.next(OWNER_ID, 2026)).thenReturn("F-2026-0001");
+        when(invoiceRepository.saveAndFlush(draft)).thenReturn(draft);
+
+        InvoiceResponse response = invoiceService.issue(OWNER_ID, 1L);
+
+        assertThat(response.status()).isEqualTo(InvoiceStatus.ISSUED);
+        assertThat(response.seller().vatRegime()).isEqualTo(VatRegime.FRANCHISE);
+    }
+
+    @Test
+    void findById_aDraftShowsTheCurrentCompany() {
+        Invoice draft = draft(1L);
+        Company company = company();
+        when(invoiceRepository.findByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft));
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.of(company));
+
+        assertThat(invoiceService.findById(OWNER_ID, 1L).seller().legalName()).isEqualTo("Acme SAS");
+
+        company.setLegalName("Renamed SAS");
+        assertThat(invoiceService.findById(OWNER_ID, 1L).seller().legalName()).isEqualTo("Renamed SAS");
+        assertThat(draft.getSeller()).isNull();
+    }
+
+    @Test
+    void findById_aDraftWithoutCompanyHasNoSeller() {
+        when(invoiceRepository.findByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(draft(1L)));
+
+        InvoiceResponse response = invoiceService.findById(OWNER_ID, 1L);
+
+        assertThat(response.seller()).isNull();
+        assertThat(response.checks()).anySatisfy(check -> {
+            assertThat(check.code()).isEqualTo("SELLER_DETAILS");
+            assertThat(check.passed()).isFalse();
+        });
+    }
+
+    @Test
+    void findById_anIssuedInvoiceShowsItsSnapshotNotTheCurrentCompany() {
+        Invoice invoice = issued(1L);
+        invoice.setSeller(InvoiceSeller.from(company()));
+        when(invoiceRepository.findByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
+
+        assertThat(invoiceService.findById(OWNER_ID, 1L).seller().legalName()).isEqualTo("Acme SAS");
+        verify(companyRepository, never()).findByOwnerId(any());
+    }
+
+    @Test
+    void findById_anInvoiceIssuedBeforeCompaniesExistedHasNoSeller() {
+        when(invoiceRepository.findByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(issued(1L)));
+
+        assertThat(invoiceService.findById(OWNER_ID, 1L).seller()).isNull();
+        verify(companyRepository, never()).findByOwnerId(any());
+    }
+
+    @Test
+    void cancel_keepsTheSnapshot() {
+        Invoice invoice = issued(1L);
+        invoice.setSeller(InvoiceSeller.from(company()));
+        when(invoiceRepository.lockByIdAndOwnerId(1L, OWNER_ID)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.saveAndFlush(invoice)).thenReturn(invoice);
+
+        assertThat(invoiceService.cancel(OWNER_ID, 1L).seller().legalName()).isEqualTo("Acme SAS");
     }
 
     @Test
@@ -466,6 +605,23 @@ class InvoiceServiceTest {
         invoice.setIssueDate(TODAY);
         invoice.setDueDate(TODAY.plusDays(30));
         return invoice;
+    }
+
+    private static Company company() {
+        Company company = new Company();
+        company.setOwnerId(OWNER_ID);
+        company.setLegalName("Acme SAS");
+        company.setLegalForm(LegalForm.SAS);
+        company.setShareCapital(new BigDecimal("10000.00"));
+        company.setStreet("1 rue de la Paix");
+        company.setPostalCode("75002");
+        company.setCity("Paris");
+        company.setCountry("France");
+        company.setSiret("73282932000074");
+        company.setVatNumber("FR44732829320");
+        company.setVatRegime(VatRegime.STANDARD);
+        company.setRegistration("RCS Paris");
+        return company;
     }
 
     private static Customer addressed(Customer customer) {

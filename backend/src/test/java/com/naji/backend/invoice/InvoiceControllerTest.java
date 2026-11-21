@@ -1,5 +1,7 @@
 package com.naji.backend.invoice;
 
+import com.naji.backend.company.LegalForm;
+import com.naji.backend.company.VatRegime;
 import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.common.exception.UnprocessableException;
@@ -228,7 +230,23 @@ class InvoiceControllerTest {
 
         mockMvc.perform(post("/api/invoices/1/issue").with(owner()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.number").value("F-2026-0001"));
+                .andExpect(jsonPath("$.number").value("F-2026-0001"))
+                .andExpect(jsonPath("$.seller.legalName").value("Acme SAS"))
+                .andExpect(jsonPath("$.seller.legalForm").value("SAS"))
+                .andExpect(jsonPath("$.seller.siren").value("732829320"))
+                .andExpect(jsonPath("$.seller.vatRegime").value("STANDARD"));
+    }
+
+    @Test
+    void issue_returns422WithTheSellerChecks() throws Exception {
+        when(invoiceService.issue(OWNER_ID, 1L)).thenThrow(new UnprocessableException(
+                "This invoice cannot be issued yet: some mandatory details are missing",
+                Map.of("missing", List.of("SELLER_DETAILS", "VAT_EXEMPTION"))));
+
+        mockMvc.perform(post("/api/invoices/1/issue").with(owner()))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.missing[0]").value("SELLER_DETAILS"))
+                .andExpect(jsonPath("$.missing[1]").value("VAT_EXEMPTION"));
     }
 
     @Test
@@ -281,6 +299,9 @@ class InvoiceControllerTest {
         return new InvoiceResponse(id, draft ? null : "F-2026-0001", status, false, 3L,
                 new InvoiceResponse.BilledCustomer("Acme SAS", "billing@acme.fr", "12 rue de la Paix", "75002", "Paris",
                         "France", null, null),
+                new InvoiceResponse.Seller("Acme SAS", null, LegalForm.SAS, new BigDecimal("10000.00"), "1 rue de la Paix",
+                        "75002", "Paris", "France", "73282932000074", "732829320", "FR44732829320", VatRegime.STANDARD,
+                        "RCS Paris", null, null, null, null),
                 PaymentTerms.NET_30, null, null, null, OperationNature.SERVICES,
                 List.of(new InvoiceLineResponse(10L, 5L, ProductType.SERVICE,
                         "Web development", null, new BigDecimal("1.500"), ProductUnit.DAY,

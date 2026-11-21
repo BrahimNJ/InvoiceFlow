@@ -41,6 +41,7 @@ flowchart LR
     company --> common
     customer --> common
     invoice --> common
+    invoice --> company
     invoice --> customer
     invoice --> product
     payment --> common

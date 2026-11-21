@@ -1,5 +1,7 @@
 package com.naji.backend.invoice;
 
+import com.naji.backend.company.LegalForm;
+import com.naji.backend.company.VatRegime;
 import com.naji.backend.customer.Customer;
 import com.naji.backend.customer.CustomerRepository;
 import com.naji.backend.invoice.dto.InvoiceTotals;
@@ -217,6 +219,39 @@ class InvoiceRepositoryTest {
 
     private Long save(Invoice invoice) {
         return invoiceRepository.saveAndFlush(invoice).getId();
+    }
+
+    @Test
+    void theSellerSnapshotRoundTripsAndADraftLoadsWithoutOne() {
+        Invoice issued = issued(ownerId, "Acme", "F-2026-0001", TODAY, TODAY.plusDays(30));
+        InvoiceSeller seller = new InvoiceSeller();
+        seller.setLegalName("Acme SAS");
+        seller.setTradeName("Acme");
+        seller.setLegalForm(LegalForm.SAS);
+        seller.setShareCapital(new BigDecimal("10000.00"));
+        seller.setStreet("1 rue de la Paix");
+        seller.setPostalCode("75002");
+        seller.setCity("Paris");
+        seller.setCountry("France");
+        seller.setSiret("73282932000074");
+        seller.setVatNumber("FR44732829320");
+        seller.setVatRegime(VatRegime.FRANCHISE);
+        seller.setRegistration("RCS Paris");
+        seller.setEmail("billing@acme.fr");
+        seller.setPhone("+33 1 23 45 67 89");
+        seller.setIban("FR7630006000011234567890189");
+        seller.setBic("AGRIFRPP");
+        issued.setSeller(seller);
+        Long issuedId = invoiceRepository.saveAndFlush(issued).getId();
+        Long draftId = invoiceRepository.saveAndFlush(draft(ownerId, "Acme")).getId();
+        entityManager.clear();
+
+        InvoiceSeller loaded = invoiceRepository.findByIdAndOwnerId(issuedId, ownerId).orElseThrow().getSeller();
+
+        assertThat(loaded).usingRecursiveComparison().isEqualTo(seller);
+        assertThat(loaded.getShareCapital()).isEqualByComparingTo("10000");
+        assertThat(loaded.getSiren()).isEqualTo("732829320");
+        assertThat(invoiceRepository.findByIdAndOwnerId(draftId, ownerId).orElseThrow().getSeller()).isNull();
     }
 
     private static Invoice draft(Long owner, String customerName) {

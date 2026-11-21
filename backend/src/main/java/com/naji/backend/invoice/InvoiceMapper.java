@@ -10,6 +10,7 @@ import com.naji.backend.invoice.dto.InvoiceRequest;
 import com.naji.backend.invoice.dto.InvoiceResponse;
 import com.naji.backend.invoice.dto.InvoiceResponse.BilledCustomer;
 import com.naji.backend.invoice.dto.InvoiceResponse.ReadinessCheck;
+import com.naji.backend.invoice.dto.InvoiceResponse.Seller;
 import com.naji.backend.invoice.dto.InvoiceResponse.VatBreakdown;
 import org.springframework.stereotype.Component;
 
@@ -61,8 +62,11 @@ public class InvoiceMapper {
         return copy;
     }
 
-    /** {@code today} decides whether an issued invoice is overdue. */
-    public InvoiceResponse toResponse(Invoice invoice, LocalDate today) {
+    /**
+     * {@code today} decides whether an issued invoice is overdue; {@code seller} is what the invoice shows as seller
+     * (resolved by {@link InvoiceService}), {@code null} when there is none.
+     */
+    public InvoiceResponse toResponse(Invoice invoice, LocalDate today, InvoiceSeller seller) {
         Totals totals = totals(invoice);
         InvoiceCustomer customer = invoice.getCustomer();
         return new InvoiceResponse(
@@ -73,6 +77,7 @@ public class InvoiceMapper {
                 invoice.getCustomerId(),
                 new BilledCustomer(customer.getName(), customer.getEmail(), customer.getStreet(), customer.getPostalCode(),
                         customer.getCity(), customer.getCountry(), customer.getSiret(), customer.getVatNumber()),
+                toSeller(seller),
                 invoice.getPaymentTerms(),
                 invoice.getIssueDate(),
                 invoice.getDueDate(),
@@ -87,7 +92,7 @@ public class InvoiceMapper {
                 totals.vatBreakdown().stream()
                         .map(vat -> new VatBreakdown(vat.rate(), vat.base(), vat.amount()))
                         .toList(),
-                InvoiceReadiness.check(invoice).stream()
+                InvoiceReadiness.check(invoice, seller).stream()
                         .map(result -> new ReadinessCheck(result.check().name(), result.check().required(), result.passed()))
                         .toList(),
                 invoice.getIssuedAt(),
@@ -96,6 +101,16 @@ public class InvoiceMapper {
                 invoice.getCreatedAt(),
                 invoice.getUpdatedAt()
         );
+    }
+
+    private static Seller toSeller(InvoiceSeller seller) {
+        if (seller == null) {
+            return null;
+        }
+        return new Seller(seller.getLegalName(), seller.getTradeName(), seller.getLegalForm(), seller.getShareCapital(),
+                seller.getStreet(), seller.getPostalCode(), seller.getCity(), seller.getCountry(), seller.getSiret(),
+                seller.getSiren(), seller.getVatNumber(), seller.getVatRegime(), seller.getRegistration(),
+                seller.getEmail(), seller.getPhone(), seller.getIban(), seller.getBic());
     }
 
     public InvoiceListItem toListItem(Invoice invoice, LocalDate today) {

@@ -1,5 +1,7 @@
 package com.naji.backend.invoice;
 
+import com.naji.backend.company.LegalForm;
+import com.naji.backend.company.VatRegime;
 import com.naji.backend.customer.Customer;
 import com.naji.backend.invoice.dto.InvoiceLineRequest;
 import com.naji.backend.invoice.dto.InvoiceListItem;
@@ -97,7 +99,7 @@ class InvoiceMapperTest {
     void toResponse_carriesTheBreakdownTheChecksAndTheNature() {
         Invoice invoice = issued();
 
-        InvoiceResponse response = mapper.toResponse(invoice, TODAY);
+        InvoiceResponse response = mapper.toResponse(invoice, TODAY, seller());
 
         assertThat(response.number()).isEqualTo("F-2026-0001");
         assertThat(response.customer().name()).isEqualTo("Acme SAS");
@@ -109,7 +111,9 @@ class InvoiceMapperTest {
                 new ReadinessCheck("CUSTOMER", true, true),
                 new ReadinessCheck("CUSTOMER_ADDRESS", true, true),
                 new ReadinessCheck("LINES", true, true),
-                new ReadinessCheck("CUSTOMER_SIREN", false, true));
+                new ReadinessCheck("CUSTOMER_SIREN", false, true),
+                new ReadinessCheck("SELLER_DETAILS", true, true),
+                new ReadinessCheck("VAT_EXEMPTION", true, true));
         assertThat(response.overdue()).isFalse();
     }
 
@@ -118,7 +122,7 @@ class InvoiceMapperTest {
         Invoice invoice = issued();
         invoice.setAmountPaid(new BigDecimal("560.00"));
 
-        InvoiceResponse response = mapper.toResponse(invoice, TODAY);
+        InvoiceResponse response = mapper.toResponse(invoice, TODAY, seller());
         InvoiceListItem item = mapper.toListItem(invoice, TODAY);
 
         assertThat(response.total()).hasToString("1560.00");
@@ -147,7 +151,41 @@ class InvoiceMapperTest {
     void aDraftIsNeverOverdue() {
         Invoice draft = new Invoice();
 
-        assertThat(mapper.toResponse(draft, TODAY).overdue()).isFalse();
+        assertThat(mapper.toResponse(draft, TODAY, null).overdue()).isFalse();
+    }
+
+    @Test
+    void toResponse_showsTheSellerWithItsSiren() {
+        InvoiceResponse.Seller seller = mapper.toResponse(issued(), TODAY, seller()).seller();
+
+        assertThat(seller.legalName()).isEqualTo("Acme SAS");
+        assertThat(seller.legalForm()).isEqualTo(LegalForm.SAS);
+        assertThat(seller.shareCapital()).isEqualByComparingTo("10000");
+        assertThat(seller.siret()).isEqualTo("73282932000074");
+        assertThat(seller.siren()).isEqualTo("732829320");
+        assertThat(seller.vatRegime()).isEqualTo(VatRegime.STANDARD);
+        assertThat(seller.registration()).isEqualTo("RCS Paris");
+    }
+
+    @Test
+    void toResponse_hasNoSellerWithoutOne() {
+        assertThat(mapper.toResponse(issued(), TODAY, null).seller()).isNull();
+    }
+
+    private static InvoiceSeller seller() {
+        InvoiceSeller seller = new InvoiceSeller();
+        seller.setLegalName("Acme SAS");
+        seller.setLegalForm(LegalForm.SAS);
+        seller.setShareCapital(new BigDecimal("10000.00"));
+        seller.setStreet("1 rue de la Paix");
+        seller.setPostalCode("75002");
+        seller.setCity("Paris");
+        seller.setCountry("France");
+        seller.setSiret("73282932000074");
+        seller.setVatNumber("FR44732829320");
+        seller.setVatRegime(VatRegime.STANDARD);
+        seller.setRegistration("RCS Paris");
+        return seller;
     }
 
     private Invoice issued() {

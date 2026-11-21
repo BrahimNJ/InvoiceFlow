@@ -55,6 +55,10 @@ public class Invoice {
     @Embedded
     private InvoiceCustomer customer = new InvoiceCustomer();
 
+    /** Frozen when the invoice is issued; {@code null} for a draft and for invoices issued before the company existed. */
+    @Embedded
+    private InvoiceSeller seller;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PaymentTerms paymentTerms;

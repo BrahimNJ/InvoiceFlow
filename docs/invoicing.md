@@ -94,10 +94,18 @@ Issuing is refused with **422** and the list of `missing` checks when a required
 | `CUSTOMER_ADDRESS` | required | Customer billing address is a mandatory mention |
 | `LINES` | required | Something must be billed |
 | `CUSTOMER_SIREN` | recommended | Mandatory for business customers under the e-invoicing reform; customers do not say yet whether they are a business |
+| `SELLER_DETAILS` | required | The seller's mentions (legal name, legal form, address, SIRET, VAT regime) come from the owner's company |
+| `VAT_EXEMPTION` | required | A seller under the VAT exemption (franchise) charges no VAT: every line must be at 0 % |
 
 The **operation nature** (goods, services or both), another mention required by the reform, is derived from the
-line types. The seller's own mentions (SIREN, legal form, address, VAT number) need the company settings (task 5.1):
-the checklist shows them as pending without blocking.
+line types.
+
+### Seller details
+
+The seller is the owner's company. A draft always shows the company as it is now; issuing copies its details onto the
+invoice, then freezes them. Editing the company later never changes an issued, paid or cancelled invoice, and a
+duplicate is a new draft that follows the company again. Invoices issued before the company settings existed have no
+seller (`null`).
 
 ## Screens
 
