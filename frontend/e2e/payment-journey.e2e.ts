@@ -8,6 +8,7 @@ import {
   createCustomer,
   createProduct,
   issueInvoice,
+  recordCompany,
   signUp,
 } from './steps';
 
@@ -18,6 +19,7 @@ import {
 test('an issued invoice is paid in two instalments', async ({ page }) => {
   test.slow();
   await signUp(page);
+  await recordCompany(page);
   await createCustomer(page, ATELIER_DURAND);
   await createProduct(page, 'Website audit', '450');
 

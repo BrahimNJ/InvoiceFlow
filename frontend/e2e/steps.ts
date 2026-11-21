@@ -20,6 +20,31 @@ export const ATELIER_DURAND: NewCustomer = {
   city: 'Lyon',
 };
 
+export interface NewCompany {
+  legalName: string;
+  legalForm: string;
+  shareCapital: string;
+  street: string;
+  postalCode: string;
+  city: string;
+  siret: string;
+  vatRegime: 'STANDARD' | 'FRANCHISE';
+  vatNumber: string;
+}
+
+/** A valid fictitious company: the SIRET passes the Luhn check and the VAT number matches its SIREN. */
+export const DURAND_CONSEIL: NewCompany = {
+  legalName: 'Durand Conseil',
+  legalForm: 'SAS',
+  shareCapital: '10000',
+  street: '8 rue des Tilleuls',
+  postalCode: '69003',
+  city: 'Lyon',
+  siret: '73282932000074',
+  vatRegime: 'STANDARD',
+  vatNumber: 'FR44732829320',
+};
+
 export async function signUp(page: Page): Promise<void> {
   await page.goto('/register');
   await page.getByLabel('First name').fill('Camille');
@@ -78,4 +103,32 @@ export async function issueInvoice(page: Page): Promise<void> {
   const dialog = page.getByRole('alertdialog', { name: 'Issue this invoice?' });
   await dialog.getByRole('button', { name: 'Issue invoice' }).click();
   await expect(page).toHaveURL(/\/invoices\/\d+$/);
+}
+
+/** Fills the company form (not saved yet); a field the legal form or VAT regime hides is left out. */
+export async function fillCompany(page: Page, company: NewCompany): Promise<void> {
+  await page.getByLabel('Legal name', { exact: true }).fill(company.legalName);
+  await page.getByLabel('Legal form', { exact: true }).selectOption(company.legalForm);
+  if (company.shareCapital) {
+    await page.getByLabel('Share capital (€)', { exact: true }).fill(company.shareCapital);
+  }
+  await page.getByLabel('Street', { exact: true }).fill(company.street);
+  await page.getByLabel('Postal code', { exact: true }).fill(company.postalCode);
+  await page.getByLabel('City', { exact: true }).fill(company.city);
+  await page.getByLabel('SIRET', { exact: true }).fill(company.siret);
+  await page.getByLabel('VAT regime', { exact: true }).selectOption(company.vatRegime);
+  await page.getByLabel('VAT number', { exact: true }).fill(company.vatNumber);
+}
+
+/**
+ * Records the company of the new user, which every invoice needs as its seller: an invoice cannot be issued without
+ * it. The form is checked with axe-core before it is saved.
+ */
+export async function recordCompany(page: Page, company: NewCompany = DURAND_CONSEIL): Promise<void> {
+  await page.goto('/company');
+  await expect(page.getByRole('heading', { level: 1, name: 'Company' })).toBeVisible();
+  await fillCompany(page, company);
+  await expectAccessible(page);
+  await page.getByRole('button', { name: 'Save company' }).click();
+  await expect(page.getByText('Company details saved.')).toBeVisible();
 }

@@ -8,6 +8,7 @@ import {
   createCustomer,
   createProduct,
   issueInvoice,
+  recordCompany,
   signUp,
 } from './steps';
 
@@ -21,6 +22,7 @@ test('a new user issues a first invoice', async ({ page }) => {
   await signUp(page);
   await expectAccessible(page);
 
+  await recordCompany(page);
   await createCustomer(page, ATELIER_DURAND);
   await createProduct(page, 'Website audit', '450');
 
