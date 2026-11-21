@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ **Company and billing information** (#48, 5.1): review and merge the PR (merge commit, not squash). Maintainer action pending: set `ADMIN_EMAILS` on Render and restart. Then the PDF (4.1), now unblocked by the seller details, and natural-language invoices (7.1). Showcase lot 5 (supply chain) is still open.
+➡️ **Company and billing information** (#48, 5.1): review and merge PR #49 (merge commit, not squash). Maintainer action pending: set `ADMIN_EMAILS` on Render and restart. Then the PDF (4.1), now unblocked by the seller details, and natural-language invoices (7.1). Showcase lot 5 (supply chain) is still open.
 
 ---
 
@@ -86,7 +86,7 @@
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 5.1 | Company and billing information | 🔍 In review | #48 | Branch `48-feat/company-details`. New `company` module (Flyway V12): one company per user, `GET`/`PUT /api/company`, SIRET (Luhn, La Poste rule), French VAT key against the SIREN, IBAN mod 97, share capital for commercial companies. Flyway V13: seller snapshot frozen on issue; required checks `SELLER_DETAILS` and `VAT_EXEMPTION` (art. 293 B). `/company` screen, seller block on the A4 preview and detail page. 437 backend (98.3 % / 94.1 %), 332 frontend (96.9 % / 91.2 %) and 33 E2E tests pass locally on PostgreSQL; independent review done, its 9 findings fixed. Follow-ups: default payment terms and penalty wording, RCS/RM mandatory for registered companies, logo, SIRENE lookup |
+| 5.1 | Company and billing information | 🔍 In review | #48 / #49 | Branch `48-feat/company-details`. New `company` module (Flyway V12): one company per user, `GET`/`PUT /api/company`, SIRET (Luhn, La Poste rule), French VAT key against the SIREN, IBAN mod 97, share capital for commercial companies. Flyway V13: seller snapshot frozen on issue; required checks `SELLER_DETAILS` and `VAT_EXEMPTION` (art. 293 B). `/company` screen, seller block on the A4 preview and detail page. 437 backend (98.3 % / 94.1 %), 332 frontend (96.9 % / 91.2 %) and 33 E2E tests pass locally on PostgreSQL; independent review done, its 9 findings fixed. Follow-ups: default payment terms and penalty wording, RCS/RM mandatory for registered companies, logo, SIRENE lookup |
 | 5.2 | Dashboard (revenue, paid / pending / overdue, recent invoices) | 📋 Planned | — | |
 
 ## Phase 6 — Security
