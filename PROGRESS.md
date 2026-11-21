@@ -1,7 +1,7 @@
 # InvoiceFlow — progress
 
 > Single source of truth for project status. Updated at the end of every task (see `CLAUDE.md`, rule 7).
-> Last update: **2026-11-18**
+> Last update: **2026-11-21**
 
 ## Status legend
 
@@ -16,7 +16,7 @@
 
 ## Next task
 
-➡️ **Role-based access and admin back-office** (#46): review and merge PR #47 (merge commit, not squash), then set `ADMIN_EMAILS` on Render. Then natural-language invoices (7.1) and company details (5.1), which unlocks the seller mentions and the PDF (4.1). Showcase lot 5 (supply chain) is still open.
+➡️ **Company and billing information** (#48, 5.1): seller details on a per-user company profile, copied onto issued invoices; unlocks the PDF (4.1) and Factur-X (4.2). Maintainer action pending: set `ADMIN_EMAILS` on Render and restart. Then natural-language invoices (7.1). Showcase lot 5 (supply chain) is still open.
 
 ---
 
@@ -86,7 +86,7 @@
 
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
-| 5.1 | Company and billing information | 📋 Planned | — | |
+| 5.1 | Company and billing information | 🚧 In progress | #48 | Branch `48-feat/company-details`. Seller mentions frozen on issue, readiness checks, settings page |
 | 5.2 | Dashboard (revenue, paid / pending / overdue, recent invoices) | 📋 Planned | — | |
 
 ## Phase 6 — Security
@@ -94,7 +94,7 @@
 | # | Task | Status | Issue / PR | Notes |
 |---|------|--------|------------|-------|
 | 6.1 | Authentication: JWT access tokens, rotating refresh tokens, sign-up/sign-in pages | ✅ Done | #19 / #20 | Verified in production on 2026-10-18 (register, me, refresh, CSRF, logout). See `docs/authentication.md`. Follow-up: Safari third-party cookies |
-| 6.2 | Role-based access and admin back-office | 🔍 In review | #46 / #47 | Branch `46-feat/role-based-access`. New `admin` module (ADR 0010): accounts list, role change, suspension (sign-in 403, sessions revoked), append-only audit log, platform counts; never business data. `/api/admin/**` needs `ROLE_ADMIN` and a database check of the caller; last-admin guard under a row lock. `ADMIN_EMAILS` bootstraps the first admins at startup while none is active. 368 backend (98.1 % / 93.6 %), 286 frontend (96.7 % / 90.8 %) and 27 E2E tests pass locally; independent review done, its 3 findings fixed (sign-up promotion removed, `@DynamicUpdate` on `users`, no re-promotion after a demotion). Follow-ups: PostgreSQL concurrency test (0.10), email verification, set `ADMIN_EMAILS` on Render after merge |
+| 6.2 | Role-based access and admin back-office | ✅ Done | #46 / #47 | Merged 2026-11-18; CI, E2E and deploys green on `81190df`, production checked on 2026-11-21 (health UP, `/actuator/info` on `81190df`, admin endpoints 401 anonymous, CORS OK). New `admin` module (ADR 0010): accounts list, role change, suspension (sign-in 403, sessions revoked), append-only audit log, platform counts; never business data. `/api/admin/**` needs `ROLE_ADMIN` and a database check of the caller; last-admin guard under a row lock. `ADMIN_EMAILS` bootstraps the first admins at startup while none is active. 368 backend (98.1 % / 93.6 %), 286 frontend (96.7 % / 90.8 %) and 27 E2E tests pass locally; independent review done, its 3 findings fixed (sign-up promotion removed, `@DynamicUpdate` on `users`, no re-promotion after a demotion). Follow-ups: PostgreSQL concurrency test (0.10), email verification, set `ADMIN_EMAILS` on Render (pending) |
 
 ## Phase 7 — AI features
 
@@ -109,6 +109,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-11-21 | Role-based access merged (#47), production serves `81190df` (smoke-checked). Company and billing information started on `48-feat/company-details` (#48). |
 | 2026-11-18 | Role-based access complete on `46-feat/role-based-access` (#46): admin back-office, audit log, suspension; 368 backend, 286 frontend and 27 E2E tests pass; review findings fixed. |
 | 2026-11-18 | Payments merged (#45), production serves `462aa02`; 297 backend and 262 frontend tests pass on `main`. Role-based access started on `46-feat/role-based-access` (#46). |
 | 2026-11-02 | Payments implemented on `44-feat/payments` (#44): record, list and delete payments, `PAID` status, balance-based key figures; 297 backend, 262 frontend and 23 E2E tests pass. #41 merged (#43). |
