@@ -1,9 +1,11 @@
 package com.naji.backend.company;
 
+import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.company.dto.CompanyRequest;
 import com.naji.backend.company.dto.CompanyResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +27,10 @@ public class CompanyService {
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND));
     }
 
-    /** Creates the owner's company on the first save, updates it afterwards. */
+    /**
+     * Creates the owner's company on the first save, updates it afterwards. Two first saves at the same time hit the
+     * one-company-per-owner constraint: the second one gets a 409 and can save again, which then updates.
+     */
     @Transactional
     public CompanyResponse save(Long ownerId, CompanyRequest request) {
         Company company = companyRepository.findByOwnerId(ownerId).orElseGet(() -> {
@@ -34,6 +39,10 @@ public class CompanyService {
             return created;
         });
         companyMapper.updateEntity(company, request);
-        return companyMapper.toResponse(companyRepository.saveAndFlush(company));
+        try {
+            return companyMapper.toResponse(companyRepository.saveAndFlush(company));
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Your company details were saved at the same time elsewhere: save again");
+        }
     }
 }

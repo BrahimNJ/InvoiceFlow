@@ -98,6 +98,15 @@ class CompanyRequestValidationTest {
     }
 
     @Test
+    void rejectsAZeroShareCapitalForACommercialCompany() {
+        CompanyRequest request = new CompanyRequest("Acme", null, LegalForm.SARL, BigDecimal.ZERO,
+                "1 rue de la Paix", "75002", "Paris", "France", "73282932000074", "FR44732829320",
+                VatRegime.STANDARD, null, null, null, null, null);
+
+        assertThat(errors(request)).containsEntry("shareCapital", "must be greater than 0 for this legal form");
+    }
+
+    @Test
     void rejectsANegativeShareCapital() {
         CompanyRequest request = new CompanyRequest("Acme", null, LegalForm.SAS, new BigDecimal("-1"),
                 "1 rue de la Paix", "75002", "Paris", "France", "73282932000074", "FR44732829320",

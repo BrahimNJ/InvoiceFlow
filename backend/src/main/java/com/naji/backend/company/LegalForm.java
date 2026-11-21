@@ -24,4 +24,12 @@ public enum LegalForm {
     public boolean requiresShareCapital() {
         return shareCapitalRequired;
     }
+
+    /**
+     * Whether a share capital can be recorded: the forms that require one, and {@link #OTHER}, which covers companies
+     * not listed here (SELARL, SCOP, SCI...) that may have to show one.
+     */
+    public boolean allowsShareCapital() {
+        return shareCapitalRequired || this == OTHER;
+    }
 }

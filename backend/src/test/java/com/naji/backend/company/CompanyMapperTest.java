@@ -43,6 +43,18 @@ class CompanyMapperTest {
     }
 
     @Test
+    void keepsAnOptionalShareCapitalForAnUnlistedLegalForm() {
+        Company company = new Company();
+        mapper.updateEntity(company, new CompanyRequest("Cabinet Martin SELARL", null, LegalForm.OTHER,
+                new BigDecimal("5000"), "1 rue de la Paix", "75002", "Paris", "France", "73282932000074",
+                "FR44732829320", VatRegime.STANDARD, null, null, null, null, null));
+
+        assertThat(company.getShareCapital()).isEqualByComparingTo("5000");
+        assertThat(LegalForm.OTHER.requiresShareCapital()).isFalse();
+        assertThat(LegalForm.EI.allowsShareCapital()).isFalse();
+    }
+
+    @Test
     void exposesTheSirenInTheResponse() {
         Company company = new Company();
         company.setId(3L);

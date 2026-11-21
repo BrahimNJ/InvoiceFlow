@@ -108,12 +108,12 @@ class InvoiceMapperTest {
         assertThat(response.vatBreakdown()).containsExactly(
                 new VatBreakdown(new BigDecimal("20.00"), new BigDecimal("1300.00"), new BigDecimal("260.00")));
         assertThat(response.checks()).containsExactly(
+                new ReadinessCheck("SELLER_DETAILS", true, true),
                 new ReadinessCheck("CUSTOMER", true, true),
                 new ReadinessCheck("CUSTOMER_ADDRESS", true, true),
                 new ReadinessCheck("LINES", true, true),
-                new ReadinessCheck("CUSTOMER_SIREN", false, true),
-                new ReadinessCheck("SELLER_DETAILS", true, true),
-                new ReadinessCheck("VAT_EXEMPTION", true, true));
+                new ReadinessCheck("VAT_EXEMPTION", true, true),
+                new ReadinessCheck("CUSTOMER_SIREN", false, true));
         assertThat(response.overdue()).isFalse();
     }
 

@@ -9,7 +9,7 @@ import java.util.Locale;
 
 /**
  * Maps the company DTOs. Blank optional fields are stored as {@code null}; the VAT number, IBAN and BIC are stored
- * compact and upper case. The share capital is dropped for legal forms that do not show one.
+ * compact and upper case. The share capital is dropped for legal forms that cannot show one (sole traders).
  */
 @Component
 public class CompanyMapper {
@@ -18,7 +18,7 @@ public class CompanyMapper {
         company.setLegalName(request.legalName().trim());
         company.setTradeName(trimToNull(request.tradeName()));
         company.setLegalForm(request.legalForm());
-        company.setShareCapital(request.legalForm().requiresShareCapital() ? request.shareCapital() : null);
+        company.setShareCapital(request.legalForm().allowsShareCapital() ? request.shareCapital() : null);
         company.setStreet(request.street().trim());
         company.setPostalCode(request.postalCode().trim());
         company.setCity(request.city().trim());

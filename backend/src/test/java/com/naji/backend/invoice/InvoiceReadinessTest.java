@@ -18,14 +18,14 @@ class InvoiceReadinessTest {
         Invoice invoice = new Invoice();
 
         assertThat(InvoiceReadiness.check(invoice, null)).containsExactly(
+                new Result(Check.SELLER_DETAILS, false),
                 new Result(Check.CUSTOMER, false),
                 new Result(Check.CUSTOMER_ADDRESS, false),
                 new Result(Check.LINES, false),
-                new Result(Check.CUSTOMER_SIREN, false),
-                new Result(Check.SELLER_DETAILS, false),
-                new Result(Check.VAT_EXEMPTION, true));
+                new Result(Check.VAT_EXEMPTION, true),
+                new Result(Check.CUSTOMER_SIREN, false));
         assertThat(InvoiceReadiness.blocking(invoice, null))
-                .containsExactly(Check.CUSTOMER, Check.CUSTOMER_ADDRESS, Check.LINES, Check.SELLER_DETAILS);
+                .containsExactly(Check.SELLER_DETAILS, Check.CUSTOMER, Check.CUSTOMER_ADDRESS, Check.LINES);
     }
 
     @Test

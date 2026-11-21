@@ -90,12 +90,12 @@ Issuing is refused with **422** and the list of `missing` checks when a required
 
 | Check | Level | Why |
 |-------|-------|-----|
+| `SELLER_DETAILS` | required | The seller's mentions (legal name, legal form, address, SIRET, VAT regime) come from the owner's company |
 | `CUSTOMER` | required | The invoice must name the customer |
 | `CUSTOMER_ADDRESS` | required | Customer billing address is a mandatory mention |
 | `LINES` | required | Something must be billed |
-| `CUSTOMER_SIREN` | recommended | Mandatory for business customers under the e-invoicing reform; customers do not say yet whether they are a business |
-| `SELLER_DETAILS` | required | The seller's mentions (legal name, legal form, address, SIRET, VAT regime) come from the owner's company |
 | `VAT_EXEMPTION` | required | A seller under the VAT exemption (franchise) charges no VAT: every line must be at 0 % |
+| `CUSTOMER_SIREN` | recommended | Mandatory for business customers under the e-invoicing reform; customers do not say yet whether they are a business |
 
 The **operation nature** (goods, services or both), another mention required by the reform, is derived from the
 line types.

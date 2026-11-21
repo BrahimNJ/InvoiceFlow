@@ -1,5 +1,6 @@
 package com.naji.backend.company;
 
+import com.naji.backend.common.exception.ConflictException;
 import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.company.dto.CompanyRequest;
 import com.naji.backend.company.dto.CompanyResponse;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -76,6 +78,16 @@ class CompanyServiceTest {
         assertThat(response.id()).isEqualTo(3L);
         assertThat(existing.getLegalName()).isEqualTo("Acme SAS");
         assertThat(existing.getOwnerId()).isEqualTo(OWNER_ID);
+    }
+
+    @Test
+    void save_reportsAConflictWhenAnotherFirstSaveWonTheRace() {
+        when(companyRepository.findByOwnerId(OWNER_ID)).thenReturn(Optional.empty());
+        when(companyRepository.saveAndFlush(any(Company.class)))
+                .thenThrow(new DataIntegrityViolationException("uk_companies_owner"));
+
+        assertThatThrownBy(() -> companyService.save(OWNER_ID, request("Acme SAS")))
+                .isInstanceOf(ConflictException.class);
     }
 
     private static CompanyRequest request(String legalName) {

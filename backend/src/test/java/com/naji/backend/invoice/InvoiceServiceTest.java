@@ -367,7 +367,7 @@ class InvoiceServiceTest {
 
         assertThatThrownBy(() -> invoiceService.issue(OWNER_ID, 1L))
                 .isInstanceOfSatisfying(UnprocessableException.class, ex ->
-                        assertThat(ex.getProperties()).containsEntry("missing", List.of("CUSTOMER", "CUSTOMER_ADDRESS", "LINES", "SELLER_DETAILS")));
+                        assertThat(ex.getProperties()).containsEntry("missing", List.of("SELLER_DETAILS", "CUSTOMER", "CUSTOMER_ADDRESS", "LINES")));
         verify(numberGenerator, never()).next(any(), any(Integer.class));
         verify(invoiceRepository, never()).saveAndFlush(any());
     }

@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SiretAndIbanValidatorTest {
 
     @ParameterizedTest
-    @ValueSource(strings = {"73282932000074", "44306184100047"})
+    @ValueSource(strings = {"73282932000074", "44306184100047", "35600000000048", "35600000049837"})
     void acceptsSiretsWithAValidChecksum(String siret) {
         assertThat(SiretValidator.isValid(siret)).isTrue();
         assertThat(new SiretValidator().isValid(siret, null)).isTrue();
@@ -17,7 +17,7 @@ class SiretAndIbanValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"73282932000075", "12345678901234", "7328293200007", "732829320000740", "7328293200007A",
-            "732 829 320 00074", ""})
+            "732 829 320 00074", "", "35600000012345"})
     void rejectsMalformedSiretsOrBadChecksums(String siret) {
         assertThat(SiretValidator.isValid(siret)).isFalse();
     }

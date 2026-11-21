@@ -16,9 +16,12 @@ public class ConsistentCompanyValidator implements ConstraintValidator<Consisten
         context.disableDefaultConstraintViolation();
         boolean valid = true;
 
-        if (request.legalForm() != null && request.legalForm().requiresShareCapital()
-                && request.shareCapital() == null) {
-            valid = violation(context, "shareCapital", "is required for this legal form");
+        if (request.legalForm() != null && request.legalForm().requiresShareCapital()) {
+            if (request.shareCapital() == null) {
+                valid = violation(context, "shareCapital", "is required for this legal form");
+            } else if (request.shareCapital().signum() == 0) {
+                valid = violation(context, "shareCapital", "must be greater than 0 for this legal form");
+            }
         }
 
         String vatNumber = blankToNull(request.vatNumber());
