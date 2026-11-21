@@ -34,6 +34,8 @@
             <span>{{ seller.phone }}</span>
           }
         </div>
+      } @else if (d.number) {
+        <span class="pending">Issued before the company details were recorded.</span>
       } @else {
         <strong class="pending">Your company</strong>
         <span class="pending">Company details missing: legal name, address, SIRET and VAT regime are mandatory.</span>

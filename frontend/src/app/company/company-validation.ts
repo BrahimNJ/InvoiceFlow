@@ -20,14 +20,22 @@ export function luhnValid(digits: string): boolean {
   return sum % 10 === 0;
 }
 
-/** 14 digits and a valid Luhn checksum. */
+/** SIREN of La Poste: its establishments do not follow Luhn, the sum of their SIRET digits is a multiple of 5. */
+const LA_POSTE_SIREN = '356000000';
+
+/** 14 digits and a valid checksum (Luhn, or the La Poste rule). */
 export function siretValid(siret: string): boolean {
-  return /^\d{14}$/.test(siret) && luhnValid(siret);
+  if (!/^\d{14}$/.test(siret)) {
+    return false;
+  }
+  const digitSum = [...siret].reduce((sum, digit) => sum + Number(digit), 0);
+  return luhnValid(siret) || (siret.startsWith(LA_POSTE_SIREN) && digitSum % 5 === 0);
 }
 
 /** `FR44732829320`: a French number carries the SIREN and a key computed from it; other countries: format only. */
 export function vatNumberValid(vat: string, siret: string): boolean {
-  const value = compact(vat).toUpperCase();
+  // Spaces, dots and dashes are ignored, like the backend does
+  const value = vat.replace(/[\s.-]/g, '').toUpperCase();
   if (!/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(value)) {
     return false;
   }

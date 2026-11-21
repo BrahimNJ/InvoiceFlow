@@ -24,9 +24,17 @@ describe('company validation', () => {
     expect(siretValid('7328293200007a')).toBe(false);
   });
 
+  it('accepts La Poste establishments, whose SIRET digits add up to a multiple of 5', () => {
+    expect(siretValid('35600000000048')).toBe(true);
+    expect(siretValid('35600000049837')).toBe(true);
+    expect(siretValid('35600000012345')).toBe(false);
+  });
+
   it('checks a French VAT number against the SIREN and its key', () => {
     expect(vatNumberValid('FR44732829320', '73282932000074')).toBe(true);
     expect(vatNumberValid('fr 44 732 829 320', '73282932000074')).toBe(true);
+    expect(vatNumberValid('FR44.732.829.320', '73282932000074')).toBe(true);
+    expect(vatNumberValid('FR-44-732-829-320', '73282932000074')).toBe(true);
     expect(vatNumberValid('FR45732829320', '73282932000074')).toBe(false);
     expect(vatNumberValid('FR44732829320', '12345678900010')).toBe(false);
     expect(vatNumberValid('FR44732829320', '')).toBe(true);

@@ -96,16 +96,21 @@ export class InvoiceDocumentView {
       ? [seller.street, [seller.postalCode, seller.city].filter(Boolean).join(' '), seller.country].filter(Boolean)
       : [];
   });
-  /** `SAS au capital de 10 000 €`: the legal form with its share capital when it has one. */
+  /**
+   * `SAS au capital de 10 000 €`: the legal form with its share capital when it has one. An unlisted form (Other) has
+   * no short name, so only its capital is printed, when recorded.
+   */
   protected readonly sellerForm = computed(() => {
     const seller = this.doc().seller;
-    const form = seller ? LEGAL_FORMS[seller.legalForm].short : null;
-    if (!seller || !form) {
+    if (!seller) {
       return null;
     }
-    return seller.shareCapital === null
-      ? form
-      : `${form} au capital de ${formatCapital(seller.shareCapital)}`;
+    const form = LEGAL_FORMS[seller.legalForm].short;
+    if (seller.shareCapital === null) {
+      return form;
+    }
+    const capital = formatCapital(seller.shareCapital);
+    return form ? `${form} au capital de ${capital}` : `Au capital de ${capital}`;
   });
   protected readonly address = computed(() => {
     const customer = this.doc().customer;

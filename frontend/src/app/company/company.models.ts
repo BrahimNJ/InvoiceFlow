@@ -38,7 +38,7 @@ export type InvoiceSeller = Omit<Company, 'id' | 'createdAt' | 'updatedAt'>;
 
 export const LEGAL_FORMS: Record<LegalForm, { label: string; short: string | null; hasCapital: boolean }> = {
   EI: { label: 'EI, sole proprietorship', short: 'EI', hasCapital: false },
-  EI_MICRO: { label: 'Micro-entrepreneur (EI)', short: 'Micro-entrepreneur', hasCapital: false },
+  EI_MICRO: { label: 'Micro-entrepreneur (EI)', short: 'EI', hasCapital: false },
   EURL: { label: 'EURL', short: 'EURL', hasCapital: true },
   SARL: { label: 'SARL', short: 'SARL', hasCapital: true },
   SASU: { label: 'SASU', short: 'SASU', hasCapital: true },
@@ -59,3 +59,6 @@ export const VAT_REGIMES: Record<VatRegime, { label: string; help: string }> = {
 export const FRANCHISE_MENTION = 'TVA non applicable, art. 293 B du CGI';
 
 export const hasShareCapital = (form: LegalForm | ''): boolean => form !== '' && LEGAL_FORMS[form].hasCapital;
+
+/** A share capital can be recorded: required forms, and Other (SELARL, SCOP, SCI...), where it is optional. */
+export const allowsShareCapital = (form: LegalForm | ''): boolean => hasShareCapital(form) || form === 'OTHER';

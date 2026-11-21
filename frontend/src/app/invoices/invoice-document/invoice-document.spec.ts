@@ -142,7 +142,8 @@ describe('InvoiceDocumentView', () => {
       );
       const seller = plain(page.querySelector('.seller')?.textContent);
 
-      expect(seller).toContain('Micro-entrepreneur');
+      expect(seller).toContain('EI');
+      expect(seller).not.toContain('Micro-entrepreneur');
       expect(seller).not.toContain('au capital');
       expect(seller).not.toContain('VAT');
       expect(page.querySelector('.trade-name')).toBeNull();
@@ -157,7 +158,10 @@ describe('InvoiceDocumentView', () => {
       expect(page.querySelector('.legal')?.textContent).not.toContain('BIC');
 
       await render(testIssuedInvoice({ seller: testSeller({ legalForm: 'OTHER', shareCapital: null }) }));
-      expect(plain(page.querySelector('.seller')?.textContent)).not.toContain(' au capital');
+      expect(plain(page.querySelector('.seller')?.textContent)).not.toContain('au capital');
+
+      await render(testIssuedInvoice({ seller: testSeller({ legalForm: 'OTHER', shareCapital: 5000 }) }));
+      expect(plain(page.querySelector('.seller')?.textContent)).toContain('Au capital de 5 000 €');
     });
 
     it('prints the franchise mention under the VAT exemption', async () => {
@@ -171,6 +175,14 @@ describe('InvoiceDocumentView', () => {
 
       expect(page.querySelector('.seller .pending')?.textContent).toContain('Your company');
       expect(plain(page.querySelector('.seller')?.textContent)).toContain('Company details missing');
+    });
+
+    it('does not ask for company details on an invoice issued before they existed', async () => {
+      await render(testIssuedInvoice({ seller: null }));
+
+      const seller = plain(page.querySelector('.seller')?.textContent);
+      expect(seller).toContain('Issued before the company details were recorded.');
+      expect(seller).not.toContain('missing');
     });
   });
 });

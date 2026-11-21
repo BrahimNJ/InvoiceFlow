@@ -28,7 +28,14 @@ import {
   siretValidator,
   vatNumberValidator,
 } from '../company-validation';
-import { Company, CompanyPayload, LegalForm, VatRegime, hasShareCapital } from '../company.models';
+import {
+  Company,
+  CompanyPayload,
+  LegalForm,
+  VatRegime,
+  allowsShareCapital,
+  hasShareCapital,
+} from '../company.models';
 import { CompanyService } from '../company.service';
 import { Field, REQUIRED_MESSAGES, SECTIONS } from './company-fields';
 
@@ -39,6 +46,7 @@ const FIELD_ERRORS: Record<string, string> = {
   bic: 'A BIC is 8 or 11 characters.',
   email: 'Enter a valid email address.',
   amount: 'An amount like 10000 or 1 500,50.',
+  positive: 'The share capital of a company is at least 1 €.',
 };
 
 const TIPS = [
@@ -52,14 +60,19 @@ const TIPS = [
 /** Required when the legal form has a share capital; ignored (and hidden) otherwise. */
 const capitalValidator: ValidatorFn = (control: AbstractControl) => {
   const form = control.parent?.get('legalForm')?.value as LegalForm | '' | undefined;
-  if (!hasShareCapital(form ?? '')) {
+  if (!allowsShareCapital(form ?? '')) {
     return null;
   }
+  const required = hasShareCapital(form ?? '');
   const text = (control.value as string).trim();
   if (text === '') {
-    return { required: true };
+    return required ? { required: true } : null;
   }
-  return parseAmount(text) === null ? { amount: true } : null;
+  const amount = parseAmount(text);
+  if (amount === null || amount < 0) {
+    return { amount: true };
+  }
+  return required && amount === 0 ? { positive: true } : null;
 };
 
 /** Required when subject to VAT. */
@@ -97,8 +110,8 @@ export class CompanySettings implements OnInit {
     country: ['France', [Validators.required, Validators.maxLength(255)]],
     siret: ['', [Validators.required, siretValidator]],
     vatRegime: ['' as VatRegime | '', [Validators.required]],
-    vatNumber: ['', [vatRequiredValidator, vatNumberValidator, Validators.maxLength(20)]],
-    registration: ['', [Validators.maxLength(255)]],
+    vatNumber: ['', [vatRequiredValidator, vatNumberValidator, Validators.maxLength(30)]],
+    registration: ['', [Validators.maxLength(120)]],
     email: ['', [emailValidator, Validators.maxLength(255)]],
     phone: ['', [Validators.maxLength(30)]],
     iban: ['', [ibanValidator, Validators.maxLength(42)]],
@@ -108,7 +121,7 @@ export class CompanySettings implements OnInit {
     requireSync: true,
   });
 
-  protected readonly capitalVisible = computed(() => hasShareCapital(this.value().legalForm));
+  protected readonly capitalVisible = computed(() => allowsShareCapital(this.value().legalForm));
   protected readonly franchise = computed(() => this.value().vatRegime === 'FRANCHISE');
 
   /** The saved company; `null` until the first save. */
@@ -236,7 +249,7 @@ export function toPayload(value: FormValue): CompanyPayload {
     legalName: value.legalName.trim(),
     tradeName: optional(value.tradeName),
     legalForm: value.legalForm as LegalForm,
-    shareCapital: hasShareCapital(value.legalForm) ? parseAmount(value.shareCapital) : null,
+    shareCapital: allowsShareCapital(value.legalForm) ? parseAmount(value.shareCapital) : null,
     street: value.street.trim(),
     postalCode: value.postalCode.trim(),
     city: value.city.trim(),

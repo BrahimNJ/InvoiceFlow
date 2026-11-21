@@ -99,6 +99,19 @@ describe('CompanySettings', () => {
       expect(control('shareCapital')).toBeNull();
     });
 
+    it('offers an optional share capital for another legal form and refuses 0 for a company', async () => {
+      // The legal name stays empty: the form is invalid, so nothing is sent
+      await fill({ legalForm: 'OTHER', shareCapital: '' });
+      expect(control('shareCapital')).toBeTruthy();
+      await submit();
+      expect(error('legalName')).toBeTruthy();
+      expect(error('shareCapital')).toBeFalsy();
+
+      await fill({ legalForm: 'SARL', shareCapital: '0' });
+      await submit();
+      expect(error('shareCapital')).toContain('at least 1 €');
+    });
+
     it('reports the required fields without calling the API and focuses the first one', async () => {
       await fill({ legalForm: 'SARL' });
 
@@ -263,6 +276,12 @@ describe('company form conversion', () => {
 
     expect(payload.shareCapital).toBeNull();
     expect(payload.siret).toBe('73282932000074');
+  });
+
+  it('keeps an optional share capital for another legal form', () => {
+    const value = { ...toFormValue(testCompany()), legalForm: 'OTHER' as const, shareCapital: '5 000' };
+
+    expect(toPayload(value).shareCapital).toBe(5000);
   });
 
   it('round-trips a company', () => {
