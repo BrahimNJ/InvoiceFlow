@@ -37,6 +37,8 @@ export class InvoiceLines {
   private readonly injector = inject(Injector);
 
   readonly lines = input.required<FormArray<LineForm>>();
+  /** The seller is under the VAT franchise (art. 293 B): new lines are billed at 0 % VAT. */
+  readonly franchise = input(false);
 
   protected readonly types = PRODUCT_TYPES;
   protected readonly typeOptions = Object.keys(PRODUCT_TYPES) as ProductType[];
@@ -126,6 +128,18 @@ export class InvoiceLines {
     }
   }
 
+  /** True when a line still carries VAT although the seller is under the franchise. */
+  protected hasVat(): boolean {
+    return this.lines().controls.some((line) => line.controls.vatRate.value !== 0);
+  }
+
+  protected zeroVat(): void {
+    for (const line of this.lines().controls) {
+      line.controls.vatRate.setValue(0);
+    }
+    this.lines().markAsDirty();
+  }
+
   protected detailsOpen(line: LineForm): boolean {
     return this.expanded().has(line) || line.controls.details.value !== '';
   }
@@ -167,6 +181,9 @@ export class InvoiceLines {
   private add(line: LineForm, field: 'label' | 'quantity'): void {
     if (this.lines().length >= MAX_LINES) {
       return;
+    }
+    if (this.franchise()) {
+      line.controls.vatRate.setValue(0);
     }
     this.lines().push(line);
     this.lines().markAsDirty();

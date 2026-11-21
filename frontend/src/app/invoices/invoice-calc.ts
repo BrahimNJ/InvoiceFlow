@@ -1,5 +1,6 @@
 // Live preview of what the backend computes (InvoiceCalculator, PaymentTerms, InvoiceReadiness), so that the editor
 // reacts at each keystroke. The backend stays the reference: saved invoices show its figures.
+import { InvoiceSeller } from '../company/company.models';
 import { ProductType } from '../products/product.models';
 import { BilledCustomer, OperationNature, PaymentTerms, ReadinessCheck, VatBreakdown } from './invoice.models';
 
@@ -138,10 +139,19 @@ export function operationNature(types: ProductType[]): OperationNature | null {
 
 const present = (value: string | null | undefined) => !!value?.trim();
 
-/** Same rules as the backend; checked again on the server when the invoice is issued. */
-export function readiness(customer: BilledCustomer | null, lineCount: number): ReadinessCheck[] {
+/**
+ * Same rules as the backend; checked again on the server when the invoice is issued.
+ * `seller` is the user's company (null until recorded); `vatRates` are the rates of the lines.
+ */
+export function readiness(
+  customer: BilledCustomer | null,
+  lineCount: number,
+  seller: Pick<InvoiceSeller, 'vatRegime'> | null = null,
+  vatRates: number[] = [],
+): ReadinessCheck[] {
   const chosen = customer !== null && present(customer.name);
   return [
+    { code: 'SELLER_DETAILS', required: true, passed: seller !== null },
     { code: 'CUSTOMER', required: true, passed: chosen },
     {
       code: 'CUSTOMER_ADDRESS',
@@ -149,6 +159,8 @@ export function readiness(customer: BilledCustomer | null, lineCount: number): R
       passed: chosen && present(customer.street) && present(customer.postalCode) && present(customer.city),
     },
     { code: 'LINES', required: true, passed: lineCount > 0 },
+    // Passes when the seller charges VAT, or when no VAT is charged at all
+    { code: 'VAT_EXEMPTION', required: true, passed: seller?.vatRegime !== 'FRANCHISE' || vatRates.every((rate) => rate === 0) },
     { code: 'CUSTOMER_SIREN', required: false, passed: chosen && present(customer.siret) },
   ];
 }

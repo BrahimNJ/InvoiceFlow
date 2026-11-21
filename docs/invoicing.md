@@ -107,6 +107,10 @@ invoice, then freezes them. Editing the company later never changes an issued, p
 duplicate is a new draft that follows the company again. Invoices issued before the company settings existed have no
 seller (`null`).
 
+In the app the company is recorded on the **Company** screen (`/company`). Its mentions (legal name, legal form and share
+capital, address, SIREN and SIRET, VAT number, registration, contact, bank details) are printed on the invoice. Under the
+VAT franchise the editor bills new lines at 0 % and the invoice carries "TVA non applicable, art. 293 B du CGI".
+
 ## Screens
 
 The design answers recurring complaints found in reviews of French invoicing tools and invoicing UX write-ups

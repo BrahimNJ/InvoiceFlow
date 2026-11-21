@@ -16,7 +16,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable, finalize, map, startWith, switchMap } from 'rxjs';
 
-import { AuthService } from '../../core/auth/auth.service';
+import { Company } from '../../company/company.models';
+import { CompanyService } from '../../company/company.service';
 import { ProblemDetail, errorMessage } from '../../core/http/problem-detail';
 import { AppHeader } from '../../shared/app-header';
 import { formatEuros, formatPercent } from '../../shared/format/money';
@@ -68,7 +69,7 @@ export class InvoiceEditor implements OnInit, HasUnsavedChanges {
   private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
-  private readonly user = inject(AuthService).user;
+  private readonly companies = inject(CompanyService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
 
@@ -92,6 +93,9 @@ export class InvoiceEditor implements OnInit, HasUnsavedChanges {
   });
 
   protected readonly customer = signal<SelectedCustomer | null>(null);
+  /** The user's company, the seller of the invoice; null until recorded (or if it cannot be loaded). */
+  protected readonly company = signal<Company | null>(null);
+  protected readonly franchise = computed(() => this.company()?.vatRegime === 'FRANCHISE');
   /** The saved draft (after the first save, or when editing). */
   protected readonly invoice = signal<Invoice | null>(null);
   protected readonly loading = signal(false);
@@ -106,7 +110,14 @@ export class InvoiceEditor implements OnInit, HasUnsavedChanges {
 
   protected readonly totals = computed(() => computeTotals(this.value().lines.map(pricedLine)));
   protected readonly dueIfIssuedToday = computed(() => dueDate(this.value().paymentTerms, this.today));
-  protected readonly checks = computed(() => readiness(this.customer()?.details ?? null, this.value().lines.length));
+  protected readonly checks = computed(() =>
+    readiness(
+      this.customer()?.details ?? null,
+      this.value().lines.length,
+      this.company(),
+      this.value().lines.map((line) => line.vatRate),
+    ),
+  );
   protected readonly blocking = computed(() => this.checks().filter((check) => check.required && !check.passed));
   /** The invoice as it would be printed if issued today. */
   protected readonly doc = computed(
@@ -116,7 +127,7 @@ export class InvoiceEditor implements OnInit, HasUnsavedChanges {
       issueDate: this.today,
       dueDate: this.dueIfIssuedToday(),
       paymentTerms: this.value().paymentTerms,
-      seller: [this.user()?.firstName, this.user()?.lastName].filter(Boolean).join(' ') || 'Your company',
+      seller: this.company(),
       customer: this.customer()?.details ?? null,
       lines: this.value().lines.map((line) => {
         const priced = pricedLine(line);
@@ -136,6 +147,10 @@ export class InvoiceEditor implements OnInit, HasUnsavedChanges {
     }),
   );
   constructor() {
+    this.companies
+      .get()
+      .pipe(takeUntilDestroyed())
+      .subscribe({ next: (company) => this.company.set(company), error: () => undefined });
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.form.dirty) {
         this.dirty.set(true);

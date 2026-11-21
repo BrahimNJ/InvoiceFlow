@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { formatEuros, formatPercent } from '../../shared/format/money';
 import { Icon } from '../../shared/icon/icon';
@@ -12,7 +13,7 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
  */
 @Component({
   selector: 'app-invoice-side-panel',
-  imports: [Icon, InvoiceDocumentView],
+  imports: [Icon, InvoiceDocumentView, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="tabs" role="tablist" aria-label="Side panel">
@@ -60,17 +61,13 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
                   <strong>{{ readiness[check.code].label }}</strong>
                   @if (!check.passed) {
                     <small>{{ check.required ? '' : 'Recommended. ' }}{{ readiness[check.code].fix }}</small>
+                    @if (check.code === 'SELLER_DETAILS') {
+                      <a class="fix-link" routerLink="/company">Add your company details</a>
+                    }
                   }
                 </span>
               </li>
             }
-            <li class="pending">
-              <app-icon name="clock" [size]="16" />
-              <span>
-                <strong>Your company details</strong>
-                <small>SIREN, legal form and address of your company: coming with the company settings.</small>
-              </span>
-            </li>
           </ul>
         </section>
       </div>
@@ -110,7 +107,8 @@ import { OPERATION_NATURES, READINESS, ReadinessCheck } from '../invoice.models'
     li app-icon { margin-top: .1rem; }
     .ok app-icon { color: var(--accent); }
     .missing app-icon { color: var(--danger); }
-    .warn app-icon, .pending app-icon { color: var(--warning); }
+    .warn app-icon { color: var(--warning); }
+    .fix-link { font-size: .8rem; font-weight: 600; color: var(--brand); text-decoration: underline; }
     .ok strong { font-weight: 500; color: var(--ink-700); }
   `,
 })

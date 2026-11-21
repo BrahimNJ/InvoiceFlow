@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { testSeller } from '../../company/company.fixtures';
 import { testInvoice, testIssuedInvoice } from '../invoice.fixtures';
 import { InvoiceDocumentView, documentFromInvoice } from './invoice-document';
 
@@ -21,7 +22,7 @@ describe('InvoiceDocumentView', () => {
       ?.querySelector('dd')?.textContent;
 
   async function render(invoice = testIssuedInvoice()): Promise<void> {
-    fixture.componentRef.setInput('doc', documentFromInvoice(invoice, 'Jane Doe', '2026-10-24', '2026-11-23'));
+    fixture.componentRef.setInput('doc', documentFromInvoice(invoice, '2026-10-24', '2026-11-23'));
     await fixture.whenStable();
   }
 
@@ -100,5 +101,76 @@ describe('InvoiceDocumentView', () => {
     expect(page.textContent).toContain('Choose a customer');
     expect(page.textContent).toContain('No line yet');
     expect(page.textContent).not.toContain('Nature of the operations');
+  });
+
+  describe('seller', () => {
+    it('prints the identity of the seller with its legal form and share capital', async () => {
+      await render();
+      const seller = plain(page.querySelector('.seller')?.textContent);
+
+      expect(plain(page.querySelector('.seller strong')?.textContent)).toBe('Durand Conseil');
+      expect(seller).toContain('Atelier Durand');
+      expect(seller).toContain('SAS au capital de 10 000 €');
+      expect(seller).toContain('8 rue des Tilleuls');
+      expect(seller).toContain('69003 Lyon');
+      expect(seller).toContain('SIREN 732829320 · SIRET 73282932000074');
+      expect(seller).toContain('VAT FR44732829320');
+      expect(seller).toContain('RCS Lyon 732 829 320');
+      expect(seller).toContain('contact@durand.test');
+      expect(seller).toContain('+33 4 12 34 56 78');
+      expect(plain(page.querySelector('.legal')?.textContent)).toContain(
+        'Bank transfer: IBAN FR7630006000011234567890189 · BIC AGRIFRPP',
+      );
+      expect(page.querySelector('.franchise')).toBeNull();
+    });
+
+    it('leaves out what the company does not have', async () => {
+      await render(
+        testIssuedInvoice({
+          seller: testSeller({
+            tradeName: null,
+            legalForm: 'EI_MICRO',
+            shareCapital: null,
+            vatNumber: null,
+            registration: null,
+            email: null,
+            phone: null,
+            iban: null,
+            bic: null,
+          }),
+        }),
+      );
+      const seller = plain(page.querySelector('.seller')?.textContent);
+
+      expect(seller).toContain('Micro-entrepreneur');
+      expect(seller).not.toContain('au capital');
+      expect(seller).not.toContain('VAT');
+      expect(page.querySelector('.trade-name')).toBeNull();
+      expect(page.querySelector('.legal')?.textContent).not.toContain('IBAN');
+    });
+
+    it('shows a share capital with cents and no form for the other legal form', async () => {
+      await render(testIssuedInvoice({ seller: testSeller({ legalForm: 'SARL', shareCapital: 1500.5, iban: 'FR76', bic: null }) }));
+
+      expect(plain(page.querySelector('.seller')?.textContent)).toContain('SARL au capital de 1 500,50 €');
+      expect(plain(page.querySelector('.legal')?.textContent)).toContain('Bank transfer: IBAN FR76');
+      expect(page.querySelector('.legal')?.textContent).not.toContain('BIC');
+
+      await render(testIssuedInvoice({ seller: testSeller({ legalForm: 'OTHER', shareCapital: null }) }));
+      expect(plain(page.querySelector('.seller')?.textContent)).not.toContain(' au capital');
+    });
+
+    it('prints the franchise mention under the VAT exemption', async () => {
+      await render(testIssuedInvoice({ seller: testSeller({ vatRegime: 'FRANCHISE', vatNumber: null }) }));
+
+      expect(page.querySelector('.franchise')?.textContent).toBe('TVA non applicable, art. 293 B du CGI');
+    });
+
+    it('says the company details are missing when there is no seller', async () => {
+      await render(testInvoice({ seller: null }));
+
+      expect(page.querySelector('.seller .pending')?.textContent).toContain('Your company');
+      expect(plain(page.querySelector('.seller')?.textContent)).toContain('Company details missing');
+    });
   });
 });

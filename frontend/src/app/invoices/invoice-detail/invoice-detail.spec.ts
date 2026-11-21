@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { testSeller } from '../../company/company.fixtures';
 import { ConfirmService } from '../../shared/ui/confirm.service';
 import { ToastService } from '../../shared/ui/toast.service';
 import { addDays, todayIso } from '../invoice-calc';
@@ -166,9 +167,11 @@ describe('InvoiceDetail', () => {
     await open(
       testInvoice({
         checks: [
+          { code: 'SELLER_DETAILS', required: true, passed: true },
           { code: 'CUSTOMER', required: true, passed: true },
           { code: 'CUSTOMER_ADDRESS', required: true, passed: false },
           { code: 'LINES', required: true, passed: true },
+          { code: 'VAT_EXEMPTION', required: true, passed: true },
           { code: 'CUSTOMER_SIREN', required: false, passed: false },
         ],
       }),
@@ -176,6 +179,30 @@ describe('InvoiceDetail', () => {
 
     expect(button('Issue invoice')?.disabled).toBe(true);
     expect(page.querySelector('.note.warn')?.textContent).toContain('To issue it, complete: customer billing address.');
+    expect(page.querySelector('.note.warn a')).toBeNull();
+  });
+
+  it('links to the company settings when the seller details are missing', async () => {
+    await open(
+      testInvoice({
+        seller: null,
+        checks: [
+          { code: 'SELLER_DETAILS', required: true, passed: false },
+          { code: 'CUSTOMER', required: true, passed: true },
+        ],
+      }),
+    );
+
+    expect(page.querySelector('.note.warn')?.textContent).toContain('your company details');
+    expect(page.querySelector('.note.warn a')?.getAttribute('href')).toBe('/company');
+    expect(page.textContent).toContain('Company details missing');
+  });
+
+  it('prints the seller recorded on the invoice', async () => {
+    await open(testIssuedInvoice({ seller: testSeller({ legalName: 'Frozen Seller SAS', vatRegime: 'FRANCHISE' }) }));
+
+    expect(page.querySelector('.seller strong')?.textContent).toBe('Frozen Seller SAS');
+    expect(page.querySelector('.franchise')?.textContent).toContain('art. 293 B du CGI');
   });
 
   it('deletes a draft and goes back to the list', async () => {
