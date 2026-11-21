@@ -1,0 +1,96 @@
+<app-header />
+
+<main class="container app-page narrow">
+  <app-page-header
+    icon="briefcase"
+    heading="Company"
+    subtitle="The seller printed on every invoice: your legal identity, tax status and bank details."
+  />
+
+  @if (loading()) {
+    <p class="status-line" role="status"><span class="spinner" aria-hidden="true"></span>Loading your company…</p>
+  } @else if (loadError(); as message) {
+    <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
+  } @else {
+    @if (company() === null) {
+      <p class="intro">
+        <app-icon name="info" [size]="18" />
+        <span>
+          Record your company once: an invoice cannot be issued without it. Required fields are checked as you go, and the
+          details are copied onto each invoice when it is issued.
+        </span>
+      </p>
+    }
+
+    <app-help-tip storageKey="company" heading="Where to find these details" [tips]="tips" />
+
+    @if (error(); as message) {
+      <div class="alert" role="alert"><app-icon name="alert" [size]="18" /><span>{{ message }}</span></div>
+    }
+
+    <form class="panel form-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @for (section of sections; track section.title) {
+        <fieldset class="form-section">
+          <legend><app-icon [name]="section.icon" [size]="18" />{{ section.title }}</legend>
+          <p class="section-help">{{ section.help }}</p>
+          <div class="form-grid">
+            @for (field of section.fields; track field.name) {
+              @if (visible(field.name)) {
+                <div class="field" [class.wide]="field.wide">
+                  <label [for]="'company-' + field.name">{{ field.label }}</label>
+                  @if (field.options; as options) {
+                    <select
+                      class="input"
+                      [id]="'company-' + field.name"
+                      [formControlName]="field.name"
+                      [attr.name]="field.name"
+                      [attr.aria-invalid]="showError(form.controls[field.name])"
+                      [attr.aria-describedby]="'company-' + field.name + (message(field.name) ? '-error' : '-hint')"
+                    >
+                      <option value="" disabled>Choose…</option>
+                      @for (option of options; track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <input
+                      class="input"
+                      [id]="'company-' + field.name"
+                      [type]="field.type ?? 'text'"
+                      [formControlName]="field.name"
+                      [attr.name]="field.name"
+                      [attr.autocomplete]="field.autocomplete ?? null"
+                      [attr.inputmode]="field.inputmode ?? null"
+                      [attr.placeholder]="field.placeholder ?? null"
+                      [attr.spellcheck]="field.type === 'email' ? 'false' : null"
+                      [attr.aria-invalid]="showError(form.controls[field.name])"
+                      [attr.aria-describedby]="'company-' + field.name + (message(field.name) ? '-error' : '-hint')"
+                    />
+                  }
+                  @if (message(field.name); as text) {
+                    <p class="field-error" [id]="'company-' + field.name + '-error'">{{ text }}</p>
+                  } @else {
+                    <p class="hint" [id]="'company-' + field.name + '-hint'">{{ field.hint }}</p>
+                  }
+                </div>
+              }
+            }
+          </div>
+          @if (section.title === 'Tax & registration' && franchise()) {
+            <p class="franchise-note">
+              <app-icon name="info" [size]="16" />
+              <span>
+                Under the VAT franchise, invoices state “TVA non applicable, art. 293 B du CGI” and every line must be at
+                0 % VAT. The invoice editor applies 0 % to new lines.
+              </span>
+            </p>
+          }
+        </fieldset>
+      }
+
+      <div class="form-footer">
+        <app-submit-button label="Save company" busyLabel="Saving…" [busy]="submitting()" />
+      </div>
+    </form>
+  }
+</main>
