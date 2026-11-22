@@ -101,14 +101,36 @@ describe('invoice calculations', () => {
       vatNumber: null,
     };
 
-    expect(readiness(null, 0).map((check) => check.passed)).toEqual([false, false, false, false]);
-    expect(readiness(customer, 2)).toEqual([
+    const standard = { vatRegime: 'STANDARD' as const };
+    expect(readiness(null, 0).map((check) => check.passed)).toEqual([false, false, false, false, true, false]);
+    expect(readiness(customer, 2, standard, [20, 10])).toEqual([
+      { code: 'SELLER_DETAILS', required: true, passed: true },
       { code: 'CUSTOMER', required: true, passed: true },
       { code: 'CUSTOMER_ADDRESS', required: true, passed: true },
       { code: 'LINES', required: true, passed: true },
+      { code: 'VAT_EXEMPTION', required: true, passed: true },
       { code: 'CUSTOMER_SIREN', required: false, passed: false },
     ]);
-    expect(readiness({ ...customer, city: ' ' }, 1)[1].passed).toBe(false);
+    expect(readiness({ ...customer, city: ' ' }, 1, standard)[2].passed).toBe(false);
+  });
+
+  it('requires the seller company, and no VAT at all under the franchise', () => {
+    const code = (checks: ReturnType<typeof readiness>, name: string) => checks.find((check) => check.code === name)!;
+    const franchise = { vatRegime: 'FRANCHISE' as const };
+
+    expect(code(readiness(null, 1, null), 'SELLER_DETAILS')).toEqual({ code: 'SELLER_DETAILS', required: true, passed: false });
+    expect(code(readiness(null, 1, franchise), 'SELLER_DETAILS').passed).toBe(true);
+
+    expect(code(readiness(null, 1, franchise, [0, 0]), 'VAT_EXEMPTION')).toEqual({
+      code: 'VAT_EXEMPTION',
+      required: true,
+      passed: true,
+    });
+    expect(code(readiness(null, 2, franchise, [0, 20]), 'VAT_EXEMPTION').passed).toBe(false);
+    expect(code(readiness(null, 0, franchise, []), 'VAT_EXEMPTION').passed).toBe(true);
+    expect(code(readiness(null, 1, { vatRegime: 'STANDARD' }, [20]), 'VAT_EXEMPTION').passed).toBe(true);
+    // Without a company the exemption is not in question: only SELLER_DETAILS fails
+    expect(code(readiness(null, 1, null, [20]), 'VAT_EXEMPTION').passed).toBe(true);
   });
 
   it('parses and writes quantities', () => {

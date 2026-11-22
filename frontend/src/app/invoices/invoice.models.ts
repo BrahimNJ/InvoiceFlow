@@ -1,4 +1,5 @@
 // Mirrors the backend DTOs of com.naji.backend.invoice.
+import { InvoiceSeller } from '../company/company.models';
 import { ProductType, ProductUnit } from '../products/product.models';
 import { IconName } from '../shared/icon/icon';
 
@@ -9,7 +10,13 @@ export type PaymentTerms = 'ON_RECEIPT' | 'NET_15' | 'NET_30' | 'NET_45' | 'NET_
 export type OperationNature = 'GOODS' | 'SERVICES' | 'MIXED';
 export type InvoiceSort = 'CREATED_AT' | 'NUMBER' | 'CUSTOMER' | 'ISSUE_DATE' | 'DUE_DATE' | 'TOTAL';
 export type SortDirection = 'ASC' | 'DESC';
-export type ReadinessCode = 'CUSTOMER' | 'CUSTOMER_ADDRESS' | 'LINES' | 'CUSTOMER_SIREN';
+export type ReadinessCode =
+  | 'SELLER_DETAILS'
+  | 'CUSTOMER'
+  | 'CUSTOMER_ADDRESS'
+  | 'LINES'
+  | 'VAT_EXEMPTION'
+  | 'CUSTOMER_SIREN';
 
 export interface BilledCustomer {
   name: string | null;
@@ -58,6 +65,8 @@ export interface Invoice {
   status: InvoiceStatus;
   overdue: boolean;
   customerId: number | null;
+  /** The seller: the owner's current company for a draft, a frozen snapshot once issued; null if none. */
+  seller: InvoiceSeller | null;
   customer: BilledCustomer;
   paymentTerms: PaymentTerms;
   /** ISO dates (`2026-10-24`), set when the invoice is issued. */
@@ -154,12 +163,20 @@ export const OPERATION_NATURES: Record<OperationNature, string> = {
 
 /** How each check reads in the readiness list, and what to do when it fails. */
 export const READINESS: Record<ReadinessCode, { label: string; fix: string }> = {
+  SELLER_DETAILS: {
+    label: 'Your company details',
+    fix: 'Record your company (legal name, address, SIRET, VAT regime): they are printed on every invoice.',
+  },
   CUSTOMER: { label: 'Customer chosen', fix: 'Choose who you are billing.' },
   CUSTOMER_ADDRESS: {
     label: 'Customer billing address',
     fix: 'Street, postal code and city are mandatory on an invoice.',
   },
   LINES: { label: 'At least one line', fix: 'Add what you are billing.' },
+  VAT_EXEMPTION: {
+    label: 'No VAT under the franchise',
+    fix: 'Your company is under the VAT franchise (art. 293 B): set every line to 0 % VAT.',
+  },
   CUSTOMER_SIREN: {
     label: 'Customer SIREN',
     fix: 'Mandatory for business customers under the e-invoicing reform: add their SIRET.',

@@ -90,14 +90,26 @@ Issuing is refused with **422** and the list of `missing` checks when a required
 
 | Check | Level | Why |
 |-------|-------|-----|
+| `SELLER_DETAILS` | required | The seller's mentions (legal name, legal form, address, SIRET, VAT regime) come from the owner's company |
 | `CUSTOMER` | required | The invoice must name the customer |
 | `CUSTOMER_ADDRESS` | required | Customer billing address is a mandatory mention |
 | `LINES` | required | Something must be billed |
+| `VAT_EXEMPTION` | required | A seller under the VAT exemption (franchise) charges no VAT: every line must be at 0 % |
 | `CUSTOMER_SIREN` | recommended | Mandatory for business customers under the e-invoicing reform; customers do not say yet whether they are a business |
 
 The **operation nature** (goods, services or both), another mention required by the reform, is derived from the
-line types. The seller's own mentions (SIREN, legal form, address, VAT number) need the company settings (task 5.1):
-the checklist shows them as pending without blocking.
+line types.
+
+### Seller details
+
+The seller is the owner's company. A draft always shows the company as it is now; issuing copies its details onto the
+invoice, then freezes them. Editing the company later never changes an issued, paid or cancelled invoice, and a
+duplicate is a new draft that follows the company again. Invoices issued before the company settings existed have no
+seller (`null`).
+
+In the app the company is recorded on the **Company** screen (`/company`). Its mentions (legal name, legal form and share
+capital, address, SIREN and SIRET, VAT number, registration, contact, bank details) are printed on the invoice. Under the
+VAT franchise the editor bills new lines at 0 % and the invoice carries "TVA non applicable, art. 293 B du CGI".
 
 ## Screens
 

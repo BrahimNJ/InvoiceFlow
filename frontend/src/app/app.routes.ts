@@ -99,6 +99,12 @@ export const routes: Routes = [
     loadComponent: () => import('./invoices/invoice-detail/invoice-detail').then((m) => m.InvoiceDetail),
   },
   {
+    path: 'company',
+    title: 'Company · InvoiceFlow',
+    canActivate: [authGuard],
+    loadComponent: () => import('./company/company-settings/company-settings').then((m) => m.CompanySettings),
+  },
+  {
     path: 'admin',
     title: 'Accounts · Admin · InvoiceFlow',
     canActivate: [adminGuard],

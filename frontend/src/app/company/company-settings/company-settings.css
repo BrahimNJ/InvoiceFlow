@@ -1,0 +1,10 @@
+.intro, .franchise-note { display: flex; gap: .6rem; padding: .85rem 1rem; border: 1px solid var(--line); border-radius: var(--radius);
+                          background: var(--brand-50); color: var(--ink-700); font-size: .925rem; }
+.intro { margin-block: 1rem; }
+.intro app-icon, .franchise-note app-icon { flex-shrink: 0; margin-top: .15rem; color: var(--brand); }
+.franchise-note { margin-top: 1.1rem; }
+app-help-tip { margin-block: 1rem 1.25rem; }
+.alert { margin-bottom: 1rem; }
+select.input { width: 100%; }
+/* Phone numbers and bank codes stay readable on narrow screens: one column below 640px (global .form-grid) */
+input[type='tel'] { min-width: 0; }

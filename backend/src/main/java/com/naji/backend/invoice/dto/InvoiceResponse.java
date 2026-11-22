@@ -1,5 +1,7 @@
 package com.naji.backend.invoice.dto;
 
+import com.naji.backend.company.LegalForm;
+import com.naji.backend.company.VatRegime;
 import com.naji.backend.invoice.InvoiceStatus;
 import com.naji.backend.invoice.OperationNature;
 import com.naji.backend.invoice.PaymentTerms;
@@ -11,7 +13,8 @@ import java.util.List;
 
 /**
  * A full invoice. {@code overdue}: issued and past its due date. {@code balance}: total minus {@code amountPaid}.
- * {@code checks}: what the invoice needs before it can be issued (still computed once issued, for the record).
+ * {@code seller}: the owner's current company for a draft, the snapshot frozen at issue otherwise ({@code null} when
+ * there is none). {@code checks}: what the invoice needs before it can be issued (still computed once issued, for the record).
  */
 public record InvoiceResponse(
         Long id,
@@ -20,6 +23,7 @@ public record InvoiceResponse(
         boolean overdue,
         Long customerId,
         BilledCustomer customer,
+        Seller seller,
         PaymentTerms paymentTerms,
         LocalDate issueDate,
         LocalDate dueDate,
@@ -50,6 +54,28 @@ public record InvoiceResponse(
             String country,
             String siret,
             String vatNumber
+    ) {
+    }
+
+    /** The seller's details as printed on the invoice. */
+    public record Seller(
+            String legalName,
+            String tradeName,
+            LegalForm legalForm,
+            BigDecimal shareCapital,
+            String street,
+            String postalCode,
+            String city,
+            String country,
+            String siret,
+            String siren,
+            String vatNumber,
+            VatRegime vatRegime,
+            String registration,
+            String email,
+            String phone,
+            String iban,
+            String bic
     ) {
     }
 

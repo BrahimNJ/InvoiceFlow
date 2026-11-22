@@ -20,6 +20,7 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,6 +40,7 @@ class PaymentFlowIntegrationTest {
     void anIssuedInvoiceIsPaidInInstalmentsAndOnlyItsOwnerReachesThePayments() throws Exception {
         String alice = register();
         String bob = register();
+        saveCompany(alice, "STANDARD");
         String today = LocalDate.now(InvoiceService.ZONE).toString();
         int customerId = create(alice, "/api/customers", """
                 {"name": "Acme SAS", "email": "billing@acme.fr", "street": "12 rue de la Paix",
@@ -111,6 +113,15 @@ class PaymentFlowIntegrationTest {
         return """
                 {"amount": %s, "date": "%s", "method": "BANK_TRANSFER"}
                 """.formatted(amount, date);
+    }
+
+    /** Records the seller company: an invoice cannot be issued without one. */
+    private void saveCompany(String authorization, String vatRegime) throws Exception {
+        perform(authorization, put("/api/company").contentType(MediaType.APPLICATION_JSON).content("""
+                {"legalName": "Acme SAS", "legalForm": "SAS", "shareCapital": 10000, "street": "1 rue de la Paix",
+                 "postalCode": "75002", "city": "Paris", "country": "France", "siret": "73282932000074",
+                 "vatNumber": "FR44732829320", "vatRegime": "%s", "registration": "RCS Paris"}
+                """.formatted(vatRegime))).andExpect(status().isOk());
     }
 
     private ResultActions perform(String authorization, MockHttpServletRequestBuilder request) throws Exception {

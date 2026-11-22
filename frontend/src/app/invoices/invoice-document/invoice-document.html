@@ -8,11 +8,37 @@
 
   <header class="top">
     <div class="seller">
-      <strong>{{ d.seller }}</strong>
-      @if (d.sellerDetails) {
-        <span class="seller-details">{{ d.sellerDetails }}</span>
+      @if (d.seller; as seller) {
+        <strong>{{ seller.legalName }}</strong>
+        @if (seller.tradeName) {
+          <span class="trade-name">{{ seller.tradeName }}</span>
+        }
+        <div class="seller-details">
+          @if (sellerForm(); as form) {
+            <span>{{ form }}</span>
+          }
+          @for (part of sellerAddress(); track $index) {
+            <span>{{ part }}</span>
+          }
+          <span>SIREN {{ seller.siren }} · SIRET {{ seller.siret }}</span>
+          @if (seller.vatNumber) {
+            <span>VAT {{ seller.vatNumber }}</span>
+          }
+          @if (seller.registration) {
+            <span>{{ seller.registration }}</span>
+          }
+          @if (seller.email) {
+            <span>{{ seller.email }}</span>
+          }
+          @if (seller.phone) {
+            <span>{{ seller.phone }}</span>
+          }
+        </div>
+      } @else if (d.number) {
+        <span class="pending">Issued before the company details were recorded.</span>
       } @else {
-        <span class="pending">Company details (SIREN, legal form, address, VAT number) coming with company settings</span>
+        <strong class="pending">Your company</strong>
+        <span class="pending">Company details missing: legal name, address, SIRET and VAT regime are mandatory.</span>
       }
     </div>
     <div class="title">
@@ -99,6 +125,14 @@
     }
     @if (nature(); as text) {
       <p>Nature of the operations: {{ text }}.</p>
+    }
+    @if (d.seller?.vatRegime === 'FRANCHISE') {
+      <p class="franchise">{{ franchiseMention }}</p>
+    }
+    @if (d.seller; as seller) {
+      @if (seller.iban) {
+        <p>Bank transfer: IBAN {{ seller.iban }}@if (seller.bic) { · BIC {{ seller.bic }}}</p>
+      }
     }
     <p>{{ terms() }}, by {{ formatDate(d.dueDate) }}.</p>
     <p>{{ lateMention }}</p>

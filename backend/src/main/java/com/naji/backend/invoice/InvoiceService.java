@@ -5,6 +5,7 @@ import com.naji.backend.common.exception.ResourceNotFoundException;
 import com.naji.backend.common.exception.UnprocessableException;
 import com.naji.backend.common.persistence.SearchPatterns;
 import com.naji.backend.common.web.PageResponse;
+import com.naji.backend.company.CompanyRepository;
 import com.naji.backend.customer.Customer;
 import com.naji.backend.customer.CustomerRepository;
 import com.naji.backend.invoice.dto.InvoiceLineRequest;
@@ -44,6 +45,7 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final CompanyRepository companyRepository;
     private final InvoiceMapper invoiceMapper;
     private final InvoiceNumberGenerator numberGenerator;
     private final Clock clock;
@@ -119,7 +121,8 @@ public class InvoiceService {
 
     /**
      * Issues a draft: it gets today's date, its due date and the next number of the year, and can no longer be
-     * changed. The customer's billing details are refreshed one last time, then frozen. An invoice of 0 € owes
+     * changed. The customer's billing details are refreshed one last time, then frozen; so is a snapshot of the owner's
+     * company, which becomes the seller. An invoice of 0 € owes
      * nothing: it is paid as soon as it is issued, so it never counts as outstanding or overdue. Answers 422 with the
      * failed checks when a required mention is missing.
      */
@@ -131,13 +134,15 @@ public class InvoiceService {
             customerRepository.findByIdAndOwnerId(invoice.getCustomerId(), ownerId)
                     .ifPresent(customer -> invoiceMapper.copyCustomer(invoice, customer));
         }
-        List<InvoiceReadiness.Check> missing = InvoiceReadiness.blocking(invoice);
+        InvoiceSeller seller = companyRepository.findByOwnerId(ownerId).map(InvoiceSeller::from).orElse(null);
+        List<InvoiceReadiness.Check> missing = InvoiceReadiness.blocking(invoice, seller);
         if (!missing.isEmpty()) {
             throw new UnprocessableException("This invoice cannot be issued yet: some mandatory details are missing",
                     Map.of("missing", missing.stream().map(Enum::name).toList()));
         }
 
         LocalDate today = today();
+        invoice.setSeller(seller);
         invoice.setIssueDate(today);
         invoice.setDueDate(invoice.getPaymentTerms().dueDate(today));
         invoice.setNumber(numberGenerator.next(ownerId, today.getYear()));
@@ -203,7 +208,15 @@ public class InvoiceService {
     }
 
     private InvoiceResponse toResponse(Invoice invoice) {
-        return invoiceMapper.toResponse(invoice, today());
+        return invoiceMapper.toResponse(invoice, today(), sellerOf(invoice));
+    }
+
+    /** A draft follows the owner's current company; once issued, the invoice shows its frozen snapshot. */
+    private InvoiceSeller sellerOf(Invoice invoice) {
+        if (!invoice.isDraft()) {
+            return invoice.getSeller();
+        }
+        return companyRepository.findByOwnerId(invoice.getOwnerId()).map(InvoiceSeller::from).orElse(null);
     }
 
     private Invoice getInvoice(Long ownerId, Long id) {

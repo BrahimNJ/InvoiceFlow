@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
+import { FRANCHISE_MENTION, InvoiceSeller, LEGAL_FORMS } from '../../company/company.models';
 import { PRODUCT_UNITS, ProductUnit } from '../../products/product.models';
 import { formatEuros, formatPercent } from '../../shared/format/money';
 import { Totals, formatDate } from '../invoice-calc';
@@ -31,9 +32,8 @@ export interface InvoiceDocument {
   issueDate: string;
   dueDate: string;
   paymentTerms: PaymentTerms;
-  seller: string;
-  /** Legal identity of the seller (SIREN, address, VAT number); until company settings exist, a notice is shown. */
-  sellerDetails?: string | null;
+  /** The company issuing the invoice; null when none is recorded (a notice is shown instead). */
+  seller: InvoiceSeller | null;
   customer: BilledCustomer | null;
   lines: DocumentLine[];
   totals: Totals;
@@ -47,14 +47,14 @@ export const LATE_PAYMENT_MENTION =
   'Late payment: penalties at three times the French legal interest rate, plus a fixed recovery fee of 40 € ' +
   '(French Commercial Code, art. L441-10 and D441-5). No discount for early payment.';
 
-export function documentFromInvoice(invoice: Invoice, seller: string, today: string, dueIfIssuedToday: string): InvoiceDocument {
+export function documentFromInvoice(invoice: Invoice, today: string, dueIfIssuedToday: string): InvoiceDocument {
   return {
     number: invoice.number,
     cancelled: invoice.status === 'CANCELLED',
     issueDate: invoice.issueDate ?? today,
     dueDate: invoice.dueDate ?? dueIfIssuedToday,
     paymentTerms: invoice.paymentTerms,
-    seller,
+    seller: invoice.seller,
     customer: invoice.customer.name ? invoice.customer : null,
     lines: invoice.lines,
     totals: invoice,
@@ -83,11 +83,34 @@ export class InvoiceDocumentView {
   protected readonly formatDate = formatDate;
   protected readonly units = PRODUCT_UNITS;
   protected readonly lateMention = LATE_PAYMENT_MENTION;
+  protected readonly franchiseMention = FRANCHISE_MENTION;
 
   protected readonly terms = computed(() => PAYMENT_TERMS[this.doc().paymentTerms].mention);
   protected readonly nature = computed(() => {
     const nature = this.doc().operationNature;
     return nature ? OPERATION_NATURES[nature] : null;
+  });
+  protected readonly sellerAddress = computed(() => {
+    const seller = this.doc().seller;
+    return seller
+      ? [seller.street, [seller.postalCode, seller.city].filter(Boolean).join(' '), seller.country].filter(Boolean)
+      : [];
+  });
+  /**
+   * `SAS au capital de 10 000 €`: the legal form with its share capital when it has one. An unlisted form (Other) has
+   * no short name, so only its capital is printed, when recorded.
+   */
+  protected readonly sellerForm = computed(() => {
+    const seller = this.doc().seller;
+    if (!seller) {
+      return null;
+    }
+    const form = LEGAL_FORMS[seller.legalForm].short;
+    if (seller.shareCapital === null) {
+      return form;
+    }
+    const capital = formatCapital(seller.shareCapital);
+    return form ? `${form} au capital de ${capital}` : `Au capital de ${capital}`;
   });
   protected readonly address = computed(() => {
     const customer = this.doc().customer;
@@ -101,4 +124,9 @@ export class InvoiceDocumentView {
   protected quantity(value: number): string {
     return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 3 }).format(value);
   }
+}
+
+/** `10 000 €`, `1 500,50 €`: whole euros without decimals. */
+export function formatCapital(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: Number.isInteger(amount) ? 0 : 2 }).format(amount);
 }

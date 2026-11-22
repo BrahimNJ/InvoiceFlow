@@ -1,4 +1,5 @@
 // Test data shared by the specs. Obviously fake values only.
+import { testSeller } from '../company/company.fixtures';
 import { Page } from '../core/http/page';
 import { BilledCustomer, Invoice, InvoiceLine, InvoiceListItem, InvoiceSummary } from './invoice.models';
 
@@ -40,6 +41,7 @@ export function testInvoice(overrides: Partial<Invoice> = {}): Invoice {
     status: 'DRAFT',
     overdue: false,
     customerId: 3,
+    seller: testSeller(),
     customer: testBilledCustomer(),
     paymentTerms: 'NET_30',
     issueDate: null,
@@ -54,9 +56,11 @@ export function testInvoice(overrides: Partial<Invoice> = {}): Invoice {
     balance: 1560,
     vatBreakdown: [{ rate: 20, base: 1300, amount: 260 }],
     checks: [
+      { code: 'SELLER_DETAILS', required: true, passed: true },
       { code: 'CUSTOMER', required: true, passed: true },
       { code: 'CUSTOMER_ADDRESS', required: true, passed: true },
       { code: 'LINES', required: true, passed: true },
+      { code: 'VAT_EXEMPTION', required: true, passed: true },
       { code: 'CUSTOMER_SIREN', required: false, passed: true },
     ],
     issuedAt: null,

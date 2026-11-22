@@ -38,8 +38,10 @@ flowchart LR
     admin --> user
     auth --> common
     auth --> user
+    company --> common
     customer --> common
     invoice --> common
+    invoice --> company
     invoice --> customer
     invoice --> product
     payment --> common

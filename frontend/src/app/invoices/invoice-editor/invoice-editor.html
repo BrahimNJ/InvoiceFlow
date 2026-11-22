@@ -84,7 +84,7 @@
 
           <section class="panel block" aria-labelledby="lines-title">
             <h2 id="lines-title"><span class="step">3</span>Lines</h2>
-            <app-invoice-lines [lines]="form.controls.lines" />
+            <app-invoice-lines [lines]="form.controls.lines" [franchise]="franchise()" />
           </section>
 
           <section class="panel block" aria-labelledby="notes-title">

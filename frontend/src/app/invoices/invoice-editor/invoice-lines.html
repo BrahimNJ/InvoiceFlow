@@ -193,3 +193,17 @@
   </button>
 </div>
 <p class="hint">Enter moves to the next line, or adds one after the last. Prices exclude VAT.</p>
+@if (franchise()) {
+  <div class="franchise-note">
+    <p>
+      <app-icon name="info" [size]="16" />
+      <span>
+        Your company is under the VAT franchise (art. 293 B): lines are billed at 0 % VAT and the invoice states
+        “TVA non applicable, art. 293 B du CGI”.
+      </span>
+    </p>
+    @if (hasVat()) {
+      <button class="btn btn-ghost btn-sm" type="button" (click)="zeroVat()">Set all lines to 0 %</button>
+    }
+  </div>
+}

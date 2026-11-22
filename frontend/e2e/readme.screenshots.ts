@@ -7,6 +7,7 @@ import {
   createCustomer,
   createProduct,
   issueInvoice,
+  recordCompany,
   signUp,
 } from './steps';
 
@@ -37,6 +38,7 @@ test('in-app documentation with a generated diagram', async ({ page }) => {
 test('invoice editor, invoice list and issued invoice', async ({ page }) => {
   test.slow();
   await signUp(page);
+  await recordCompany(page);
   await createCustomer(page, ATELIER_DURAND);
   await createCustomer(page, {
     name: 'Studio Kerouac',

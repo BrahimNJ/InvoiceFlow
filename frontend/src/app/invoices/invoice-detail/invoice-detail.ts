@@ -5,7 +5,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
 
-import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http/problem-detail';
 import { AppHeader } from '../../shared/app-header';
 import { formatEuros, formatPercent } from '../../shared/format/money';
@@ -46,7 +45,6 @@ export class InvoiceDetail implements OnInit {
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly user = inject(AuthService).user;
 
   /** From the `:id` route parameter (router input binding). */
   readonly id = input.required<string>();
@@ -68,12 +66,12 @@ export class InvoiceDetail implements OnInit {
   });
   protected readonly doc = computed(() => {
     const invoice = this.invoice()!;
-    const seller = [this.user()?.firstName, this.user()?.lastName].filter(Boolean).join(' ') || 'Your company';
-    return documentFromInvoice(invoice, seller, this.today, dueDate(invoice.paymentTerms, this.today));
+    return documentFromInvoice(invoice, this.today, dueDate(invoice.paymentTerms, this.today));
   });
   protected readonly blocking = computed(
     () => this.invoice()?.checks.filter((check) => check.required && !check.passed) ?? [],
   );
+  protected readonly sellerMissing = computed(() => this.blocking().some((check) => check.code === 'SELLER_DETAILS'));
   protected readonly blockingText = computed(() =>
     this.blocking()
       .map((check) => READINESS[check.code].label.toLowerCase())

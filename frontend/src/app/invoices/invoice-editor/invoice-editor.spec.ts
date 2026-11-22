@@ -4,6 +4,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { testCompany } from '../../company/company.fixtures';
+import { Company } from '../../company/company.models';
+import { COMPANY_API } from '../../company/company.service';
 import { testCustomer } from '../../customers/customer.fixtures';
 import { CUSTOMERS_API } from '../../customers/customer.service';
 import { testProduct } from '../../products/product.fixtures';
@@ -25,13 +28,35 @@ describe('InvoiceEditor', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    configure();
+    mount(testCompany());
+  });
+
+  function configure(): void {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     http = TestBed.inject(HttpTestingController);
+  }
+
+  /** Starts again with another company (or none): a fresh module, so that nothing of the first editor is left. */
+  function remount(company: Company | null): void {
+    TestBed.resetTestingModule();
+    configure();
+    mount(company);
+  }
+
+  /** Opens the editor; its first request loads the company of the user (404 means none yet). */
+  function mount(company: Company | null): void {
     fixture = TestBed.createComponent(InvoiceEditor);
     page = fixture.nativeElement as HTMLElement;
-  });
+    const request = http.expectOne(COMPANY_API);
+    if (company) {
+      request.flush(company);
+    } else {
+      request.flush({ detail: 'No company details recorded yet' }, { status: 404, statusText: 'Not Found' });
+    }
+  }
 
   afterEach(() => http.verify());
 
@@ -44,6 +69,11 @@ describe('InvoiceEditor', () => {
     [...page.querySelectorAll('dl.totals > div')]
       .map((row) => `${plain(row.querySelector('dt')?.textContent)} ${plain(row.querySelector('dd')?.textContent)}`)
       .join(' | ');
+
+  async function openPreviewTab(): Promise<void> {
+    page.querySelector<HTMLButtonElement>('[role="tab"]#side-tab-preview')!.click();
+    await fixture.whenStable();
+  }
 
   /** Types in an autocomplete, answers its search with `results` and picks the first option. */
   async function pick(inputId: string, api: string, text: string, results: object[]): Promise<void> {
@@ -217,16 +247,78 @@ describe('InvoiceEditor', () => {
     await fixture.whenStable();
     const checklist = () => [...page.querySelectorAll('.readiness li')].map((item) => item.className);
 
-    expect(checklist()).toEqual(['missing', 'missing', 'missing', 'warn', 'pending']);
-    expect(page.querySelector('.score')?.textContent).toBe('0/4');
+    expect(checklist()).toEqual(['ok', 'missing', 'missing', 'missing', 'ok', 'warn']);
+    expect(page.querySelector('.score')?.textContent).toBe('2/6');
     expect(button('Issue invoice').disabled).toBe(true);
 
     await pick('customer-picker', CUSTOMERS_API, 'acme', [testCustomer({ id: 3, siret: null })]);
     await pick('product-picker', PRODUCTS_API, 'web', [testProduct()]);
 
-    expect(checklist()).toEqual(['ok', 'ok', 'ok', 'warn', 'pending']);
+    expect(checklist()).toEqual(['ok', 'ok', 'ok', 'ok', 'ok', 'warn']);
     expect(page.querySelector('.readiness')?.textContent).toContain('Recommended.');
     expect(button('Issue invoice').disabled).toBe(false);
+  });
+
+  it('blocks the issue and links to the company settings until the company is recorded', async () => {
+    remount(null);
+    await fixture.whenStable();
+    await pick('customer-picker', CUSTOMERS_API, 'acme', [testCustomer({ id: 3 })]);
+    await pick('product-picker', PRODUCTS_API, 'web', [testProduct()]);
+
+    const seller = page.querySelector('.readiness li.missing')!;
+    expect(seller.textContent).toContain('Your company details');
+    expect(seller.querySelector('a')?.getAttribute('href')).toBe('/company');
+    expect(button('Issue invoice').disabled).toBe(true);
+    await openPreviewTab();
+    expect(page.querySelector('app-invoice-document .seller .pending')?.textContent).toContain('Your company');
+  });
+
+  it('prints the company as the seller of the preview', async () => {
+    await fixture.whenStable();
+    await openPreviewTab();
+
+    expect(plain(page.querySelector('app-invoice-document .seller')?.textContent)).toContain('Durand Conseil');
+    expect(page.querySelector('app-invoice-document .franchise')).toBeNull();
+    expect(page.querySelector('app-invoice-lines .franchise-note')).toBeNull();
+  });
+
+  describe('under the VAT franchise', () => {
+    beforeEach(async () => {
+      remount(testCompany({ vatRegime: 'FRANCHISE', vatNumber: null }));
+      await fixture.whenStable();
+    });
+
+    const vatSelect = () => page.querySelector<HTMLSelectElement>('.cell[data-label="VAT"] select')!;
+
+    it('explains the franchise, bills new lines at 0 % and prints the mention', async () => {
+      await pick('customer-picker', CUSTOMERS_API, 'acme', [testCustomer({ id: 3 })]);
+      await pick('product-picker', PRODUCTS_API, 'web', [testProduct({ vatRate: 20 })]);
+      expect(page.querySelector('app-invoice-lines .franchise-note')?.textContent).toContain('art. 293 B');
+      expect(vatSelect().selectedOptions[0].textContent).toContain('0 %');
+      expect(totalsText()).toContain('Total incl. VAT 650,00 €');
+      expect(page.querySelector('.readiness li.missing')).toBeNull();
+      await openPreviewTab();
+      expect(page.querySelector('app-invoice-document .franchise')?.textContent).toBe(
+        'TVA non applicable, art. 293 B du CGI',
+      );
+    });
+
+    it('refuses a line with VAT until it is set back to 0 %', async () => {
+      await pick('customer-picker', CUSTOMERS_API, 'acme', [testCustomer({ id: 3 })]);
+      await pick('product-picker', PRODUCTS_API, 'web', [testProduct()]);
+      const select = vatSelect();
+      select.value = select.options[1].value;
+      select.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+
+      expect(page.querySelector('.readiness li.missing')?.textContent).toContain('No VAT under the franchise');
+
+      button('Set all lines to 0 %').click();
+      await fixture.whenStable();
+
+      expect(page.querySelector('.readiness li.missing')).toBeNull();
+      expect(page.querySelector('app-invoice-lines .franchise-note button')).toBeNull();
+    });
   });
 
   it('saves, then issues the draft once confirmed, and opens it', async () => {

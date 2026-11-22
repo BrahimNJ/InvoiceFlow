@@ -45,6 +45,9 @@
                 <p class="note warn">
                   <app-icon name="alert" [size]="14" />
                   To issue it, complete: {{ blockingText() }}.
+                  @if (sellerMissing()) {
+                    <a routerLink="/company">Add your company details</a>
+                  }
                 </p>
               }
               <button class="btn btn-ghost danger" type="button" [disabled]="busy() !== null" (click)="delete()">

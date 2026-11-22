@@ -37,6 +37,7 @@ class InvoiceLifecycleIntegrationTest {
     void anInvoiceGoesFromDraftToIssuedToCancelledAndOnlyItsOwnerReachesIt() throws Exception {
         String alice = register();
         String bob = register();
+        saveCompany(alice, "STANDARD");
         int customerId = create(alice, "/api/customers", """
                 {"name": "Acme SAS", "email": "billing@acme.fr", "street": "12 rue de la Paix",
                  "postalCode": "75002", "city": "Paris", "siret": "73282932000074"}
@@ -137,6 +138,73 @@ class InvoiceLifecycleIntegrationTest {
 
         // Drafts can be deleted
         perform(alice, delete("/api/invoices/" + emptyId)).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void theSellerIsTheCurrentCompanyOfADraftThenFrozenAtIssue() throws Exception {
+        String alice = register();
+        int customerId = create(alice, "/api/customers", """
+                {"name": "Acme SAS", "email": "billing@acme.fr", "street": "12 rue de la Paix",
+                 "postalCode": "75002", "city": "Paris"}
+                """);
+        String body = """
+                {"customerId": %d, "paymentTerms": "NET_30", "lines": [
+                  {"type": "SERVICE", "label": "Web development", "quantity": 1, "unit": "DAY",
+                   "unitPrice": 650, "vatRate": 20}]}
+                """.formatted(customerId);
+        int id = create(alice, "/api/invoices", body);
+        String url = "/api/invoices/" + id;
+
+        // Without a company: no seller, and the issue is refused
+        perform(alice, get(url)).andExpect(jsonPath("$.seller").value(org.hamcrest.Matchers.nullValue()));
+        perform(alice, post(url + "/issue"))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.missing[0]").value("SELLER_DETAILS"));
+
+        // The draft follows the company
+        saveCompany(alice, "STANDARD");
+        perform(alice, get(url))
+                .andExpect(jsonPath("$.seller.legalName").value("Acme SAS"))
+                .andExpect(jsonPath("$.seller.siren").value("732829320"))
+                .andExpect(jsonPath("$.seller.vatRegime").value("STANDARD"));
+
+        // Issued: the snapshot no longer follows the company
+        perform(alice, post(url + "/issue")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.seller.legalName").value("Acme SAS"));
+        perform(alice, put("/api/company").contentType(MediaType.APPLICATION_JSON).content("""
+                {"legalName": "Renamed SAS", "legalForm": "SAS", "shareCapital": 10000, "street": "2 rue de la Paix",
+                 "postalCode": "75002", "city": "Paris", "country": "France", "siret": "73282932000074",
+                 "vatRegime": "FRANCHISE"}
+                """)).andExpect(status().isOk());
+        perform(alice, get(url))
+                .andExpect(jsonPath("$.seller.legalName").value("Acme SAS"))
+                .andExpect(jsonPath("$.seller.street").value("1 rue de la Paix"))
+                .andExpect(jsonPath("$.seller.vatRegime").value("STANDARD"));
+        perform(alice, post(url + "/cancel")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.seller.legalName").value("Acme SAS"));
+
+        // A duplicate is a draft that follows the company again, now under the VAT exemption
+        int copyId = create(alice, url + "/duplicate", null);
+        perform(alice, get("/api/invoices/" + copyId))
+                .andExpect(jsonPath("$.seller.legalName").value("Renamed SAS"));
+        perform(alice, post("/api/invoices/" + copyId + "/issue"))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.missing[0]").value("VAT_EXEMPTION"));
+
+        // At 0 % the franchise seller can issue
+        int exemptId = create(alice, "/api/invoices", body.replace("\"vatRate\": 20", "\"vatRate\": 0"));
+        perform(alice, post("/api/invoices/" + exemptId + "/issue"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.seller.vatRegime").value("FRANCHISE"));
+    }
+
+    /** Records the seller company: an invoice cannot be issued without one. */
+    private void saveCompany(String authorization, String vatRegime) throws Exception {
+        perform(authorization, put("/api/company").contentType(MediaType.APPLICATION_JSON).content("""
+                {"legalName": "Acme SAS", "legalForm": "SAS", "shareCapital": 10000, "street": "1 rue de la Paix",
+                 "postalCode": "75002", "city": "Paris", "country": "France", "siret": "73282932000074",
+                 "vatNumber": "FR44732829320", "vatRegime": "%s", "registration": "RCS Paris"}
+                """.formatted(vatRegime))).andExpect(status().isOk());
     }
 
     private ResultActions perform(String authorization, MockHttpServletRequestBuilder request) throws Exception {

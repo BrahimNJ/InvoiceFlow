@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { invoiceForm, lineForm } from './invoice-form';
@@ -9,10 +9,11 @@ import { InvoiceLines } from './invoice-lines';
 @Component({
   imports: [InvoiceLines],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-invoice-lines [lines]="form.controls.lines" />`,
+  template: `<app-invoice-lines [lines]="form.controls.lines" [franchise]="franchise()" />`,
 })
 class Host {
   readonly form = invoiceForm();
+  readonly franchise = signal(false);
 }
 
 /** Intl uses narrow no-break spaces in French amounts. */
@@ -46,6 +47,42 @@ describe('InvoiceLines', () => {
     const totals = [...page.querySelectorAll('.total')].map((cell) => plain(cell.textContent));
 
     expect(totals).toEqual(['600,00 €', '119,88 €']);
+  });
+
+  describe('under the VAT franchise', () => {
+    beforeEach(async () => {
+      host.franchise.set(true);
+      await fixture.whenStable();
+    });
+
+    const rates = () => host.form.controls.lines.controls.map((line) => line.controls.vatRate.value);
+
+    it('explains the franchise and bills new lines at 0 %', async () => {
+      expect(page.querySelector('.franchise-note')?.textContent).toContain('art. 293 B du CGI');
+
+      page.querySelector<HTMLButtonElement>('.add button')!.click();
+      await settle();
+
+      expect(rates()).toEqual([20, 20, 0]);
+    });
+
+    it('sets every line back to 0 % in one click, then hides the button', async () => {
+      page.querySelector<HTMLButtonElement>('.franchise-note button')!.click();
+      await settle();
+
+      expect(rates()).toEqual([0, 0]);
+      expect(host.form.controls.lines.dirty).toBe(true);
+      expect(page.querySelector('.franchise-note button')).toBeNull();
+    });
+  });
+
+  it('does not mention the franchise otherwise, and keeps the catalogue rate of new lines', async () => {
+    expect(page.querySelector('.franchise-note')).toBeNull();
+
+    page.querySelector<HTMLButtonElement>('.add button')!.click();
+    await settle();
+
+    expect(host.form.controls.lines.controls.at(-1)!.controls.vatRate.value).toBe(20);
   });
 
   it('adds a free line with Enter on the last line and focuses it', async () => {

@@ -64,6 +64,7 @@ export class AppHeader {
     { path: '/customers', label: 'Customers', icon: 'users' },
     { path: '/products', label: 'Products', icon: 'package' },
     { path: '/invoices', label: 'Invoices', icon: 'invoice' },
+    { path: '/company', label: 'Company', icon: 'briefcase' },
     ...(this.auth.isAdmin() ? [{ path: '/admin', label: 'Admin', icon: 'shield' as IconName }] : []),
   ]);
   protected readonly user = this.auth.user;
